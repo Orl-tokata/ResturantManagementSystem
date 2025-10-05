@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="textBox1.Text" xml:space="preserve">
+    <value>Menu នៅក្នុង system នេះមានសំខាន់ៗដូចជា៖
+✦Dashboard 
+✦Categories
+✦Producs
+✦Tables
+✦POS screen
+✦Kitchen
+✦Change Password
+✦Staff &amp; User(admin)
+✦Attendance(admin)
+✦Reports(admin)
+✦Currency(admin)
+
+✦Dashboard: ជាកន្លែងមួយសម្រាប់បង្ហាញព័ត៍មានលក់ប្រចាំថ្ងៃក្នុងនោះមាន៖
+	✤ Daily Sale : បង្ហាញលុយលក់ប្រចាំថ្ងៃជាដុល្លា($)ដែលបានលក់ក្នុងថ្ងៃនេះ។
+	✤ Total Products : បង្ហាញចំនួនproductដែលបានលក់ក្នុងថ្ងៃនេះ(រាប់ចំនួនproductចេញជាInvoice)។
+	✤ Sale on Hand : បង្ហាញការលក់ដោយដៃជាចំនួនitems។
+	
+✦Categories: ជាកន្លែងសម្រាប់ add​​ និង show​ ប្រភេទមុខម្ហូបហើយយើងអាចកែនិងលុបវាបាន។
+✦Producs: ជាកន្លែងសម្រាប់ add មុខម្ហូប និង បង្ហាញ មុខម្ហូបមកវិញ ហើយយើងអាចកែនិងលុបវាបាន។
+✦Tables: ជាកន្លែង add លេខតុដែលមាននៅក្នុងហាងយើង ។
+✦POS: ជាកន្លែងដែលបង្ហាញរាល់មុខម្ហូបទាំងអស់សម្រាប់លក់ ដែលវាមានធាតុសំខាន់ៗដូចជា៖
+	✤ New       : សម្រាប់សម្អាតរាល់ការបញ្ជាទិញនៅលើ Show List Items។
+	✤ Holde     : សម្រាប់Holdចោលនៅមុខម្ហូបដែលគេបានបញ្ជាទិញ។
+	✤ Bill List   :​ ជាកន្លែង list រាល់ការបញ្ជារទិញទាំងអស់នៅក្នុងថ្ងៃនេះ ដែលវាអាច Edit​​ និង print បាន។
+	✤ KOT       : ជាចង្រ្កានបាយ នៅពេលអតិថិជន Order រួចរាល់ Chashier អាចចុចបញ្ជូនទៅកាន់ផ្ទះបាយបាន។
+	✤ Delivery : ជាប្រភេទការorderបែបនៅឆ្ងាយ ដែលក្នុងនោះវាមាន ឈ្មោះអ្នកដឹង និង អ្នកទិញ។
+	✤ Din In     : ជាប្រភេទការញាំុនៅក្នុងហាង ដែលមានលេខតុឱ្យជ្រើសរើសនិងឈ្មោះអ្នករត់តុយកទៅឱ្យ។
+	និងមាន buttonសំខាន់៣ទៀត
+		✤​Print Menu : សម្រាប់ Print menu ទាំងអស់។
+		✤Fast Cash   : ជាកន្លែងគិតលុយលឿនដោយគ្រាន់តែចុចជានោះនិងប្ដូរstatusជាPaid​នៅក្នុង Bill List។
+		✤Pay             : ជាកន្លែងគិតលុយដែលវាមានfunction discount និង change rate នៅក្នុងនោះ ពេលចុចរួចនោះជានិង change Status ទៅជា paidនិង printជាinvoice។
+✦Kitchen​ : ជាកន្លែងបង្ហាញរាល់ការបញ្ជាទិញពី POS Screen មក។
+✦Change Password : ជាកន្លែង Change Password របស់ Userទាំងអស់(For Admin)។
+✦Staff &amp; User          : ជាកន្លែងគ្រប់គ្រងបុគ្គលិតនិងUser ដែលអាចAdd​ Update Delete និង បង្ហាញរាល់ព័ត៍មានទាំងអស់របស់ Staff &amp; User(For Admin)។
+✦Attendance​           : ជាកន្លែងបង្ហាញអវត្តមានរបស់ Cashier តាមរយៈLogin និងមានបង្ហាញម៉ោងថ្ងៃខែឆ្នាំចេញចូល(For Admin)។
+✦Reports                 : ជាកន្លែងបង្ហាញរាល់ការលក់ជាប្រចាំថ្ងៃនីមួយៗ ដែលវាអាច Print និង​ Import ជា Excel​ File បាន(For Admin)។
+✦Currency               : ជាកន្លែង update​ អត្រាប្ដូរប្រាក់ពីលុយដុល្លាទៅជាលុយខ្មែរ ឧទាហរណ៍ 1$=4100រៀល  យើងអាចប្ដូរវាទៅតាមអត្រាដុល្លាឡើងឬចុះបាន(For Admin)។</value>
+  </data>
+  <metadata name="timer1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="timer3.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>106, 17</value>
+  </metadata>
+</root>
