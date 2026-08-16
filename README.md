@@ -42,14 +42,30 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1 (Scaffold) and 2 (Schema) — complete and verified.**
+**Milestones 1 (Scaffold), 2 (Schema) and 3 (Auth backend) — complete and verified.**
 
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **6 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **22 tests, 0 failures, 0 skipped**
+- Auth verified over real HTTP: login → token, `/me` 401 without it and 200 with
+  it, refresh cookie exchanged for a fresh access token, other routes 401
 - `npm run build` passes; `tsc --noEmit` reports 0 errors
 - Swagger UI and `/v3/api-docs` both return 200
+
+### Trying the API
+
+```bash
+curl -X POST http://localhost:8081/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"ChangeMe123!\"}"
+```
+
+Or click **Authorize** in Swagger UI and paste the returned `accessToken`.
+
+Password policy for register / reset / change: at least 8 characters, one
+uppercase letter, one number. Five failed logins lock the account.
+
+Password reset emails only send when `MAIL_USERNAME` / `MAIL_PASSWORD` are set;
+otherwise the OTP is written to the application log so the flow stays testable.
 
 ### Default accounts
 
@@ -62,8 +78,9 @@ Created at first startup by `config/DataInitializer`, only if no user exists:
 
 ⚠️ Development credentials. Change both before this leaves localhost.
 
-Next: **milestone 3 (Auth backend)** — register/login/refresh/me, the JWT filter
-and per-route roles. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5, §6 and §10.
+Next: **milestone 4 (Auth frontend)** — the five auth screens in Next.js, wired
+to these endpoints via the axios client. See [PROJECT-SPEC.md](PROJECT-SPEC.md)
+§3, §7 and §10.
 
 ### Installed versions
 

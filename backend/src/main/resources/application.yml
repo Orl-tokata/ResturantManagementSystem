@@ -75,6 +75,15 @@ app:
       refresh-token:
         expiration: 86400000         # 24 hours
 
+    cookie:
+      # The refresh cookie is httpOnly always; `secure` additionally requires
+      # HTTPS. Local dev runs on plain http, so it defaults to false here and
+      # MUST be true anywhere the app is actually deployed.
+      secure: ${COOKIE_SECURE:false}
+
+    # Prefix for the generated 10-character UserInfm.bizKey.
+    default-biz-key: ${BIZ_KEY_PREFIX:RMS}
+
   currency:
     base: USD
     khr-rate: 4100

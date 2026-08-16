@@ -214,19 +214,28 @@ Base path `/api`. Every response uses the existing `ApiResponse<T>` envelope:
 List endpoints return `ApiResponse<PageResponse<T>>` with
 `content, page, size, totalElements, totalPages`.
 
-### Auth — `/api/auth` (public)
+### Auth — `/api/auth` ✅ implemented
 
-| Method | Path | Body | Notes |
+| Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/register` | RegisterRequest | exists |
-| POST | `/login` | LoginRequest | returns access + refresh token, role |
-| POST | `/refresh` | refreshToken | **new** |
-| POST | `/logout` | — | exists |
-| POST | `/forgot-password` | email | exists — sends OTP |
-| POST | `/verify-otp` | email, code | **new** — returns reset token |
-| POST | `/reset-password` | token, newPassword | exists |
-| POST | `/change-password` | current, new | authenticated |
-| GET | `/me` | — | **new** — current user for the sidebar |
+| POST | `/register` | public | 409 on duplicate username or email |
+| POST | `/login` | public | access token in body, refresh token in an httpOnly cookie |
+| POST | `/refresh` | cookie | reads `rms_refresh`, returns a new access token |
+| POST | `/logout` | public | expires the cookie |
+| POST | `/forgot-password` | public | emails a 6-digit OTP, valid 10 min |
+| POST | `/verify-otp` | public | spends the OTP, returns a reset token valid 15 min |
+| POST | `/reset-password` | public | consumes the reset token |
+| POST | `/change-password` | **required** | verifies the current password first |
+| GET | `/me` | **required** | current user for the sidebar |
+
+> `/api/auth/**` is **not** blanket-permitted. The public paths are listed
+> individually in `SecurityConfig.PUBLIC_PATHS`, because a wildcard would also
+> expose `/me` and `/change-password` — which need a principal, and NPE'd into a
+> 500 when they did not have one. Anything new under `/api/auth` is private
+> unless explicitly added.
+
+Two token types share one signing key but carry a different `typ` claim, so a
+refresh token cannot be replayed as an access token. There is a test for that.
 
 ### CRUD resources
 
@@ -509,7 +518,7 @@ Each milestone should end in a runnable state.
 |---|---|---|
 | 1 | ✅ **Scaffold** | Gradle + Next projects, docker-compose, health check green |
 | 2 | ✅ **Schema** | Flyway V1–V3, 14 entities, 12 repositories, 6 passing tests |
-| 3 | **Auth backend** | register/login/refresh/me + JWT filter + roles |
+| 3 | ✅ **Auth backend** | register/login/refresh/me + JWT filter + roles, 22 passing tests |
 | 4 | **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
 | 5 | **App shell** | Sidebar/Topbar/StatusBar, both menus, role-based redirect |
 | 6 | **UI kit** | the 11 components in §7.3, matching prototype styling |
