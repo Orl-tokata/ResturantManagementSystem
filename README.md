@@ -42,7 +42,7 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–4 complete and verified** (Scaffold · Schema · Auth backend · Auth frontend).
+**Milestones 1–5 complete and verified** (Scaffold · Schema · Auth backend · Auth frontend · App shell).
 
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
@@ -65,9 +65,24 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 | `/forgot-password` | ភ្លេចពាក្យសម្ងាត់ · Request a reset code |
 | `/verify-otp` | បញ្ជាក់លេខកូដ · 6-box OTP, paste-aware, 60s resend timer |
 | `/reset-password` | កំណត់ពាក្យសម្ងាត់ថ្មី · Set a new password |
-| `/admin`, `/cashier/order` | guarded placeholders until milestone 5 |
+
+Behind the login, **24 routes** are wired with working navigation:
+
+| Area | Routes |
+|---|---|
+| Admin (green chrome) | dashboard, products, categories, tables, staff, suppliers, purchase, stock, reports, settings, change-password |
+| Cashier (teal chrome) | home, tables, payment, receipt, history, profile |
+| POS (navy, full-screen) | `/cashier/order` — no sidebar by design |
 
 Sign in as `admin` → lands on `/admin`; any other role → `/cashier/order`.
+
+Each screen currently shows a placeholder naming the milestone that builds it,
+so nothing looks finished when it is not. The sidebar highlights the current
+page, collapses to a drawer under 768px, and the clocks tick live.
+
+Next: **milestone 6 (UI kit)** — the 11 shared components in
+[PROJECT-SPEC.md](PROJECT-SPEC.md) §7.3, after which milestones 7–13 can be
+built in any order.
 
 ### Trying the API
 
@@ -94,9 +109,9 @@ Created at first startup by `config/DataInitializer`, only if no user exists:
 
 ⚠️ Development credentials. Change both before this leaves localhost.
 
-Next: **milestone 5 (App shell)** — Sidebar, Topbar and StatusBar, both menus,
-and the role-based navigation from the prototype's `proto.js`. See
-[PROJECT-SPEC.md](PROJECT-SPEC.md) §7.3 and §10.
+
+
+
 
 ### Installed versions
 

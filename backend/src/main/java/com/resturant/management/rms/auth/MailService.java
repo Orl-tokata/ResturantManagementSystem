@@ -41,10 +41,11 @@ public class MailService {
                 """.formatted(code, validMinutes, code, validMinutes);
 
         if (!configured) {
+            // ASCII only: the Windows console mangles non-ASCII punctuation.
             log.warn("""
 
                     ================================================================
-                     MAIL NOT CONFIGURED — password reset code not sent by email.
+                     MAIL NOT CONFIGURED - password reset code not sent by email.
                        to   : {}
                        code : {}
                      Set MAIL_USERNAME / MAIL_PASSWORD to enable real delivery.

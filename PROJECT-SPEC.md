@@ -400,11 +400,30 @@ mirrors `renderShell()` in the prototype's `proto.js`, including the
 
 ### 7.4 Layout groups
 
-- `(auth)` — centred card on teal `#245953`, no chrome ✅ built
-- `(protected)` — everything requiring a session; wrapped in `<RequireAuth>`.
-  Milestone 5 puts `<AppShell>` here.
-- **`/cashier/order` is the exception** — full-screen POS with navy chrome and
-  no sidebar. Give it its own layout, not the shared shell.
+Built as:
+
+```
+app/
+  (auth)/            centred card on teal #245953, no chrome
+    login · signup · forgot-password · verify-otp · reset-password
+  (protected)/       layout = <RequireAuth>
+    admin/
+      layout.tsx     <AppShell variant="admin">   green chrome
+      … 11 pages
+    cashier/
+      (shell)/
+        layout.tsx   <AppShell variant="cashier"> teal chrome
+        … 6 pages
+      (pos)/
+        order/       NO shell — full viewport, navy chrome
+```
+
+**Why two route groups under `cashier/`:** `/cashier/order` must not inherit the
+sidebar, but it is a sibling URL of the screens that do. Route groups add no URL
+segment, so `(shell)` and `(pos)` give the two halves different layouts while
+keeping `/cashier/tables` and `/cashier/order` as siblings. Toggling the shell
+with a `usePathname()` check inside one layout would work too, but it makes the
+POS pay for chrome it then hides.
 
 ### 7.5 Session handling
 
@@ -538,7 +557,7 @@ Each milestone should end in a runnable state.
 | 2 | ✅ **Schema** | Flyway V1–V3, 14 entities, 12 repositories, 6 passing tests |
 | 3 | ✅ **Auth backend** | register/login/refresh/me + JWT filter + roles, 22 passing tests |
 | 4 | ✅ **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
-| 5 | **App shell** | Sidebar/Topbar/StatusBar, both menus, role-based redirect |
+| 5 | ✅ **App shell** | Sidebar/Topbar/StatusBar, both menus, 24 routes wired |
 | 6 | **UI kit** | the 11 components in §7.3, matching prototype styling |
 | 7 | **Master data** | categories, products, tables, staff — CRUD both ends |
 | 8 | **POS** | order screen, table picker, cart state, open order |
