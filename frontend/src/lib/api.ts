@@ -102,7 +102,12 @@ api.interceptors.response.use(
       }
 
       // Refresh failed too — the session is genuinely over.
+      //
+      // A hard navigation is intentional here, not router.push(): this runs
+      // outside React, and a full reload is the only way to guarantee every
+      // cached query and in-memory token from the dead session is discarded.
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/login?reason=expired";
       }
     }

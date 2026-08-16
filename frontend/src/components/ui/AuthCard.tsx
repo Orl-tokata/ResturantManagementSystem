@@ -21,7 +21,7 @@ export function AuthCard({
 }) {
   return (
     <div
-      className={`w-full ${wide ? "max-w-[480px]" : "max-w-[420px]"} rounded-lg border border-white/20 bg-teal-800 p-7 text-white shadow-2xl`}
+      className={`auth-surface w-full ${wide ? "max-w-[480px]" : "max-w-[420px]"} rounded-lg border border-white/20 bg-teal-800 p-7 text-white shadow-2xl`}
     >
       <div className="mb-5 flex items-center gap-3">
         <div className="grid h-12 w-12 shrink-0 place-items-center rounded bg-white/10 text-2xl">

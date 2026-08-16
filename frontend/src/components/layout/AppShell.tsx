@@ -3,7 +3,7 @@
 import { Menu, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Clock } from "@/components/layout/Clock";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MENUS, type ShellVariant } from "@/lib/menus";
@@ -30,10 +30,14 @@ export function AppShell({
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Close the mobile drawer whenever the route changes.
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
+  // Close the mobile drawer on any route change, including back/forward, which
+  // the links' own onNavigate handler would miss. Adjusting state during render
+  // is React's documented alternative to mirroring a prop into an effect.
+  const [drawerRoute, setDrawerRoute] = useState(pathname);
+  if (pathname !== drawerRoute) {
+    setDrawerRoute(pathname);
+    if (drawerOpen) setDrawerOpen(false);
+  }
 
   const current = MENUS[variant].find(
     (m) => pathname === m.href || pathname.startsWith(`${m.href}/`),

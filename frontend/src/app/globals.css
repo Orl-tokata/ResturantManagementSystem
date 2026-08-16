@@ -89,3 +89,38 @@ body {
 .km {
   line-height: 1.75;
 }
+
+/* ---- Dark auth surface ---------------------------------------------------
+   Shared form controls are styled for light backgrounds. The auth card sits on
+   teal, so it re-colours them here by cascade rather than every field taking a
+   `tone` prop.
+   ------------------------------------------------------------------------- */
+
+.auth-surface .field-label,
+.auth-surface .check-label {
+  color: rgb(255 255 255 / 0.9);
+}
+
+.auth-surface .field-hint {
+  color: rgb(255 255 255 / 0.6);
+}
+
+.auth-surface .field-error {
+  color: var(--color-orange-500);
+}
+
+.auth-surface input:not([type="checkbox"]),
+.auth-surface select,
+.auth-surface textarea {
+  background-color: rgb(255 255 255 / 0.95);
+  border-color: transparent;
+}
+
+.auth-surface .btn-ghost {
+  border-color: rgb(255 255 255 / 0.4);
+  color: #fff;
+}
+
+.auth-surface .btn-ghost:hover {
+  background-color: rgb(255 255 255 / 0.1);
+}

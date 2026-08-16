@@ -42,7 +42,9 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–5 complete and verified** (Scaffold · Schema · Auth backend · Auth frontend · App shell).
+**Milestones 1–6 complete and verified** (Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit).
+
+👉 See the component kit at **http://localhost:3000/admin/ui-kit**
 
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
@@ -50,8 +52,9 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 - `./gradlew test` — **22 tests, 0 failures, 0 skipped**
 - Auth verified over real HTTP: login → token, `/me` 401 without it and 200 with
   it, refresh cookie exchanged for a fresh access token, other routes 401
-- `npm run build` passes; `tsc --noEmit` reports 0 errors; **24 routes** prerender,
+- `npm run build` passes; `tsc --noEmit` reports 0 errors; **25 routes** prerender,
   all return 200 and an unknown route 404s
+- `npm run lint` — **0 errors, 0 warnings**
 - CORS preflight from `http://localhost:3000` returns
   `Access-Control-Allow-Credentials: true`, and the refresh cookie is accepted
   cross-origin (`HttpOnly; SameSite=Lax; Path=/api/auth`)
@@ -81,9 +84,9 @@ Each screen currently shows a placeholder naming the milestone that builds it,
 so nothing looks finished when it is not. The sidebar highlights the current
 page, collapses to a drawer under 768px, and the clocks tick live.
 
-Next: **milestone 6 (UI kit)** — the 11 shared components in
-[PROJECT-SPEC.md](PROJECT-SPEC.md) §7.3, after which milestones 7–13 can be
-built in any order.
+Next: **milestone 7 (Master data)** — products, categories, tables and staff,
+CRUD on both ends. Milestones 7–13 can now be built in any order, since they all
+sit on the UI kit. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
 
 ### Trying the API
 

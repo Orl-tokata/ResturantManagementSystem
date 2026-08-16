@@ -8,7 +8,9 @@ const VARIANTS: Record<Variant, string> = {
   admin: "bg-brand-600 text-white hover:brightness-110",
   accent: "bg-orange-500 text-white hover:bg-orange-600",
   danger: "bg-danger-soft text-white hover:brightness-110",
-  ghost: "border border-white/40 text-white hover:bg-white/10",
+  // `btn-ghost` is the hook globals.css uses to re-colour this on the teal
+  // auth surface, where an ink border would be invisible.
+  ghost: "btn-ghost border border-ink-300 text-ink-900 hover:bg-ink-100",
   light: "bg-ink-200 text-ink-900 hover:bg-ink-300",
 };
 

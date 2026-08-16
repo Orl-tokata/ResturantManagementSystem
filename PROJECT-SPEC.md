@@ -377,19 +377,39 @@ The prototype relied on the user having *Khmer OS* installed; production does no
 
 Derived from the prototype CSS classes — build these once in `components/ui/`:
 
+All built in `components/ui/`, exported from `components/ui/index.ts`, and
+rendered together at **`/admin/ui-kit`** — a development gallery, deliberately
+not linked from the sidebar.
+
 | Component | Prototype class | Used by |
 |---|---|---|
 | `<Button>` | `.btn` + variants | everywhere |
-| `<Input> <Select> <Textarea>` | `.input .select .textarea` | all forms |
-| `<SearchBar>` | `.searchbar` | every list screen |
-| `<Card>` | `.card` `.card__head` | everywhere |
-| `<DataTable>` | `.table` `.table-wrap` | 9 list screens |
+| `<Field> <Input> <Select> <Textarea> <Checkbox> <FieldRow>` | `.field .input .select` | all forms |
+| `<SearchBar>` | `.searchbar` | every list screen — 300ms debounce |
+| `<Card> <Toolbar> <PageTitle>` | `.card` `.toolbar` | everywhere |
+| `<DataTable>` | `.table` `.table-wrap` | 9 list screens — generic over row type |
+| `<Pagination>` | prototype pager | list screens — zero-based, matches Spring Data |
 | `<Badge>` | `.badge--ok/warn/dead/info` | status columns |
-| `<StatTile>` | `.stat` | dashboards |
-| `<Modal>` | `.modal-backdrop` `.modal` | every add/edit/delete |
+| `<StatTile> <StatGrid>` | `.stat` | dashboards |
+| `<Modal>` | `.modal-backdrop` `.modal` | every add/edit |
 | `<ConfirmDialog>` | delete modal pattern | 6 screens |
 | `<Tabs>` | `.tabs` | reports |
 | `<Meter>` | `.meter` | stock levels |
+| `<EmptyState>` | — | added: lists need a zero-row state the prototype never showed |
+| `<Alert>` | — | added: form and request errors |
+
+**Light by default.** Controls are styled for white surfaces, since that is most
+of the app. The auth card sits on teal, so `AuthCard` marks its subtree
+`.auth-surface` and a short block in `globals.css` re-colours labels, inputs and
+ghost buttons by cascade — rather than every field taking a `tone` prop.
+
+**Status colours are decided once.** `toneForOrderStatus`, `toneForTableStatus`
+and `toneForRecordStatus` live next to `<Badge>`, so PAID is never green on one
+screen and grey on another.
+
+`<Modal>` traps Tab, closes on Escape, restores focus to whatever opened it, and
+locks body scroll. It closes on backdrop `mousedown`, not `click`, so a text
+selection that ends outside the panel does not dismiss it.
 
 `components/layout/`: `<Sidebar>` `<Topbar>` `<StatusBar>` `<AppShell>` —
 mirrors `renderShell()` in the prototype's `proto.js`, including the
@@ -558,7 +578,7 @@ Each milestone should end in a runnable state.
 | 3 | ✅ **Auth backend** | register/login/refresh/me + JWT filter + roles, 22 passing tests |
 | 4 | ✅ **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
 | 5 | ✅ **App shell** | Sidebar/Topbar/StatusBar, both menus, 24 routes wired |
-| 6 | **UI kit** | the 11 components in §7.3, matching prototype styling |
+| 6 | ✅ **UI kit** | the components in §7.3 + gallery at `/admin/ui-kit` |
 | 7 | **Master data** | categories, products, tables, staff — CRUD both ends |
 | 8 | **POS** | order screen, table picker, cart state, open order |
 | 9 | **Payment** | payment screen, `/pay` transaction, receipt + print |
