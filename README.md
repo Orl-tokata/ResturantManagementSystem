@@ -50,7 +50,8 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 - `./gradlew test` — **22 tests, 0 failures, 0 skipped**
 - Auth verified over real HTTP: login → token, `/me` 401 without it and 200 with
   it, refresh cookie exchanged for a fresh access token, other routes 401
-- `npm run build` passes; `tsc --noEmit` reports 0 errors; 8 routes prerender
+- `npm run build` passes; `tsc --noEmit` reports 0 errors; **24 routes** prerender,
+  all return 200 and an unknown route 404s
 - CORS preflight from `http://localhost:3000` returns
   `Access-Control-Allow-Credentials: true`, and the refresh cookie is accepted
   cross-origin (`HttpOnly; SameSite=Lax; Path=/api/auth`)
@@ -108,9 +109,6 @@ Created at first startup by `config/DataInitializer`, only if no user exists:
 | `cashier` | `ChangeMe123!` | CASHIER |
 
 ⚠️ Development credentials. Change both before this leaves localhost.
-
-
-
 
 
 ### Installed versions
