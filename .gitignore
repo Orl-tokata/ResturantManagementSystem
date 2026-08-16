@@ -1,0 +1,44 @@
+# ---- secrets --------------------------------------------------------------
+.env
+.env.local
+*.local.yml
+backend/src/main/resources/application-local.yml
+!backend/src/main/resources/application-local.yml.example
+
+# ---- java / gradle --------------------------------------------------------
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/out/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.log
+
+# ---- node / next ----------------------------------------------------------
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/next-env.d.ts
+.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# ---- ide ------------------------------------------------------------------
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# ---- os -------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini

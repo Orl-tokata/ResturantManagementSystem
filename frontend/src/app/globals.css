@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Design tokens — Tailwind v4 CSS-first theme.
+   Values sampled from the Figma canvas (dFVrxfNmTg1w1RSfQuWppQ) and carried
+   over from the HTML prototype's assets/css/tokens.css.
+
+   Every key here generates utilities: --color-teal-800 → bg-teal-800,
+   text-teal-800, border-teal-800, etc.
+   ========================================================================== */
+
+@theme {
+  /* --- Auth / Cashier theme (dark teal family) --- */
+  --color-teal-900: #1b423d;
+  --color-teal-800: #245953;
+  --color-teal-700: #2e4f4f;
+  --color-teal-600: #0e8388;
+  --color-teal-500: #14a2a8;
+  --color-teal-100: #cbe4de;
+
+  /* --- Admin theme (green family) --- */
+  --color-brand-700: #158069;
+  --color-brand-600: #1b9c85;
+  --color-brand-500: #47a992;
+  --color-brand-200: #b7e5dd;
+  --color-sand-300: #eed180;
+
+  /* --- POS chrome --- */
+  --color-navy-800: #323759;
+  --color-navy-700: #3d4368;
+  --color-orange-500: #ff8b13;
+  --color-orange-600: #e07a0c;
+  --color-cream-100: #fdf6e3;
+
+  /* --- Status --- */
+  --color-danger: #a81616;
+  --color-danger-soft: #e5484d;
+  --color-success: #2e9e5b;
+  --color-warning: #e6a817;
+  --color-info: #2f7bc4;
+
+  /* --- Neutrals --- */
+  --color-ink-50: #fbfbfb;
+  --color-ink-100: #f4f5f7;
+  --color-ink-200: #e7e9ec;
+  --color-ink-300: #d9d9d9;
+  --color-ink-400: #b8b8b8;
+  --color-ink-500: #8b9096;
+  --color-ink-700: #4a4f55;
+  --color-ink-900: #22262b;
+
+  /* --- Typography --- */
+  --font-ui: var(--font-khmer), "Noto Sans Khmer", "Khmer OS Battambang",
+    system-ui, -apple-system, sans-serif;
+  --font-num: system-ui, "Segoe UI", sans-serif;
+
+  /* --- Layout --- */
+  --spacing-sidebar: 210px;
+  --spacing-topbar: 52px;
+  --spacing-statusbar: 34px;
+
+  /* --- Radii --- */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+}
+
+/* ---- Base ---------------------------------------------------------------- */
+
+:root {
+  --background: #f4f5f7;
+  --foreground: #22262b;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Khmer script needs a little more line height than Latin to stay legible. */
+:lang(km),
+.km {
+  line-height: 1.75;
+}

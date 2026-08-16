@@ -1,0 +1,22 @@
+# Copy to `application-local.yml` (gitignored) and fill in real values,
+# then run with:  ./gradlew bootRun --args='--spring.profiles.active=local'
+#
+# Alternatively export the same values as environment variables —
+# application.yml reads DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET,
+# MAIL_USERNAME, MAIL_PASSWORD, CORS_ALLOWED_ORIGINS, SERVER_PORT.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rms
+    username: rms
+    password: CHANGE_ME
+
+  mail:
+    username: your-address@gmail.com
+    password: CHANGE_ME_GMAIL_APP_PASSWORD
+
+app:
+  security:
+    jwt:
+      # Generate one with:  openssl rand -base64 64
+      secret-key: CHANGE_ME_BASE64_SECRET_AT_LEAST_512_BITS

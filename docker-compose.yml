@@ -1,0 +1,43 @@
+# Local development database.
+#
+#   docker compose up -d db
+#
+# If Docker is not installed, either install Docker Desktop, or use a local
+# PostgreSQL server and create the database manually — see README.md.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: rms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rms
+      POSTGRES_USER: rms
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in a .env file next to this compose file}
+    ports:
+      - "5433:5432"          # 5433 on the host: a local PostgreSQL 15 already owns 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rms -d rms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: rms-pgadmin
+    restart: unless-stopped
+    profiles: ["tools"]      # only starts with: docker compose --profile tools up -d
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@rms.local
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
