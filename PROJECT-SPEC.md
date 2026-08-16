@@ -297,11 +297,26 @@ Carry over `JwtAuthenticationFilter`, `JwtService`, `CustomUserDetailsService`.
 
 ### 7.1 Setup
 
+Already scaffolded (milestone 1) with:
+
 ```bash
-npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir
+npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
 ```
 
-Additional dependencies:
+**Installed versions** — note these differ from what an older tutorial assumes:
+
+| | Version | Consequence |
+|---|---|---|
+| Next.js | **16.3.1** | App Router, Turbopack build by default |
+| React | **19.2.8** | |
+| Tailwind CSS | **v4** | **CSS-first config — there is no `tailwind.config.ts`** (see §7.2) |
+| TypeScript | 5.x | |
+
+> Node 20.14.0 is installed. One transitive ESLint dependency asks for
+> `^20.19 || ^22.13 || >=24` and prints an `EBADENGINE` warning. Install and
+> build both succeed, but upgrading to Node 22 LTS removes the noise.
+
+Additional dependencies (installed):
 
 | Package | Why |
 |---|---|
@@ -312,35 +327,42 @@ Additional dependencies:
 | `lucide-react` | icons (replaces the prototype's emoji) |
 | `date-fns` | date formatting |
 
-### 7.2 Design tokens → Tailwind
+### 7.2 Design tokens → Tailwind v4
 
-Copy the palette from `Prototype-Restaurant-mgs/assets/css/tokens.css` — these
-values were sampled from the Figma canvas, so they are the real design colours.
+Tailwind v4 dropped the JS config file. The theme is declared **in CSS** with
+`@theme`, already done in `frontend/src/app/globals.css`:
 
-```ts
-// tailwind.config.ts
-theme: {
-  extend: {
-    colors: {
-      teal:   { 900:'#1b423d', 800:'#245953', 700:'#2e4f4f',
-                600:'#0e8388', 500:'#14a2a8', 100:'#cbe4de' },
-      brand:  { 700:'#158069', 600:'#1b9c85', 500:'#47a992', 200:'#b7e5dd' },
-      sand:   { 300:'#eed180' },
-      navy:   { 800:'#323759', 700:'#3d4368' },
-      orange: { 500:'#ff8b13', 600:'#e07a0c' },
-      cream:  { 100:'#fdf6e3' },
-      danger: { DEFAULT:'#a81616', soft:'#e5484d' },
-    },
-    fontFamily: {
-      ui: ['"Khmer OS Battambang"','"Noto Sans Khmer"','Hanuman','system-ui','sans-serif'],
-    },
-  },
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-teal-800: #245953;   /* → bg-teal-800, text-teal-800, border-teal-800 */
+  --color-brand-600: #1b9c85;
+  --color-navy-800: #323759;
+  --color-orange-500: #ff8b13;
+  /* … full palette in the file … */
 }
 ```
 
-**Khmer typography:** self-host Noto Sans Khmer via `next/font/local` rather than
-relying on the user having *Khmer OS* installed. The prototype falls back to
-system fonts; production must not.
+Every `--color-*` key automatically generates the matching utilities. Palette
+values came from `Prototype-Restaurant-mgs/assets/css/tokens.css`, which was
+sampled from the Figma canvas — they are the real design colours.
+
+Namespace map, prototype → Tailwind:
+
+| Prototype token | Tailwind utility |
+|---|---|
+| `--teal-800` auth/cashier chrome | `teal-800` |
+| `--green-600` admin chrome | `brand-600` |
+| `--navy-800` POS chrome | `navy-800` |
+| `--orange-500` POS actions | `orange-500` |
+| `--grey-*` neutrals | `ink-*` |
+
+`grey` was renamed `ink` to avoid colliding with Tailwind's built-in `gray`.
+
+**Khmer typography:** handled in `layout.tsx` via `next/font/google` →
+`Noto_Sans_Khmer`, self-hosted at build time and exposed as `--font-khmer`.
+The prototype relied on the user having *Khmer OS* installed; production does not.
 
 ### 7.3 Component inventory
 
@@ -378,6 +400,11 @@ mirrors `renderShell()` in the prototype's `proto.js`, including the
 
 ## 8. Database
 
+> **This machine has no Docker installed, and a local PostgreSQL 15 service is
+> already running on port 5432.** So `docker-compose.yml` publishes the container
+> on **5433** to avoid the clash. Until a database is provisioned, use the `dev`
+> profile (in-memory H2, Flyway off) — see §9.
+
 PostgreSQL 16 via Docker:
 
 ```yaml
@@ -410,19 +437,48 @@ Indexes to create explicitly: `orders(created_at)`, `orders(status)`,
 
 ## 9. Local setup
 
+### Fastest path — no database needed
+
 ```bash
-docker compose up -d db
-cd backend  && ./gradlew bootRun     # → http://localhost:8081
-cd frontend && npm run dev           # → http://localhost:3000
+cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
-Swagger: <http://localhost:8081/swagger-ui.html>
+Boots on in-memory H2 with Flyway disabled. Good for milestone 1; **not** for
+schema work, because Hibernate generates the tables and they will drift from the
+real migrations.
 
-`frontend/.env.local`:
+### Real path — PostgreSQL
 
+Either start the container:
+
+```bash
+cp .env.example .env        # then set DB_PASSWORD
+docker compose up -d db     # publishes on host port 5433
 ```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8081/api
+
+…or use the PostgreSQL 15 already installed on this machine:
+
+```sql
+CREATE USER rms WITH PASSWORD 'your-password';
+CREATE DATABASE rms OWNER rms;
 ```
+
+Then either copy `backend/src/main/resources/application-local.yml.example` to
+`application-local.yml` and fill it in, or export `DB_URL`, `DB_USERNAME`,
+`DB_PASSWORD`, `JWT_SECRET`.
+
+### Frontend
+
+```bash
+cd frontend && npm run dev
+```
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| API health | http://localhost:8081/api/health |
+| Swagger UI | http://localhost:8081/swagger-ui.html |
+| H2 console (`dev` only) | http://localhost:8081/h2-console |
 
 Backend port stays **8081** to match the existing repo, leaving 3000 free for Next.
 
@@ -434,7 +490,7 @@ Each milestone should end in a runnable state.
 
 | # | Milestone | Deliverable |
 |---|---|---|
-| 1 | **Scaffold** | Gradle + Next projects, docker-compose, health check green |
+| 1 | ✅ **Scaffold** | Gradle + Next projects, docker-compose, health check green |
 | 2 | **Schema** | Flyway V1 + V2, all entities, repositories |
 | 3 | **Auth backend** | register/login/refresh/me + JWT filter + roles |
 | 4 | **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
