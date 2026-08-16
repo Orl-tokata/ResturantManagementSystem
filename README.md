@@ -42,7 +42,7 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1 (Scaffold), 2 (Schema) and 3 (Auth backend) — complete and verified.**
+**Milestones 1–4 complete and verified** (Scaffold · Schema · Auth backend · Auth frontend).
 
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
@@ -50,8 +50,24 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 - `./gradlew test` — **22 tests, 0 failures, 0 skipped**
 - Auth verified over real HTTP: login → token, `/me` 401 without it and 200 with
   it, refresh cookie exchanged for a fresh access token, other routes 401
-- `npm run build` passes; `tsc --noEmit` reports 0 errors
+- `npm run build` passes; `tsc --noEmit` reports 0 errors; 8 routes prerender
+- CORS preflight from `http://localhost:3000` returns
+  `Access-Control-Allow-Credentials: true`, and the refresh cookie is accepted
+  cross-origin (`HttpOnly; SameSite=Lax; Path=/api/auth`)
 - Swagger UI and `/v3/api-docs` both return 200
+
+### Screens
+
+| Route | Screen |
+|---|---|
+| `/login` | ចូលប្រើប្រាស់ · Login |
+| `/signup` | បង្កើតគណនី · Sign up |
+| `/forgot-password` | ភ្លេចពាក្យសម្ងាត់ · Request a reset code |
+| `/verify-otp` | បញ្ជាក់លេខកូដ · 6-box OTP, paste-aware, 60s resend timer |
+| `/reset-password` | កំណត់ពាក្យសម្ងាត់ថ្មី · Set a new password |
+| `/admin`, `/cashier/order` | guarded placeholders until milestone 5 |
+
+Sign in as `admin` → lands on `/admin`; any other role → `/cashier/order`.
 
 ### Trying the API
 
@@ -78,9 +94,9 @@ Created at first startup by `config/DataInitializer`, only if no user exists:
 
 ⚠️ Development credentials. Change both before this leaves localhost.
 
-Next: **milestone 4 (Auth frontend)** — the five auth screens in Next.js, wired
-to these endpoints via the axios client. See [PROJECT-SPEC.md](PROJECT-SPEC.md)
-§3, §7 and §10.
+Next: **milestone 5 (App shell)** — Sidebar, Topbar and StatusBar, both menus,
+and the role-based navigation from the prototype's `proto.js`. See
+[PROJECT-SPEC.md](PROJECT-SPEC.md) §7.3 and §10.
 
 ### Installed versions
 

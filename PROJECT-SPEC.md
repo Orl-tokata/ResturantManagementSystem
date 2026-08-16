@@ -400,10 +400,28 @@ mirrors `renderShell()` in the prototype's `proto.js`, including the
 
 ### 7.4 Layout groups
 
-- `(auth)` — centred card on teal `#245953`, no chrome
-- `(cashier)` and `(admin)` — `<AppShell>` with sidebar + topbar + status bar
+- `(auth)` — centred card on teal `#245953`, no chrome ✅ built
+- `(protected)` — everything requiring a session; wrapped in `<RequireAuth>`.
+  Milestone 5 puts `<AppShell>` here.
 - **`/cashier/order` is the exception** — full-screen POS with navy chrome and
   no sidebar. Give it its own layout, not the shared shell.
+
+### 7.5 Session handling
+
+The access token is held **in a module variable in `lib/api.ts`**, never in
+`localStorage` — an XSS payload can read storage but not a closure. Durability
+comes from the httpOnly refresh cookie, which JavaScript cannot touch at all.
+`AuthProvider` attempts a silent `POST /auth/refresh` on mount, so a page reload
+keeps the user signed in.
+
+Route protection is **client-side on purpose**. Next middleware runs before the
+app has a token in memory and cannot read the `/api/auth`-scoped httpOnly
+cookie, so it could not make a correct decision. `RequireAuth` only avoids
+rendering a shell whose data calls would 401 — the backend remains the actual
+enforcement point.
+
+`?next=` on the login URL is honoured only when it starts with a single `/`,
+otherwise the login screen would be an open redirect.
 
 ---
 
@@ -519,7 +537,7 @@ Each milestone should end in a runnable state.
 | 1 | ✅ **Scaffold** | Gradle + Next projects, docker-compose, health check green |
 | 2 | ✅ **Schema** | Flyway V1–V3, 14 entities, 12 repositories, 6 passing tests |
 | 3 | ✅ **Auth backend** | register/login/refresh/me + JWT filter + roles, 22 passing tests |
-| 4 | **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
+| 4 | ✅ **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
 | 5 | **App shell** | Sidebar/Topbar/StatusBar, both menus, role-based redirect |
 | 6 | **UI kit** | the 11 components in §7.3, matching prototype styling |
 | 7 | **Master data** | categories, products, tables, staff — CRUD both ends |

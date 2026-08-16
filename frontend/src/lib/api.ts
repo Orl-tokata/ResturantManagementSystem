@@ -101,8 +101,9 @@ api.interceptors.response.use(
         return api(original);
       }
 
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
+      // Refresh failed too — the session is genuinely over.
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login?reason=expired";
       }
     }
 
