@@ -259,8 +259,10 @@ Identical shape for each: `GET /` (paged, `?search=&page=&size=`),
 |---|---|---|
 | GET | `/api/products?categoryId=` | POS category filter |
 | PATCH | `/api/tables/{id}/status` | free ⇄ occupied ⇄ reserved |
-| POST | `/api/orders` | open an order for a table |
-| PUT | `/api/orders/{id}/items` | replace the whole line-item set |
+| POST | `/api/orders` | ✅ open a bill — **returns the one already open at that table** rather than erroring, so a double-tap or a second till cannot create competing bills |
+| GET | `/api/orders/open?tableId=` | ✅ recover the open bill when the POS reloads (404 if none) |
+| PUT | `/api/orders/{id}/items` | ✅ replace the whole line-item set |
+| POST | `/api/orders/{id}/cancel` | ✅ cancel and free the table |
 | POST | `/api/orders/{id}/pay` | method + tendered → total, change, marks PAID |
 | POST | `/api/orders/{id}/cancel` | |
 | GET | `/api/orders/{id}/receipt` | receipt projection |
@@ -283,6 +285,25 @@ rather than letting a foreign-key violation surface as a 500:
 
 `GlobalExceptionHandler` also maps `DataIntegrityViolationException` to a 409 as
 a backstop, and enum type-mismatches to 400 rather than 500.
+
+### Money arithmetic (milestone 8)
+
+`OrderService.recalculate` is the single place totals are computed:
+
+```
+subtotal = Σ (qty × unitPrice)          scale 2, HALF_UP
+taxable  = subtotal − discount          rejected if discount > subtotal
+vat      = taxable × vatRate / 100      scale 2, HALF_UP
+total    = taxable + vat
+totalKhr = total × khrRate              scale 0 — riel has no minor unit
+```
+
+`vatRate` and `khrRate` come from `AppSetting` via `SettingService`, which falls
+back to 10% and 4100 if a row is missing or unparseable — a bad settings row must
+not stop the tills.
+
+The rate is copied onto the order when it is opened, so changing VAT later does
+not silently restate bills that are already open.
 
 ### Transactional rules
 
@@ -593,7 +614,7 @@ Each milestone should end in a runnable state.
 | 5 | ✅ **App shell** | Sidebar/Topbar/StatusBar, both menus, 24 routes wired |
 | 6 | ✅ **UI kit** | the components in §7.3 + gallery at `/admin/ui-kit` |
 | 7 | ✅ **Master data** | categories, products, tables, staff — CRUD both ends, 38 tests |
-| 8 | **POS** | order screen, table picker, cart state, open order |
+| 8 | ✅ **POS** | order screen, table picker, cart state, open order — 52 tests |
 | 9 | **Payment** | payment screen, `/pay` transaction, receipt + print |
 | 10 | **History** | order history with filters |
 | 11 | **Supply chain** | suppliers, purchases, stock, adjustments |

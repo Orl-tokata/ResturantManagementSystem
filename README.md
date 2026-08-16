@@ -42,8 +42,11 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–7 complete and verified.**
-Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit · Master data
+**Milestones 1–8 complete and verified.**
+Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit · Master data · POS
+
+👉 **Try the POS:** sign in as `cashier`, pick a table at `/cashier/tables`,
+tap dishes to build the order, then Save.
 
 👉 **Working CRUD screens:** `/admin/categories` · `/admin/products` ·
 `/admin/tables` · `/admin/staff` — real data from the API, add/edit modals,
@@ -53,7 +56,10 @@ Component gallery at `/admin/ui-kit`.
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **38 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **52 tests, 0 failures, 0 skipped**
+- POS verified over real HTTP: open bill → table becomes OCCUPIED → re-opening
+  reuses the same bill → items priced and taxed (15.00 + 10% = 16.50 = 67,650៛)
+  → recovered after reload → cancel frees the table and locks the bill
 - Master data verified over real HTTP: CRUD round-trip returns 201/200/200/404,
   a cashier gets 403 on writes and on `/api/staff`, anonymous gets 401, and the
   delete guards answer 409 with a specific message
@@ -91,8 +97,9 @@ Each screen currently shows a placeholder naming the milestone that builds it,
 so nothing looks finished when it is not. The sidebar highlights the current
 page, collapses to a drawer under 768px, and the clocks tick live.
 
-Next: **milestone 8 (POS)** — the order screen, cart state and table selection.
-See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
+Next: **milestone 9 (Payment)** — the payment screen, the `/pay` transaction
+(mark paid → decrement stock → write movements → free the table, all or nothing)
+and the printable receipt. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
 
 ### Trying the API
 
