@@ -424,14 +424,26 @@ volumes: { pgdata: }
 Use **Flyway**, not `ddl-auto=update`. The old repo uses `update`, which silently
 skips destructive changes and leaves dev and prod schemas drifting apart.
 
-- `V1__init.sql` — all tables, FKs, indexes, sequences
-- `V2__seed.sql` — the prototype's demo data: 8 categories, ~48 products,
-  12 tables, 7 staff, 5 suppliers, 10 stock items
+Migrations as built:
 
-Set `spring.jpa.hibernate.ddl-auto=validate`.
+| File | Contents |
+|---|---|
+| `V1__baseline.sql` | `seq_invoice_no`, `seq_purchase_no` |
+| `V2__init.sql` | 14 tables, FKs, CHECK constraints, 11 indexes |
+| `V3__seed.sql` | 8 categories, 16 products, 12 tables, 7 staff, 5 suppliers, 10 stock items, 15 settings |
 
-Indexes to create explicitly: `orders(created_at)`, `orders(status)`,
-`order_items(order_id)`, `products(category_id)`, `stock_movements(stock_item_id)`.
+`spring.jpa.hibernate.ddl-auto=validate` in every profile.
+
+User accounts are **not** seeded in SQL — passwords must be BCrypt-hashed by the
+application, and a hash committed to a migration would be a shared public
+credential. `config/DataInitializer` creates `admin` and `cashier` idempotently
+at startup instead.
+
+Explicit indexes: `orders(status)`, `orders(reg_dtm)`, `orders(table_id)`,
+`order_item(order_id)`, `product(category_id)`, `purchase(supplier_id)`,
+`purchase(purchase_date)`, `purchase_item(purchase_id)`,
+`stock_movement(stock_item_id)`, `stock_movement(created_at)`,
+`password_reset_token(user_ref)`.
 
 ---
 
@@ -443,9 +455,14 @@ Indexes to create explicitly: `orders(created_at)`, `orders(status)`,
 cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
-Boots on in-memory H2 with Flyway disabled. Good for milestone 1; **not** for
-schema work, because Hibernate generates the tables and they will drift from the
-real migrations.
+In-memory H2 in **PostgreSQL compatibility mode**, with Flyway enabled and
+Hibernate set to `validate` — the same migrations, the same validation as
+production. The migrations are written in portable DDL precisely so this works,
+which means a mismatch between a migration and an entity mapping fails at
+startup instead of on deploy.
+
+The only difference from production is that the database is discarded on
+shutdown. Suitable for feature work; just re-seed by restarting.
 
 ### Real path — PostgreSQL
 
@@ -491,7 +508,7 @@ Each milestone should end in a runnable state.
 | # | Milestone | Deliverable |
 |---|---|---|
 | 1 | ✅ **Scaffold** | Gradle + Next projects, docker-compose, health check green |
-| 2 | **Schema** | Flyway V1 + V2, all entities, repositories |
+| 2 | ✅ **Schema** | Flyway V1–V3, 14 entities, 12 repositories, 6 passing tests |
 | 3 | **Auth backend** | register/login/refresh/me + JWT filter + roles |
 | 4 | **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
 | 5 | **App shell** | Sidebar/Topbar/StatusBar, both menus, role-based redirect |

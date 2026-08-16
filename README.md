@@ -42,14 +42,28 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestone 1 (Scaffold) — complete and verified.**
+**Milestones 1 (Scaffold) and 2 (Schema) — complete and verified.**
 
-- `./gradlew build` passes; app boots, `/api/health` returns `status: UP`, `database: UP`
+- `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
+- Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
+  mappings provably match the migrations
+- `./gradlew test` — **6 tests, 0 failures, 0 skipped**
 - `npm run build` passes; `tsc --noEmit` reports 0 errors
 - Swagger UI and `/v3/api-docs` both return 200
 
-Next: **milestone 2 (Schema)** — Flyway `V2__init.sql`, the 14 entities and
-their repositories. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §4 and §10.
+### Default accounts
+
+Created at first startup by `config/DataInitializer`, only if no user exists:
+
+| Username | Password | Role |
+|---|---|---|
+| `admin` | `ChangeMe123!` | ADMIN |
+| `cashier` | `ChangeMe123!` | CASHIER |
+
+⚠️ Development credentials. Change both before this leaves localhost.
+
+Next: **milestone 3 (Auth backend)** — register/login/refresh/me, the JWT filter
+and per-route roles. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5, §6 and §10.
 
 ### Installed versions
 

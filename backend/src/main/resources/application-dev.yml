@@ -1,39 +1,49 @@
 # ---------------------------------------------------------------------------
-# `dev` profile — in-memory H2, no external services required.
+# `dev` profile — in-memory H2 in PostgreSQL compatibility mode.
 #
 #   ./gradlew bootRun --args='--spring.profiles.active=dev'
 #
-# Purpose: boot the app and hit /api/health without installing anything.
-# NOT the profile to build features on — Flyway is disabled here and Hibernate
-# generates the schema, so it will drift from the real PostgreSQL schema.
-# Use the default profile (PostgreSQL + Flyway) from milestone 2 onward.
+# Flyway runs here exactly as it does against PostgreSQL, and Hibernate is set
+# to `validate`, so a mismatch between the migrations and the entity mappings
+# fails at startup rather than in production. The migrations are written in
+# portable DDL specifically to make this work.
+#
+# The database is discarded on shutdown — this is for development, not storage.
 # ---------------------------------------------------------------------------
 
 spring:
   datasource:
-    url: jdbc:h2:mem:rms;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    url: jdbc:h2:mem:rms;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password: ''
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-    show-sql: true
+    show-sql: false
 
   flyway:
-    enabled: false
+    enabled: true
+    locations: classpath:db/migration
+    clean-disabled: false
 
   h2:
     console:
       enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: false
 
 app:
   security:
     jwt:
       # Throwaway value so the context starts. Never used outside `dev`.
       secret-key: ZGV2LW9ubHktc2VjcmV0LW5vdC1mb3ItYW55LXJlYWwtZW52aXJvbm1lbnQtMDAwMQ==
+
+logging:
+  level:
+    org.flywaydb: INFO
