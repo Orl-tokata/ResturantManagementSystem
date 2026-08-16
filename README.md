@@ -42,14 +42,21 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–6 complete and verified** (Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit).
+**Milestones 1–7 complete and verified.**
+Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit · Master data
 
-👉 See the component kit at **http://localhost:3000/admin/ui-kit**
+👉 **Working CRUD screens:** `/admin/categories` · `/admin/products` ·
+`/admin/tables` · `/admin/staff` — real data from the API, add/edit modals,
+delete confirmation, debounced search, filters and pagination.
+Component gallery at `/admin/ui-kit`.
 
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **22 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **38 tests, 0 failures, 0 skipped**
+- Master data verified over real HTTP: CRUD round-trip returns 201/200/200/404,
+  a cashier gets 403 on writes and on `/api/staff`, anonymous gets 401, and the
+  delete guards answer 409 with a specific message
 - Auth verified over real HTTP: login → token, `/me` 401 without it and 200 with
   it, refresh cookie exchanged for a fresh access token, other routes 401
 - `npm run build` passes; `tsc --noEmit` reports 0 errors; **25 routes** prerender,
@@ -84,9 +91,8 @@ Each screen currently shows a placeholder naming the milestone that builds it,
 so nothing looks finished when it is not. The sidebar highlights the current
 page, collapses to a drawer under 768px, and the clocks tick live.
 
-Next: **milestone 7 (Master data)** — products, categories, tables and staff,
-CRUD on both ends. Milestones 7–13 can now be built in any order, since they all
-sit on the UI kit. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
+Next: **milestone 8 (POS)** — the order screen, cart state and table selection.
+See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
 
 ### Trying the API
 

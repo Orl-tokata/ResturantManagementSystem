@@ -242,12 +242,12 @@ refresh token cannot be replayed as an access token. There is a test for that.
 Identical shape for each: `GET /` (paged, `?search=&page=&size=`),
 `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`.
 
-| Resource | Path | Read | Write |
-|---|---|---|---|
-| Categories | `/api/categories` | any auth | ADMIN |
-| Products | `/api/products` | any auth | ADMIN |
-| Tables | `/api/tables` | any auth | ADMIN |
-| Staff | `/api/staff` | ADMIN | ADMIN |
+| Resource | Path | Read | Write | Status |
+|---|---|---|---|---|
+| Categories | `/api/categories` | any auth | ADMIN | ✅ |
+| Products | `/api/products` | any auth | ADMIN | ✅ |
+| Tables | `/api/tables` | any auth | ADMIN | ✅ |
+| Staff | `/api/staff` | **ADMIN** | ADMIN | ✅ |
 | Suppliers | `/api/suppliers` | ADMIN | ADMIN |
 | Purchases | `/api/purchases` | ADMIN | ADMIN |
 | Stock items | `/api/stock` | ADMIN | ADMIN |
@@ -270,6 +270,19 @@ Identical shape for each: `GET /` (paged, `?search=&page=&size=`),
 | GET | `/api/reports/best-sellers?limit=` | |
 | GET | `/api/reports/low-stock` | |
 | GET | `/api/dashboard/summary` | the four KPI tiles |
+
+### Delete guards (milestone 7)
+
+Deletes are checked in the service and answered with 409 and a specific message,
+rather than letting a foreign-key violation surface as a 500:
+
+- **Category** with products → `Cannot delete Category 'បាយ': it is still used by N product(s)`
+- **Table** that is occupied → `Cannot delete table 'Table 02' while it is occupied`
+- **Product** deletes freely — `OrderItem` keeps a nullable `product_id` plus its
+  own copy of name and price, so historical receipts stay correct.
+
+`GlobalExceptionHandler` also maps `DataIntegrityViolationException` to a 409 as
+a backstop, and enum type-mismatches to 400 rather than 500.
 
 ### Transactional rules
 
@@ -579,7 +592,7 @@ Each milestone should end in a runnable state.
 | 4 | ✅ **Auth frontend** | 5 auth screens, axios interceptor, protected routes |
 | 5 | ✅ **App shell** | Sidebar/Topbar/StatusBar, both menus, 24 routes wired |
 | 6 | ✅ **UI kit** | the components in §7.3 + gallery at `/admin/ui-kit` |
-| 7 | **Master data** | categories, products, tables, staff — CRUD both ends |
+| 7 | ✅ **Master data** | categories, products, tables, staff — CRUD both ends, 38 tests |
 | 8 | **POS** | order screen, table picker, cart state, open order |
 | 9 | **Payment** | payment screen, `/pay` transaction, receipt + print |
 | 10 | **History** | order history with filters |

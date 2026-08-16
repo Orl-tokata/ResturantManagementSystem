@@ -70,6 +70,27 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(403, "You do not have permission to perform this action"));
     }
 
+    /**
+     * Safety net for constraint violations the services did not anticipate.
+     * Services should check first and raise a {@link ConflictException} with a
+     * specific message — this only stops a raw SQL error reaching the client.
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIntegrity(
+            org.springframework.dao.DataIntegrityViolationException ex) {
+        log.warn("Database constraint violated: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(409,
+                "This record conflicts with existing data, or is still referenced elsewhere."));
+    }
+
+    /** Enum path/query parameters that do not match any constant. */
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(400,
+                "Invalid value for '%s': %s".formatted(ex.getName(), ex.getValue())));
+    }
+
     /* ---- Everything else ------------------------------------------------ */
 
     @ExceptionHandler(Exception.class)
