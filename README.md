@@ -42,9 +42,9 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–13 complete and verified — every feature milestone is done.**
+**All 14 milestones complete and verified.**
 Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit ·
-Master data · POS · Payment · History · Supply chain · Reports · Settings
+Master data · POS · Payment · History · Supply chain · Reports · Settings · Hardening
 
 The **whole cashier flow works**: table → order → payment → receipt → history,
 with the receipt reachable again from any past bill.
@@ -65,7 +65,7 @@ Component gallery at `/admin/ui-kit`.
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **122 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **138 tests, 0 failures, 0 skipped** (on H2)
 - POS verified over real HTTP: open bill → table becomes OCCUPIED → re-opening
   reuses the same bill → items priced and taxed (15.00 + 10% = 16.50 = 67,650៛)
   → recovered after reload → cancel frees the table and locks the bill
@@ -99,7 +99,7 @@ Component gallery at `/admin/ui-kit`.
 - CORS preflight from `http://localhost:3000` returns
   `Access-Control-Allow-Credentials: true`, and the refresh cookie is accepted
   cross-origin (`HttpOnly; SameSite=Lax; Path=/api/auth`)
-- Swagger UI and `/v3/api-docs` both return 200
+- Swagger UI and `/v3/api-docs` both return 200 (springdoc 2.8.9 — see the note below)
 
 ### Screens
 
@@ -130,10 +130,57 @@ Sign in as `admin` → lands on `/admin`; any other role → `/cashier/order`.
 The sidebar highlights the current page, collapses to a drawer under 768px,
 and the clocks tick live.
 
-Next: **milestone 14 (Hardening)** — the last one: broader validation, a
-consistent error surface, more tests, and moving the test suite onto
-Testcontainers so it stops depending on H2. See
-[PROJECT-SPEC.md](PROJECT-SPEC.md) §10.
+## ⚠️ What is *not* verified
+
+Being straight about the gaps, because "138 tests pass" can read as more than it is.
+
+**The suite has never run against real PostgreSQL.** All 138 tests execute on H2
+in PostgreSQL-compatibility mode. Testcontainers is wired up:
+
+```bash
+cd backend && ./gradlew postgresTest
+```
+
+That task is proven to *reach* Docker — it fails with
+`DockerClientProviderStrategy` on this machine, which has no Docker daemon — but
+it has never been observed passing. **Run it once on a machine with Docker before
+trusting the migrations on PostgreSQL.** H2 in PG mode is close, not identical.
+
+Also not done:
+
+- **No frontend tests.** The UI is verified by `tsc`, `eslint`, `next build` and
+  manual HTTP checks — not by Playwright or Vitest.
+- **No brute-force throttle beyond per-account lockout.** Five failed logins lock
+  *that* account, but nothing rate-limits an attacker spraying one password across
+  many usernames.
+- **No file upload.** Product images are emoji strings.
+- **No ingredient consumption on sale** — see open question 0 in the spec.
+- **Khmer UI text is still my placeholder**, not the copy from your Figma file.
+
+## Hardening (milestone 14)
+
+Error responses now use the `ApiResponse` shape with an honest status:
+
+| Request | Before | After |
+|---|---|---|
+| unknown path | 500 | **404** `No endpoint matches this path` |
+| wrong method | 500 | **405** `DELETE is not supported here. Allowed: [GET]` |
+| non-JSON body | 500 | **415** `Content-Type 'text/plain' is not supported…` |
+| missing parameter | 500 | **400** `Required parameter 'tableId' is missing` |
+| non-numeric path id | 500 | **400** |
+
+An anonymous probe of an unknown path still gets **401**, so paths cannot be
+enumerated without credentials. Stack traces and exception class names never
+reach the client.
+
+Security headers on every response: `Content-Security-Policy`,
+`Referrer-Policy`, `Permissions-Policy`, `X-Content-Type-Options`,
+`X-Frame-Options`, plus HSTS when served over HTTPS.
+
+**springdoc was bumped 2.6.0 → 2.8.9.** On 2.6.0, `/v3/api-docs` returned 500
+with `NoSuchMethodError: ControllerAdviceBean.<init>(Object)` — it is incompatible
+with Spring Framework 6.2. It broke the moment a `@RestControllerAdvice` was
+added in milestone 3 and went unnoticed until now.
 
 ### Trying the API
 

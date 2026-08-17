@@ -49,7 +49,10 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 
 	// --- api docs ----------------------------------------------------------
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	// 2.8.x is the first line compatible with Spring Framework 6.2 (Boot 3.5).
+	// On 2.6.0, /v3/api-docs threw NoSuchMethodError on
+	// ControllerAdviceBean.<init>(Object) as soon as a @RestControllerAdvice existed.
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
 
 	// --- dev ---------------------------------------------------------------
 	compileOnly 'org.projectlombok:lombok'
@@ -60,8 +63,35 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Real PostgreSQL for the `postgres` test task — needs a Docker daemon.
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// The profile is set here, not with @ActiveProfiles on each test class.
+	// A hardcoded @ActiveProfiles overrides this property, which silently made
+	// `postgresTest` run the whole suite on H2 while reporting success.
+	systemProperty 'spring.profiles.active', 'dev'
+}
+
+/**
+ * Runs the same suite against a real PostgreSQL 16 container.
+ *
+ *   ./gradlew postgresTest        (requires a running Docker daemon)
+ *
+ * H2 in PostgreSQL mode is close, but not identical — this is what proves the
+ * Flyway migrations and every JPQL query actually work on the target database.
+ */
+tasks.register('postgresTest', Test) {
+	description = 'Runs the test suite against PostgreSQL in Testcontainers (needs Docker).'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	systemProperty 'spring.profiles.active', 'testpg'
+	useJUnitPlatform()
+	shouldRunAfter tasks.named('test')
 }

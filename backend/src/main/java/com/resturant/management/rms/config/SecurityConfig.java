@@ -70,8 +70,30 @@ public class SecurityConfig {
                                 write(res, HttpServletResponse.SC_FORBIDDEN,
                                         "You do not have permission to perform this action"))
                 )
-                // The H2 console renders inside a frame; only reachable on the dev profile.
-                .headers(h -> h.frameOptions(f -> f.sameOrigin()))
+                .headers(h -> h
+                        // The H2 console renders inside a frame; only reachable on dev.
+                        .frameOptions(f -> f.sameOrigin())
+                        .referrerPolicy(r -> r.policy(
+                                org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter
+                                        .ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        // Nothing loads from a third-party origin. Not `default-src 'none'`,
+                        // because this app also serves Swagger UI, which needs its own
+                        // scripts and inline bootstrap; 'none' would leave the docs blank.
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; "
+                                        + "script-src 'self' 'unsafe-inline'; "
+                                        + "style-src 'self' 'unsafe-inline'; "
+                                        + "img-src 'self' data:; "
+                                        + "connect-src 'self'; "
+                                        + "object-src 'none'; "
+                                        + "base-uri 'self'; "
+                                        + "frame-ancestors 'self'"))
+                        // Only sent over HTTPS; harmless on plain http locally.
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000))
+                        .permissionsPolicyHeader(p ->
+                                p.policy("camera=(), microphone=(), geolocation=()")))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

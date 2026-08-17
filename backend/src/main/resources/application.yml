@@ -44,11 +44,34 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  mvc:
+    # Raise NoHandlerFoundException so an unknown path reaches the exception
+    # handler and returns a 404 in the ApiResponse shape, instead of Spring's
+    # default error page.
+    throw-exception-if-no-handler-found: true
+
+  web:
+    resources:
+      # This is an API; it serves no static files. Without this, an unknown path
+      # is treated as a missing resource rather than a missing endpoint.
+      add-mappings: false
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
 server:
   port: ${SERVER_PORT:8081}
   error:
     include-message: always
     include-stacktrace: never
+    include-binding-errors: never
+  # Cap request bodies: this API never legitimately receives a large one, and an
+  # uncapped endpoint is a cheap denial-of-service target.
+  max-http-request-header-size: 16KB
+  tomcat:
+    max-swallow-size: 2MB
+    max-http-form-post-size: 2MB
+  shutdown: graceful
 
 springdoc:
   swagger-ui:

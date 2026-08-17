@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# `testpg` profile — the same suite against real PostgreSQL in a container.
+#
+#   ./gradlew postgresTest        (requires a running Docker daemon)
+#
+# The datasource URL is injected by PostgresTestcontainerConfig at runtime, so
+# nothing is hardcoded here. Flyway runs the real migrations and Hibernate
+# validates against the result, exactly as in production.
+# ---------------------------------------------------------------------------
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  security:
+    jwt:
+      secret-key: dGVzdC1vbmx5LXNlY3JldC1ub3QtdXNlZC1vdXRzaWRlLXRlc3RzLTAwMDAwMQ==
+
+logging:
+  level:
+    org.testcontainers: INFO
+    org.flywaydb: INFO

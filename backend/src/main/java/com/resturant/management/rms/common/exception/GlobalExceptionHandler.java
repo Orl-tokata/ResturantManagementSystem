@@ -121,8 +121,66 @@ public class GlobalExceptionHandler {
                 "Invalid value for '%s': %s".formatted(ex.getName(), ex.getValue())));
     }
 
+    /* ---- Client mistakes that must not read as server failures ----------
+       Without these, the catch-all below turns a URL typo, a wrong verb or a
+       missing query parameter into a 500 — which tells the caller the server
+       broke when in fact the request did.
+       -------------------------------------------------------------------- */
+
+    /** Unknown path. Both types occur depending on how the request is dispatched. */
+    @ExceptionHandler({
+            org.springframework.web.servlet.NoHandlerFoundException.class,
+            org.springframework.web.servlet.resource.NoResourceFoundException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(Exception ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(404, "No endpoint matches this path"));
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowed(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        String allowed = ex.getSupportedHttpMethods() == null
+                ? ""
+                : ex.getSupportedHttpMethods().toString();
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiResponse.error(405,
+                        "%s is not supported here. Allowed: %s".formatted(ex.getMethod(), allowed)));
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnsupportedMediaType(
+            org.springframework.web.HttpMediaTypeNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ApiResponse.error(415,
+                        "Content-Type '%s' is not supported. Use application/json."
+                                .formatted(ex.getContentType())));
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingParam(
+            org.springframework.web.bind.MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(400,
+                "Required parameter '%s' is missing".formatted(ex.getParameterName())));
+    }
+
+    /** Violations on @RequestParam / @PathVariable, which bypass @Valid. */
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
+            jakarta.validation.ConstraintViolationException ex) {
+        String detail = ex.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, detail));
+    }
+
     /* ---- Everything else ------------------------------------------------ */
 
+    /**
+     * Last resort. Logs the full stack trace server-side but tells the client
+     * nothing about it — an exception message can leak table names, file paths
+     * or library versions.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
