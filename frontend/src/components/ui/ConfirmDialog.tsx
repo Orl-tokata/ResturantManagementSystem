@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -12,11 +13,11 @@ export function ConfirmDialog({
   open,
   onClose,
   onConfirm,
-  title = "បញ្ជាក់ការលុប · Confirm delete",
-  message = "តើអ្នកប្រាកដជាចង់លុបមែនទេ?",
-  detail = "This action cannot be undone.",
-  confirmLabel = "បាទ/ចាស លុប · Yes, delete",
-  cancelLabel = "ទេ · No",
+  title,
+  message,
+  detail,
+  confirmLabel,
+  cancelLabel,
   destructive = true,
   busy = false,
 }: {
@@ -31,24 +32,34 @@ export function ConfirmDialog({
   destructive?: boolean;
   busy?: boolean;
 }) {
+  const t = useTranslations("common");
+
+  // Every label falls back to the translated default, so a caller only passes
+  // the ones it wants to override.
+  const heading = title ?? t("confirmDelete");
+  const body = message ?? t("confirmDeleteMessage", { name: "" });
+  const hint = detail ?? t("cannotUndo");
+  const confirmText = confirmLabel ?? t("yesDelete");
+  const cancelText = cancelLabel ?? t("no");
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={title}
+      title={heading}
       chrome={destructive ? "danger" : "admin"}
       width="sm"
       footer={
         <>
           <Button variant="light" onClick={onClose} disabled={busy}>
-            {cancelLabel}
+            {cancelText}
           </Button>
           <Button
             variant={destructive ? "danger" : "admin"}
             onClick={onConfirm}
             loading={busy}
           >
-            {confirmLabel}
+            {confirmText}
           </Button>
         </>
       }
@@ -56,11 +67,11 @@ export function ConfirmDialog({
       <div className="text-center">
         <div className="mb-2 text-4xl">{destructive ? "⚠️" : "❓"}</div>
         <p className="text-sm">
-          {message}
-          {detail && (
+          {body}
+          {hint && (
             <>
               <br />
-              <span className="text-ink-500">{detail}</span>
+              <span className="text-ink-500">{hint}</span>
             </>
           )}
         </p>

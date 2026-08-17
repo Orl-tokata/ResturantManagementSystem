@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 export interface Column<T> {
@@ -18,16 +21,18 @@ export function DataTable<T>({
   rows,
   rowKey,
   loading = false,
-  emptyMessage = "គ្មានទិន្នន័យ · No data",
+  emptyMessage,
   onRowClick,
 }: {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T, index: number) => string | number;
   loading?: boolean;
+  /** Defaults to the translated "no data" string. */
   emptyMessage?: ReactNode;
   onRowClick?: (row: T) => void;
 }) {
+  const t = useTranslations("common");
   function alignment(c: Column<T>) {
     if (c.numeric || c.align === "right") return "text-right";
     if (c.align === "center") return "text-center";
@@ -63,7 +68,7 @@ export function DataTable<T>({
               <td colSpan={columns.length} className="px-3 py-10 text-center text-sm text-ink-500">
                 <span className="inline-flex items-center gap-2">
                   <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-                  កំពុងផ្ទុក… · Loading
+                  {t("loading")}
                 </span>
               </td>
             </tr>
@@ -72,7 +77,7 @@ export function DataTable<T>({
           {!loading && rows.length === 0 && (
             <tr>
               <td colSpan={columns.length} className="px-3 py-10 text-center text-sm text-ink-500">
-                {emptyMessage}
+                {emptyMessage ?? t("noData")}
               </td>
             </tr>
           )}

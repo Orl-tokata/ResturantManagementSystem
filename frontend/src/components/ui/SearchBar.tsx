@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 /**
@@ -10,16 +11,19 @@ import { useEffect, useRef, useState } from "react";
 export function SearchBar({
   value,
   onChange,
-  placeholder = "ស្វែងរក · Search",
+  placeholder,
   delay = 300,
   className = "",
 }: {
   value: string;
   onChange: (value: string) => void;
+  /** Defaults to the translated "search" string. */
   placeholder?: string;
   delay?: number;
   className?: string;
 }) {
+  const t = useTranslations("common");
+  const label = placeholder ?? t("search");
   const [local, setLocal] = useState(value);
 
   // Adjusting state during render — React's documented alternative to syncing
@@ -63,8 +67,8 @@ export function SearchBar({
         type="search"
         value={local}
         onChange={(e) => setLocal(e.target.value)}
-        placeholder={placeholder}
-        aria-label={placeholder}
+        placeholder={label}
+        aria-label={label}
         className="w-full bg-transparent text-sm outline-none placeholder:text-ink-500"
       />
       {local && (

@@ -73,11 +73,14 @@ export interface SalesRow {
   paymentMethod: string;
 }
 
-/** Khmer weekday initials for chart ticks. */
-export const KM_WEEKDAYS = ["អា", "ច", "អ", "ព", "ព្រ", "សុ", "ស"];
-
-export function weekdayKm(iso: string): string {
-  return KM_WEEKDAYS[new Date(`${iso}T00:00:00`).getDay()] ?? "";
+/**
+ * Day-of-week index (0 = Sunday) for a `yyyy-MM-dd` string.
+ *
+ * <p>Returns the index rather than a name so the caller can translate it —
+ * weekday labels live under the `weekday` namespace in messages/*.json.
+ */
+export function weekdayIndex(iso: string): number {
+  return new Date(`${iso}T00:00:00`).getDay();
 }
 
 export function dayOfMonth(iso: string): string {

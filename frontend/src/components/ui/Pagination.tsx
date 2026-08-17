@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 
 /**
@@ -19,6 +20,8 @@ export function Pagination({
   size: number;
   onPage: (page: number) => void;
 }) {
+  const t = useTranslations("common");
+
   if (totalElements === 0) return null;
 
   const from = page * size + 1;
@@ -32,7 +35,7 @@ export function Pagination({
   return (
     <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3">
       <span className="text-sm text-ink-500">
-        បង្ហាញ {from}–{to} ក្នុងចំណោម {totalElements} · Showing {from}–{to} of {totalElements}
+        {t("showing", { from, to, total: totalElements })}
       </span>
 
       <div className="flex items-center gap-1.5">
@@ -42,7 +45,7 @@ export function Pagination({
           disabled={page === 0}
           onClick={() => onPage(page - 1)}
         >
-          ‹ មុន
+          ‹ {t("prev")}
         </Button>
 
         {window.map((p) => (
@@ -63,7 +66,7 @@ export function Pagination({
           disabled={page >= totalPages - 1}
           onClick={() => onPage(page + 1)}
         >
-          បន្ទាប់ ›
+          {t("next")} ›
         </Button>
       </div>
     </div>

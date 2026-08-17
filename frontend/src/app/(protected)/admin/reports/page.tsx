@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { BarChart } from "@/components/charts/BarChart";
 import {
   Alert,
@@ -20,7 +21,7 @@ import { errorMessage } from "@/lib/errors";
 import { formatUsd } from "@/lib/format";
 import {
   dayOfMonth,
-  weekdayKm,
+  weekdayIndex,
   type BestSeller,
   type CategoryRevenue,
   type SalesReport,
@@ -32,6 +33,14 @@ function iso(d: Date) {
 }
 
 export default function ReportsPage() {
+  const t = useTranslations("reports");
+  const tc = useTranslations("common");
+  const tw = useTranslations("weekday");
+  const tp = useTranslations("products");
+  const tD = useTranslations("dashboard");
+  const tH = useTranslations("history");
+  const tPos = useTranslations("pos");
+
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -73,7 +82,7 @@ export default function ReportsPage() {
       link.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setExportError(errorMessage(e, "Could not export the CSV"));
+      setExportError(errorMessage(e, t("exportFailed")));
     } finally {
       setExporting(false);
     }
@@ -95,7 +104,7 @@ export default function ReportsPage() {
   const categoryColumns: Column<CategoryRevenue>[] = [
     {
       key: "cat",
-      header: "ប្រភេទ · Category",
+      header: tp("category"),
       render: (c) => (
         <>
           <div className="font-medium">{c.name}</div>
@@ -103,33 +112,33 @@ export default function ReportsPage() {
         </>
       ),
     },
-    { key: "qty", header: "ចំនួនលក់", numeric: true, render: (c) => c.qty },
-    { key: "rev", header: "ចំណូល", numeric: true, render: (c) => formatUsd(c.revenue) },
+    { key: "qty", header: t("soldQty"), numeric: true, render: (c) => c.qty },
+    { key: "rev", header: t("revenue"), numeric: true, render: (c) => formatUsd(c.revenue) },
     { key: "pct", header: "%", numeric: true, render: (c) => `${c.percent}%` },
   ];
 
   const sellerColumns: Column<BestSeller>[] = [
     { key: "n", header: "#", width: "44px", render: (_c, i) => i + 1 },
-    { key: "name", header: "ម្ហូប · Dish", render: (s) => s.productName },
-    { key: "qty", header: "ចំនួន", numeric: true, render: (s) => s.qty },
-    { key: "rev", header: "ចំណូល", numeric: true, render: (s) => formatUsd(s.revenue) },
+    { key: "name", header: tD("dish"), render: (s) => s.productName },
+    { key: "qty", header: tc("qty"), numeric: true, render: (s) => s.qty },
+    { key: "rev", header: t("revenue"), numeric: true, render: (s) => formatUsd(s.revenue) },
   ];
 
   const detailColumns: Column<SalesRow>[] = [
-    { key: "date", header: "កាលបរិច្ឆេទ", render: (s) => s.date },
-    { key: "inv", header: "វិក្កយបត្រ", render: (s) => s.invoiceNo },
-    { key: "table", header: "តុ", hideOnMobile: true, render: (s) => s.tableName || "—" },
-    { key: "cashier", header: "អ្នកគិតលុយ", hideOnMobile: true, render: (s) => s.cashierName || "—" },
-    { key: "items", header: "មុខម្ហូប", numeric: true, render: (s) => s.itemCount },
-    { key: "total", header: "សរុប", numeric: true, render: (s) => formatUsd(s.total) },
-    { key: "cost", header: "ថ្លៃដើម", numeric: true, hideOnMobile: true, render: (s) => formatUsd(s.cost) },
+    { key: "date", header: tc("date"), render: (s) => s.date },
+    { key: "inv", header: tH("invoice"), render: (s) => s.invoiceNo },
+    { key: "table", header: tPos("table"), hideOnMobile: true, render: (s) => s.tableName || "—" },
+    { key: "cashier", header: tPos("cashier"), hideOnMobile: true, render: (s) => s.cashierName || "—" },
+    { key: "items", header: tH("dishes"), numeric: true, render: (s) => s.itemCount },
+    { key: "total", header: tc("total"), numeric: true, render: (s) => formatUsd(s.total) },
+    { key: "cost", header: tc("cost"), numeric: true, hideOnMobile: true, render: (s) => formatUsd(s.cost) },
     {
       key: "profit",
-      header: "ចំណេញ",
+      header: t("profit"),
       numeric: true,
       render: (s) => <span className="font-semibold text-success">{formatUsd(s.profit)}</span>,
     },
-    { key: "pay", header: "វិធីបង់", hideOnMobile: true, render: (s) => s.paymentMethod || "—" },
+    { key: "pay", header: tH("paymentMethod"), hideOnMobile: true, render: (s) => s.paymentMethod || "—" },
   ];
 
   return (
@@ -156,13 +165,13 @@ export default function ReportsPage() {
               aria-label="To date"
             />
             <Button size="sm" variant="light" onClick={() => setRange(6)}>
-              ៧ ថ្ងៃ
+              {tc("sevenDays")}
             </Button>
             <Button size="sm" variant="light" onClick={() => setRange(29)}>
-              ៣០ ថ្ងៃ
+              {tc("thirtyDays")}
             </Button>
             <Button size="sm" variant="light" onClick={setThisMonth}>
-              ខែនេះ · This month
+              {tc("thisMonth")}
             </Button>
           </>
         }
@@ -172,37 +181,37 @@ export default function ReportsPage() {
               <Download size={15} /> CSV
             </Button>
             <Button variant="ghost" onClick={() => window.print()}>
-              🖨️ បោះពុម្ព
+              🖨️ {tc("print")}
             </Button>
           </>
         }
       />
 
       <StatGrid>
-        <StatTile tone={1} label="ចំណូលសរុប · Revenue" value={formatUsd(r?.revenue ?? 0)} />
-        <StatTile tone={2} label="ថ្លៃដើម · Cost" value={formatUsd(r?.cost ?? 0)} />
-        <StatTile tone={3} label="ចំណេញដុល · Gross profit" value={formatUsd(r?.grossProfit ?? 0)} />
-        <StatTile tone={4} label="វិក្កយបត្រ · Invoices" value={r?.invoiceCount ?? "—"} />
+        <StatTile tone={1} label={t("revenue")} value={formatUsd(r?.revenue ?? 0)} />
+        <StatTile tone={2} label={t("cost")} value={formatUsd(r?.cost ?? 0)} />
+        <StatTile tone={3} label={t("grossProfit")} value={formatUsd(r?.grossProfit ?? 0)} />
+        <StatTile tone={4} label={t("invoices")} value={r?.invoiceCount ?? "—"} />
       </StatGrid>
 
-      <Card title="ចំណូលតាមថ្ងៃ · Revenue by day" className="mb-4">
+      <Card title={t("revenueByDay")} className="mb-4">
         {report.isLoading ? (
-          <p className="py-16 text-center text-sm text-ink-500">កំពុងផ្ទុក…</p>
+          <p className="py-16 text-center text-sm text-ink-500">{tc("loading")}</p>
         ) : (
           <>
             <BarChart
               points={(r?.daily ?? []).map((p) => ({
                 label: dayOfMonth(p.date),
-                sublabel: weekdayKm(p.date),
+                sublabel: tw(String(weekdayIndex(p.date))),
                 value: p.total,
-                detail: `${p.orders} វិក្កយបត្រ · invoices`,
+                detail: `${p.orders} ${t("invoices")}`,
               }))}
               formatValue={formatUsd}
               height={220}
             />
             <p className="mt-3 text-xs text-ink-500">
-              មធ្យមក្នុងវិក្កយបត្រ · Average sale{" "}
-              <b className="text-ink-900">{formatUsd(r?.averageSale ?? 0)}</b> · រឹមចំណេញ · margin{" "}
+              {t("averageSale")}{" "}
+              <b className="text-ink-900">{formatUsd(r?.averageSale ?? 0)}</b> · {t("margin")}{" "}
               <b className="text-ink-900">{r?.marginPercent ?? 0}%</b>
             </p>
           </>
@@ -210,13 +219,13 @@ export default function ReportsPage() {
       </Card>
 
       <div className="mb-4 grid gap-4 lg:grid-cols-2 lg:items-start">
-        <Card title="ចំណូលតាមប្រភេទ · Revenue by category" padded={false}>
+        <Card title={t("revenueByCategory")} padded={false}>
           <DataTable
             columns={categoryColumns}
             rows={r?.byCategory ?? []}
             rowKey={(c) => c.name}
             loading={report.isLoading}
-            emptyMessage="គ្មានការលក់ក្នុងចន្លោះពេលនេះ · No sales in this range"
+            emptyMessage={t("noSales")}
           />
           <p className="px-4 py-3 text-xs text-ink-500">
             Line totals before VAT, and only for dishes still in the catalog — a deleted
@@ -224,19 +233,19 @@ export default function ReportsPage() {
           </p>
         </Card>
 
-        <Card title="ម្ហូបលក់ដាច់ · Best sellers" padded={false}>
+        <Card title={t("bestSellers")} padded={false}>
           <DataTable
             columns={sellerColumns}
             rows={r?.bestSellers ?? []}
             rowKey={(s) => s.productName}
             loading={report.isLoading}
-            emptyMessage="គ្មានការលក់ · No sales in this range"
+            emptyMessage={t("noSales")}
           />
         </Card>
       </div>
 
       <Card
-        title="លម្អិតការលក់ · Sales detail"
+        title={t("salesDetail")}
         action={
           <span className="text-xs text-ink-500">{detail.data?.length ?? 0} វិក្កយបត្រ</span>
         }
@@ -247,7 +256,7 @@ export default function ReportsPage() {
           rows={detail.data ?? []}
           rowKey={(s) => s.invoiceNo}
           loading={detail.isLoading}
-          emptyMessage="គ្មានវិក្កយបត្រ · No paid invoices in this range"
+          emptyMessage={t("noPaidInvoices")}
         />
       </Card>
     </>
