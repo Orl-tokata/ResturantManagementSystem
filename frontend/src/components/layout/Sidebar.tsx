@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, UserRound } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { MENUS, type ShellVariant } from "@/lib/menus";
 import { useAuth } from "@/lib/auth-context";
 
@@ -15,6 +16,8 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const t = useTranslations("nav");
+  const tEnum = useTranslations("enum.role");
   const items = MENUS[variant];
 
   return (
@@ -26,7 +29,7 @@ export function Sidebar({
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">{user?.fullName ?? "—"}</div>
-          <div className="truncate text-xs text-white/75">{user?.role ?? ""}</div>
+          <div className="truncate text-xs text-white/75">{user ? tEnum(user.role) : ""}</div>
         </div>
       </div>
 
@@ -57,9 +60,7 @@ export function Sidebar({
               ].join(" ")}
             >
               <Icon size={17} className="shrink-0" />
-              <span className="truncate">
-                {item.km} <span className="text-white/60">· {item.en}</span>
-              </span>
+              <span className="truncate">{t(item.key)}</span>
             </Link>
           );
         })}
@@ -72,7 +73,7 @@ export function Sidebar({
           className="flex items-center gap-2 text-xs text-white/85 hover:text-white"
         >
           <LogOut size={15} />
-          ចាកចេញ · Log out
+          {t("logout")}
         </button>
       </div>
     </aside>

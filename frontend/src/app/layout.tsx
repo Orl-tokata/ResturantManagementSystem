@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Khmer } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -19,11 +21,16 @@ export const metadata: Metadata = {
   description: "ប្រព័ន្ធគ្រប់គ្រងភោជនីយដ្ឋាន · Restaurant Management System",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Resolved from the locale cookie by src/i18n/request.ts.
+  const locale = await getLocale();
+
   return (
-    <html lang="km" className={`${khmer.variable} h-full antialiased`}>
+    <html lang={locale} className={`${khmer.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

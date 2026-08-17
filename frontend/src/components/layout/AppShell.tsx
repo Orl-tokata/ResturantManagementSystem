@@ -4,7 +4,9 @@ import { Menu, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { Clock } from "@/components/layout/Clock";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MENUS, type ShellVariant } from "@/lib/menus";
 
@@ -28,6 +30,8 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const tNav = useTranslations("nav");
+  const tApp = useTranslations("app");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Close the mobile drawer on any route change, including back/forward, which
@@ -42,7 +46,7 @@ export function AppShell({
   const current = MENUS[variant].find(
     (m) => pathname === m.href || pathname.startsWith(`${m.href}/`),
   );
-  const title = current ? `${current.km} · ${current.en}` : "Restaurant Management System";
+  const title = current ? tNav(current.key) : tApp("name");
 
   const settingsHref = variant === "admin" ? "/admin/settings" : "/cashier/profile";
 
@@ -84,8 +88,9 @@ export function AppShell({
             <h1 className="truncate text-base font-semibold">{title}</h1>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3 text-xs">
-            <span className="hidden sm:inline">
+          <div className="flex shrink-0 items-center gap-2.5 text-xs">
+            <LanguageSwitcher />
+            <span className="hidden lg:inline">
               <Clock mode="full" />
             </span>
             <Link
@@ -103,7 +108,7 @@ export function AppShell({
         </main>
 
         <footer className="flex h-8 shrink-0 items-center justify-between bg-[var(--chrome)] px-4 text-xs text-white/90 print:hidden">
-          <span>Restaurant Management System</span>
+          <span>{tApp("name")}</span>
           <Clock mode="date" />
         </footer>
       </div>
