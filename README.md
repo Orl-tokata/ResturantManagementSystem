@@ -42,9 +42,9 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–12 complete and verified.**
+**Milestones 1–13 complete and verified — every feature milestone is done.**
 Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit ·
-Master data · POS · Payment · History · Supply chain · Reports
+Master data · POS · Payment · History · Supply chain · Reports · Settings
 
 The **whole cashier flow works**: table → order → payment → receipt → history,
 with the receipt reachable again from any past bill.
@@ -65,7 +65,7 @@ Component gallery at `/admin/ui-kit`.
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **109 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **122 tests, 0 failures, 0 skipped**
 - POS verified over real HTTP: open bill → table becomes OCCUPIED → re-opening
   reuses the same bill → items priced and taxed (15.00 + 10% = 16.50 = 67,650៛)
   → recovered after reload → cancel frees the table and locks the bill
@@ -86,6 +86,13 @@ Component gallery at `/admin/ui-kit`.
   margin 60.48%; the 7-day series is zero-filled (7 points, 6 quiet days);
   category shares sum to **100.0%**; CSV downloads as
   `text/csv` with `Content-Disposition: attachment` and a UTF-8 BOM
+- Settings verified over real HTTP: a cashier can read but not write; a
+  non-numeric, negative, >100% VAT rate and a zero exchange rate are each
+  rejected with a specific message; a partial update leaves other keys intact;
+  setting VAT to 0 makes the next bill total its subtotal
+- Profile verified over real HTTP: a cashier POSTing `role: ADMIN` and
+  `username: admin` alongside their name still comes back **CASHIER / cashier**;
+  taking another user's email is 409
 - `npm run build` passes; `tsc --noEmit` reports 0 errors; **28 routes** build,
   all return 200 and an unknown route 404s
 - `npm run lint` — **0 errors, 0 warnings**
@@ -113,21 +120,20 @@ Behind the login, **28 routes** are wired. Built and working:
 | Admin — master data | ✅ products · categories · tables · staff |
 | Admin — supply chain | ✅ suppliers · purchase · stock |
 | Admin — reporting | ✅ dashboard · reports (charts + CSV export) |
-| Cashier | ✅ home |
+| Cashier | ✅ home · profile |
+| Admin — settings | ✅ settings · change-password |
 | Admin — dev aid | ✅ ui-kit component gallery |
 
-Still placeholders, each naming the milestone that builds it:
-
-| Area | Screens | Milestone |
-|---|---|---|
-| Cashier / Admin | profile · settings · change-password | 13 |
+**No placeholders remain** — every screen in the prototype is now a real screen.
 
 Sign in as `admin` → lands on `/admin`; any other role → `/cashier/order`.
 The sidebar highlights the current page, collapses to a drawer under 768px,
 and the clocks tick live.
 
-Next: **milestone 13 (Settings)** — app settings, cashier profile and the admin
-change-password screen. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §10.
+Next: **milestone 14 (Hardening)** — the last one: broader validation, a
+consistent error surface, more tests, and moving the test suite onto
+Testcontainers so it stops depending on H2. See
+[PROJECT-SPEC.md](PROJECT-SPEC.md) §10.
 
 ### Trying the API
 

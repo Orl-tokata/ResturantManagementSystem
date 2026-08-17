@@ -229,6 +229,35 @@ public class AuthService {
     /* Helpers                                                               */
     /* ===================================================================== */
 
+    /**
+     * Self-service profile edit.
+     *
+     * <p>Only name, email and phone. Role and username are not accepted here —
+     * letting a user PUT their own role would be a privilege-escalation hole.
+     */
+    @Transactional
+    public UserResponse updateProfile(String username, UpdateProfileRequest request) {
+        UserInfm user = userRepository.findByUserId(username)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (request.email() != null && !request.email().isBlank()
+                && !request.email().equalsIgnoreCase(user.getEml())) {
+            userRepository.findByEml(request.email())
+                    .filter(other -> !other.getId().equals(user.getId()))
+                    .ifPresent(other -> {
+                        throw new ConflictException("Email already registered: " + request.email());
+                    });
+        }
+
+        user.setUserNm(request.fullName());
+        user.setEml(request.email());
+        user.setTel(request.phone());
+        user.setModId(username);
+        user.setModDtm(LocalDateTime.now());
+
+        return toResponse(userRepository.save(user));
+    }
+
     @Transactional(readOnly = true)
     public UserResponse currentUser(String username) {
         return userRepository.findByUserId(username)

@@ -636,7 +636,7 @@ Each milestone should end in a runnable state.
 | 10 | ✅ **History** | order history with filters, summary tiles, 77 tests |
 | 11 | ✅ **Supply chain** | suppliers, purchases, stock, adjustments, 97 tests |
 | 12 | ✅ **Reports** | dashboards, charts, sales report, CSV export, 109 tests |
-| 13 | **Settings** | app settings, change password |
+| 13 | ✅ **Settings** | app settings, self-service profile, change password, 122 tests |
 | 14 | **Hardening** | validation, error handling, tests, README |
 
 Milestones 1–5 are sequential. 7–13 are independent once 6 lands.

@@ -1,11 +1,21 @@
-import { Placeholder } from "@/components/layout/Placeholder";
+"use client";
 
-export default function AdminPasswordPage() {
+import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
+import { Card, Field, Input } from "@/components/ui";
+import { useAuth } from "@/lib/auth-context";
+
+export default function AdminChangePasswordPage() {
+  const { user } = useAuth();
+
   return (
-    <Placeholder
-      title="ប្តូរពាក្យសម្ងាត់ · Change Password"
-      prototype="admin-change-password.html"
-      milestone="milestone 13 (Settings)"
-    />
+    <div className="mx-auto max-w-130">
+      <Card title="ប្តូរពាក្យសម្ងាត់ · Change password">
+        <Field label="ឈ្មោះអ្នកប្រើប្រាស់ · Username" htmlFor="cp-user">
+          <Input id="cp-user" value={user?.username ?? ""} readOnly disabled />
+        </Field>
+
+        <ChangePasswordForm />
+      </Card>
+    </div>
   );
 }

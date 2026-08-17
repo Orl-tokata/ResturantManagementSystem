@@ -78,6 +78,14 @@ public final class AuthDtos {
             LocalDateTime lastLoginAt
     ) {}
 
+    /** Self-service profile edit. Role and username are deliberately absent. */
+    @Schema(name = "UpdateProfileRequest")
+    public record UpdateProfileRequest(
+            @NotBlank(message = "is required") @Size(max = 100) String fullName,
+            @Email(message = "must be a valid email address") @Size(max = 120) String email,
+            @Size(max = 30) String phone
+    ) {}
+
     @Schema(name = "ForgotPasswordRequest")
     public record ForgotPasswordRequest(
             @NotBlank(message = "is required")

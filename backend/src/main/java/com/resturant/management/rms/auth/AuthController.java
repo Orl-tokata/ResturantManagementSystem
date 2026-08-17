@@ -79,6 +79,18 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(authService.currentUser(principal.getUsername())));
     }
 
+    @PutMapping("/me")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Update your own profile",
+            description = "Name, email and phone only. Role and username are not accepted — "
+                        + "allowing them would let a user escalate their own privileges.")
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok("Profile updated",
+                authService.updateProfile(principal.getUsername(), request)));
+    }
+
     /* ---- Password recovery ---------------------------------------------- */
 
     @PostMapping("/forgot-password")
