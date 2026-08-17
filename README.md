@@ -42,9 +42,9 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–11 complete and verified.**
+**Milestones 1–12 complete and verified.**
 Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit ·
-Master data · POS · Payment · History · Supply chain
+Master data · POS · Payment · History · Supply chain · Reports
 
 The **whole cashier flow works**: table → order → payment → receipt → history,
 with the receipt reachable again from any past bill.
@@ -65,7 +65,7 @@ Component gallery at `/admin/ui-kit`.
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **97 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **109 tests, 0 failures, 0 skipped**
 - POS verified over real HTTP: open bill → table becomes OCCUPIED → re-opening
   reuses the same bill → items priced and taxed (15.00 + 10% = 16.50 = 67,650៛)
   → recovered after reload → cancel frees the table and locks the bill
@@ -78,6 +78,14 @@ Component gallery at `/admin/ui-kit`.
   summary reports sales 29.70, paid 3, avg 9.90, cancelled 1, total 5; each
   status filter returns the right count; a past range returns 0; `to` includes
   bills taken later that day; a bad date is 400
+- Supply chain verified over real HTTP: PENDING leaves stock alone; receiving
+  moves beef 2.5 → 22.5, refreshes its cost, writes an IN movement attributed to
+  the receiver, and raises the payable 1240 → 1590; every guard returns the right
+  status and a specific message
+- Reports verified over real HTTP: revenue 16.50 / cost 6.52 / profit 9.98 /
+  margin 60.48%; the 7-day series is zero-filled (7 points, 6 quiet days);
+  category shares sum to **100.0%**; CSV downloads as
+  `text/csv` with `Content-Disposition: attachment` and a UTF-8 BOM
 - `npm run build` passes; `tsc --noEmit` reports 0 errors; **28 routes** build,
   all return 200 and an unknown route 404s
 - `npm run lint` — **0 errors, 0 warnings**
@@ -104,21 +112,22 @@ Behind the login, **28 routes** are wired. Built and working:
 | POS (navy, full-screen) | ✅ `/cashier/order` — no sidebar by design |
 | Admin — master data | ✅ products · categories · tables · staff |
 | Admin — supply chain | ✅ suppliers · purchase · stock |
+| Admin — reporting | ✅ dashboard · reports (charts + CSV export) |
+| Cashier | ✅ home |
 | Admin — dev aid | ✅ ui-kit component gallery |
 
 Still placeholders, each naming the milestone that builds it:
 
 | Area | Screens | Milestone |
 |---|---|---|
-| Admin | dashboard · reports | 12 |
-| Cashier / Admin | home · profile · settings · change-password | 12–13 |
+| Cashier / Admin | profile · settings · change-password | 13 |
 
 Sign in as `admin` → lands on `/admin`; any other role → `/cashier/order`.
 The sidebar highlights the current page, collapses to a drawer under 768px,
 and the clocks tick live.
 
-Next: **milestone 12 (Reports)** — dashboard KPIs, charts, report tabs and CSV
-export. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
+Next: **milestone 13 (Settings)** — app settings, cashier profile and the admin
+change-password screen. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §10.
 
 ### Trying the API
 

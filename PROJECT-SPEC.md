@@ -635,7 +635,7 @@ Each milestone should end in a runnable state.
 | 9 | ✅ **Payment** | payment screen, `/pay` transaction, receipt + print, 65 tests |
 | 10 | ✅ **History** | order history with filters, summary tiles, 77 tests |
 | 11 | ✅ **Supply chain** | suppliers, purchases, stock, adjustments, 97 tests |
-| 12 | **Reports** | dashboard KPIs, charts, report tabs, CSV export |
+| 12 | ✅ **Reports** | dashboards, charts, sales report, CSV export, 109 tests |
 | 13 | **Settings** | app settings, change password |
 | 14 | **Hardening** | validation, error handling, tests, README |
 

@@ -62,4 +62,27 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            """)
     BigDecimal sumPaidTotalByRegDtmBetween(@Param("from") LocalDateTime from,
                                            @Param("to") LocalDateTime to);
+
+    /* ---- Reporting (milestone 12) ---------------------------------------
+       Everything here keys on paidAt: revenue belongs to the day the money was
+       taken, not the day the bill happened to be opened.
+       -------------------------------------------------------------------- */
+
+    /**
+     * Raw {@code [paidAt, total]} pairs, grouped into days in Java rather than
+     * SQL. Date-truncation functions differ between PostgreSQL and H2, and the
+     * `dev` profile runs on H2 — grouping in code keeps one code path for both.
+     */
+    @Query("""
+           SELECT o.paidAt, o.total FROM Order o
+           WHERE o.status = 'PAID' AND o.paidAt BETWEEN :from AND :to
+           ORDER BY o.paidAt ASC
+           """)
+    List<Object[]> findPaidTotals(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    List<Order> findByStatusAndPaidAtBetweenOrderByPaidAtDesc(
+            OrderStatus status, LocalDateTime from, LocalDateTime to);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = 'PAID'")
+    long countAllPaid();
 }
