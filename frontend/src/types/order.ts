@@ -55,3 +55,19 @@ export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   KHQR: "ABA KHQR",
   TRANSFER: "ផ្ទេរប្រាក់ · Transfer",
 };
+
+export const PAYMENT_ICON: Record<PaymentMethod, string> = {
+  CASH: "💵",
+  CARD: "💳",
+  KHQR: "📱",
+  TRANSFER: "🏦",
+};
+
+/** Response of {@code GET /api/orders/{id}/receipt}. */
+export interface Receipt {
+  restaurantName: string;
+  restaurantNameEn: string;
+  address: string;
+  phone: string;
+  order: Order;
+}

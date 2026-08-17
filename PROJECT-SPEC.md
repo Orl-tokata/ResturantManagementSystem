@@ -307,9 +307,20 @@ not silently restate bills that are already open.
 
 ### Transactional rules
 
-- `POST /api/orders/{id}/pay` must be `@Transactional`: mark PAID → decrement
-  `Product.stockQty` → write `StockMovement` rows → set table FREE.
-  All or nothing.
+- ✅ `POST /api/orders/{id}/pay` is `@Transactional`: mark PAID → record tender
+  and change → decrement `Product.stockQty` → set table FREE. All or nothing;
+  a rejected tender leaves the bill OPEN, stock untouched and the table occupied.
+
+  **Deviation from the original plan:** no `StockMovement` rows are written for
+  sales. Movements are keyed to `stock_item` (raw ingredients), and nothing maps
+  a dish to its ingredients — see the recipe/BOM question in §12. Movements are
+  written by the purchase and adjustment flows in milestone 11, which do operate
+  on stock items.
+
+  Stock is allowed to go negative rather than blocking the sale: by the time the
+  bill is settled the food has already left the kitchen, so refusing payment
+  would be the wrong answer. A negative figure is a signal for the stock screen,
+  and it is logged as a warning.
 - `invoiceNo` and `poNo` come from a DB sequence, formatted `INV-%05d` /
   `PO-%05d`. Do **not** generate them with `count()+1` — that races.
 - `POST /api/purchases` with status RECEIVED increments `StockItem.qty`.
@@ -615,7 +626,7 @@ Each milestone should end in a runnable state.
 | 6 | ✅ **UI kit** | the components in §7.3 + gallery at `/admin/ui-kit` |
 | 7 | ✅ **Master data** | categories, products, tables, staff — CRUD both ends, 38 tests |
 | 8 | ✅ **POS** | order screen, table picker, cart state, open order — 52 tests |
-| 9 | **Payment** | payment screen, `/pay` transaction, receipt + print |
+| 9 | ✅ **Payment** | payment screen, `/pay` transaction, receipt + print, 65 tests |
 | 10 | **History** | order history with filters |
 | 11 | **Supply chain** | suppliers, purchases, stock, adjustments |
 | 12 | **Reports** | dashboard KPIs, charts, report tabs, CSV export |
@@ -650,6 +661,13 @@ Milestones 1–5 are sequential. 7–13 are independent once 6 lands.
 ---
 
 ## 12. Open questions
+
+0. **Recipe / bill of materials.** Selling a dish should consume ingredients, but
+   nothing links `Product` to `StockItem`. Until a `product_ingredient` table
+   exists, paying decrements the dish's own `stockQty` and writes no
+   `StockMovement`. Decide before milestone 11 whether ingredient-level stock is
+   in scope; if it is, that table and a movement-on-sale step are needed.
+
 
 1. **Khmer copy** — prototype text is placeholder. Needs the Figma section node
    IDs (`Ctrl+L` on the *Form Cashier* / *Form Admin* section) to extract real strings.

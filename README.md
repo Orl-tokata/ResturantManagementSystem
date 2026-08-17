@@ -42,11 +42,13 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–8 complete and verified.**
-Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit · Master data · POS
+**Milestones 1–9 complete and verified.**
+Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit ·
+Master data · POS · Payment
 
-👉 **Try the POS:** sign in as `cashier`, pick a table at `/cashier/tables`,
-tap dishes to build the order, then Save.
+👉 **Ring up a real sale:** sign in as `cashier` → `/cashier/tables` → pick a
+table → tap dishes → **Pay** → choose cash, enter what the customer handed over
+→ **Confirm**. You get a printable receipt, the stock drops and the table frees.
 
 👉 **Working CRUD screens:** `/admin/categories` · `/admin/products` ·
 `/admin/tables` · `/admin/staff` — real data from the API, add/edit modals,
@@ -97,9 +99,8 @@ Each screen currently shows a placeholder naming the milestone that builds it,
 so nothing looks finished when it is not. The sidebar highlights the current
 page, collapses to a drawer under 768px, and the clocks tick live.
 
-Next: **milestone 9 (Payment)** — the payment screen, the `/pay` transaction
-(mark paid → decrement stock → write movements → free the table, all or nothing)
-and the printable receipt. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
+Next: **milestone 10 (History)** — order history with date-range and status
+filters. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
 
 ### Trying the API
 

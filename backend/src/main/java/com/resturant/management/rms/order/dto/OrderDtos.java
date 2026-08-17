@@ -48,6 +48,23 @@ public final class OrderDtos {
             String note
     ) {}
 
+    /** Body of {@code POST /api/orders/{id}/pay}. */
+    public record PayRequest(
+            @NotNull(message = "is required") PaymentMethod paymentMethod,
+            /** Cash handed over. Required for CASH so change can be worked out. */
+            @PositiveOrZero(message = "cannot be negative") BigDecimal amountTendered,
+            @PositiveOrZero(message = "cannot be negative") BigDecimal discount
+    ) {}
+
+    /** Everything a printed receipt needs, so the frontend makes one request. */
+    public record ReceiptResponse(
+            String restaurantName,
+            String restaurantNameEn,
+            String address,
+            String phone,
+            OrderResponse order
+    ) {}
+
     public record OrderResponse(
             Long id,
             String invoiceNo,

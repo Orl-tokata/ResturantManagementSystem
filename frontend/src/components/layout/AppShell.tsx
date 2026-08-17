@@ -48,11 +48,11 @@ export function AppShell({
 
   return (
     <div
-      className="grid h-screen overflow-hidden md:grid-cols-[210px_1fr]"
+      className="grid h-screen overflow-hidden md:grid-cols-[210px_1fr] print:block print:h-auto print:overflow-visible"
       style={{ ["--chrome" as string]: CHROME[variant] }}
     >
       {/* --- sidebar: fixed drawer on mobile, column on desktop --- */}
-      <div className="hidden md:block">
+      <div className="hidden md:block print:hidden">
         <Sidebar variant={variant} />
       </div>
 
@@ -70,8 +70,8 @@ export function AppShell({
       )}
 
       {/* --- main column --- */}
-      <div className="flex min-w-0 flex-col overflow-hidden">
-        <header className="flex h-13 shrink-0 items-center justify-between gap-3 bg-[var(--chrome)] px-4 py-3 text-white">
+      <div className="flex min-w-0 flex-col overflow-hidden print:block print:overflow-visible">
+        <header className="flex h-13 shrink-0 items-center justify-between gap-3 bg-[var(--chrome)] px-4 py-3 text-white print:hidden">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
@@ -98,9 +98,11 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto bg-white p-4 md:p-5">{children}</main>
+        <main className="flex-1 overflow-auto bg-white p-4 md:p-5 print:overflow-visible print:p-0">
+          {children}
+        </main>
 
-        <footer className="flex h-8 shrink-0 items-center justify-between bg-[var(--chrome)] px-4 text-xs text-white/90">
+        <footer className="flex h-8 shrink-0 items-center justify-between bg-[var(--chrome)] px-4 text-xs text-white/90 print:hidden">
           <span>Restaurant Management System</span>
           <Clock mode="date" />
         </footer>

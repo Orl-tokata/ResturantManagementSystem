@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -118,6 +119,101 @@ public class OrderService {
 
         recalculate(order);
         return toResponse(orderRepository.save(order));
+    }
+
+    /* ===================================================================== */
+    /* Payment                                                               */
+    /* ===================================================================== */
+
+    /**
+     * Settles a bill. All of it or none of it: mark PAID, record the tender and
+     * change, decrement stock for every line, and release the table.
+     *
+     * <p>Runs in one transaction so a failure part-way cannot leave a bill
+     * marked paid with stock untouched, or a table stuck occupied.
+     */
+    @Transactional
+    public OrderResponse pay(Long orderId, PayRequest request) {
+        Order order = findEditable(orderId);
+
+        if (order.getItems().isEmpty()) {
+            throw new BadRequestException("Cannot take payment for an empty bill");
+        }
+
+        if (request.discount() != null) {
+            order.setDiscount(request.discount());
+        }
+        recalculate(order);
+
+        BigDecimal total = order.getTotal();
+        BigDecimal tendered = request.amountTendered();
+
+        // Cash is the only method where the amount handed over is meaningful;
+        // card and QR settle the exact total.
+        if (request.paymentMethod() == PaymentMethod.CASH) {
+            if (tendered == null) {
+                throw new BadRequestException("Amount tendered is required for a cash payment");
+            }
+            if (tendered.compareTo(total) < 0) {
+                throw new BadRequestException(
+                        "Amount tendered (%s) is less than the total (%s)".formatted(tendered, total));
+            }
+        } else {
+            tendered = total;
+        }
+
+        order.setPaymentMethod(request.paymentMethod());
+        order.setAmountTendered(tendered);
+        order.setChangeAmount(tendered.subtract(total).setScale(MONEY_SCALE, RoundingMode.HALF_UP));
+        order.setStatus(OrderStatus.PAID);
+        order.setPaidAt(LocalDateTime.now());
+
+        decrementStock(order);
+        freeTable(order);
+
+        Order saved = orderRepository.save(order);
+        log.info("Paid {} — {} {} (change {})",
+                saved.getInvoiceNo(), saved.getPaymentMethod(), saved.getTotal(), saved.getChangeAmount());
+        return toResponse(saved);
+    }
+
+    /**
+     * Reduces each sold product's stock.
+     *
+     * <p>Stock is allowed to go negative rather than blocking the sale: the food
+     * has already left the kitchen by the time the bill is settled, so refusing
+     * payment would be the wrong answer. A negative figure is a signal for the
+     * stock screen, not a reason to fail here.
+     *
+     * <p>Note: no {@code StockMovement} rows are written for sales. Movements are
+     * keyed to {@code stock_item} (raw ingredients), and there is no recipe table
+     * mapping a dish to its ingredients — see PROJECT-SPEC.md §12.
+     */
+    private void decrementStock(Order order) {
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            if (product == null) continue;
+
+            BigDecimal before = product.getStockQty() == null ? BigDecimal.ZERO : product.getStockQty();
+            BigDecimal after = before.subtract(item.getQty());
+            product.setStockQty(after);
+            productRepository.save(product);
+
+            if (after.compareTo(BigDecimal.ZERO) < 0) {
+                log.warn("Stock for '{}' is now negative ({}) after {}",
+                        product.getName(), after, order.getInvoiceNo());
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ReceiptResponse receipt(Long orderId) {
+        return new ReceiptResponse(
+                settings.getString("restaurant.name", "ភោជនីយដ្ឋាន"),
+                settings.getString("restaurant.nameEn", "Restaurant"),
+                settings.getString("restaurant.address", ""),
+                settings.getString("restaurant.phone", ""),
+                toResponse(find(orderId)));
     }
 
     @Transactional

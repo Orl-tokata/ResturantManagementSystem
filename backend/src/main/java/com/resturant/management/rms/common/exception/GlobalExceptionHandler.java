@@ -83,6 +83,36 @@ public class GlobalExceptionHandler {
                 "This record conflicts with existing data, or is still referenced elsewhere."));
     }
 
+    /**
+     * A request body Jackson could not read: an enum value that matches no
+     * constant, a non-numeric amount, truncated JSON. That is the caller's
+     * mistake, so it must be a 400 — without this it falls through to the
+     * catch-all and reports 500.
+     */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+
+        Throwable cause = ex.getMostSpecificCause();
+        String detail = "Request body could not be read";
+
+        // Name the offending field and the accepted values — a bare "malformed
+        // JSON" tells the caller nothing actionable.
+        if (cause instanceof com.fasterxml.jackson.databind.exc.InvalidFormatException ife) {
+            String field = ife.getPath().isEmpty() ? "value" : ife.getPath().get(0).getFieldName();
+            Class<?> target = ife.getTargetType();
+            if (target != null && target.isEnum()) {
+                detail = "Invalid value for '%s': '%s'. Accepted: %s".formatted(
+                        field, ife.getValue(), java.util.Arrays.toString(target.getEnumConstants()));
+            } else {
+                detail = "Invalid value for '%s': '%s'".formatted(field, ife.getValue());
+            }
+        }
+
+        log.debug("Unreadable request body: {}", cause.getMessage());
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, detail));
+    }
+
     /** Enum path/query parameters that do not match any constant. */
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(

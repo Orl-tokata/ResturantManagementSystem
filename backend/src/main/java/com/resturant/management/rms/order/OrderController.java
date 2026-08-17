@@ -3,6 +3,8 @@ package com.resturant.management.rms.order;
 import com.resturant.management.rms.common.ApiResponse;
 import com.resturant.management.rms.order.dto.OrderDtos.OpenOrderRequest;
 import com.resturant.management.rms.order.dto.OrderDtos.OrderResponse;
+import com.resturant.management.rms.order.dto.OrderDtos.PayRequest;
+import com.resturant.management.rms.order.dto.OrderDtos.ReceiptResponse;
 import com.resturant.management.rms.order.dto.OrderDtos.UpdateItemsRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -55,6 +57,22 @@ public class OrderController {
     public ApiResponse<OrderResponse> replaceItems(@PathVariable Long id,
                                                    @Valid @RequestBody UpdateItemsRequest request) {
         return ApiResponse.ok("Order updated", orderService.replaceItems(id, request));
+    }
+
+    @PostMapping("/{id}/pay")
+    @Operation(summary = "Settle a bill",
+            description = "One transaction: mark PAID, record tender and change, decrement stock, "
+                        + "free the table. Cash requires amountTendered ≥ total.")
+    public ApiResponse<OrderResponse> pay(@PathVariable Long id,
+                                          @Valid @RequestBody PayRequest request) {
+        return ApiResponse.ok("Payment accepted", orderService.pay(id, request));
+    }
+
+    @GetMapping("/{id}/receipt")
+    @Operation(summary = "Receipt projection",
+            description = "The order plus the restaurant header, in one request.")
+    public ApiResponse<ReceiptResponse> receipt(@PathVariable Long id) {
+        return ApiResponse.ok(orderService.receipt(id));
     }
 
     @PostMapping("/{id}/cancel")
