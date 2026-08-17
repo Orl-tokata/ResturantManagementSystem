@@ -2,6 +2,7 @@ package com.resturant.management.rms.order;
 
 import com.resturant.management.rms.catalog.Product;
 import com.resturant.management.rms.catalog.ProductRepository;
+import com.resturant.management.rms.common.Strings;
 import com.resturant.management.rms.common.exception.BadRequestException;
 import com.resturant.management.rms.common.exception.NotFoundException;
 import com.resturant.management.rms.dining.DiningTable;
@@ -16,9 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Slf4j
@@ -231,6 +237,49 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderResponse get(Long id) {
         return toResponse(find(id));
+    }
+
+    /* ---- History --------------------------------------------------------- */
+
+    /**
+     * Paged order history.
+     *
+     * <p>{@code from}/{@code to} are dates from the UI, not instants. They are
+     * widened here to cover the whole day — an exclusive {@code to} at midnight
+     * would silently drop every bill taken on the last day of the range.
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> history(String query, OrderStatus status,
+                                       LocalDate from, LocalDate to, Pageable pageable) {
+        return orderRepository
+                .search(Strings.blankToNull(query), status, startOf(from), endOf(to), pageable)
+                .map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public HistorySummary historySummary(LocalDate from, LocalDate to) {
+        LocalDateTime start = startOf(from);
+        LocalDateTime end = endOf(to);
+
+        BigDecimal sales = orderRepository.sumPaidTotalByRegDtmBetween(start, end);
+        long paid = orderRepository.countByStatusAndRegDtmBetween(OrderStatus.PAID, start, end);
+        long cancelled = orderRepository.countByStatusAndRegDtmBetween(OrderStatus.CANCELLED, start, end);
+        long total = orderRepository.countByRegDtmBetween(start, end);
+
+        BigDecimal average = paid == 0
+                ? BigDecimal.ZERO
+                : sales.divide(BigDecimal.valueOf(paid), MONEY_SCALE, RoundingMode.HALF_UP);
+
+        return new HistorySummary(sales, paid, average, cancelled, total);
+    }
+
+    /** Missing bounds mean "no limit", so they widen to the extremes. */
+    private static LocalDateTime startOf(LocalDate date) {
+        return date == null ? LocalDateTime.of(1970, 1, 1, 0, 0) : date.atStartOfDay();
+    }
+
+    private static LocalDateTime endOf(LocalDate date) {
+        return date == null ? LocalDateTime.of(2999, 12, 31, 23, 59, 59) : date.atTime(LocalTime.MAX);
     }
 
     /** The open bill at a table, if there is one — used when the POS reloads. */

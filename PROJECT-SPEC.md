@@ -266,7 +266,8 @@ Identical shape for each: `GET /` (paged, `?search=&page=&size=`),
 | POST | `/api/orders/{id}/pay` | method + tendered → total, change, marks PAID |
 | POST | `/api/orders/{id}/cancel` | |
 | GET | `/api/orders/{id}/receipt` | receipt projection |
-| GET | `/api/orders?from=&to=&status=` | history screen |
+| GET | `/api/orders?search=&status=&from=&to=` | ✅ history, paged. Dates are `LocalDate` and cover **whole days** — an exclusive `to` at midnight would drop every bill taken on the last day of the range |
+| GET | `/api/orders/summary?from=&to=` | ✅ the four history tiles: paid total, paid count, average, cancelled count |
 | POST | `/api/stock/{id}/adjust` | type + qty + reason → writes StockMovement |
 | GET | `/api/reports/sales?from=&to=` | dashboard + reports |
 | GET | `/api/reports/best-sellers?limit=` | |
@@ -627,7 +628,7 @@ Each milestone should end in a runnable state.
 | 7 | ✅ **Master data** | categories, products, tables, staff — CRUD both ends, 38 tests |
 | 8 | ✅ **POS** | order screen, table picker, cart state, open order — 52 tests |
 | 9 | ✅ **Payment** | payment screen, `/pay` transaction, receipt + print, 65 tests |
-| 10 | **History** | order history with filters |
+| 10 | ✅ **History** | order history with filters, summary tiles, 77 tests |
 | 11 | **Supply chain** | suppliers, purchases, stock, adjustments |
 | 12 | **Reports** | dashboard KPIs, charts, report tabs, CSV export |
 | 13 | **Settings** | app settings, change password |

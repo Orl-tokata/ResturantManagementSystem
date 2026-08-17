@@ -1,6 +1,8 @@
 package com.resturant.management.rms.order;
 
 import com.resturant.management.rms.common.ApiResponse;
+import com.resturant.management.rms.common.PageResponse;
+import com.resturant.management.rms.order.dto.OrderDtos.HistorySummary;
 import com.resturant.management.rms.order.dto.OrderDtos.OpenOrderRequest;
 import com.resturant.management.rms.order.dto.OrderDtos.OrderResponse;
 import com.resturant.management.rms.order.dto.OrderDtos.PayRequest;
@@ -11,11 +13,15 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -35,6 +41,31 @@ public class OrderController {
             @AuthenticationPrincipal UserDetails principal) {
         OrderResponse order = orderService.openOrReuse(request, principal.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(order));
+    }
+
+    @GetMapping
+    @Operation(summary = "Order history (paged)",
+            description = "Filter by invoice number, status and an inclusive date range. "
+                        + "Dates cover whole days, so `to` includes bills taken that day.")
+    public ApiResponse<PageResponse<OrderResponse>> history(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        var pageable = PageRequest.of(page, Math.min(size, 100));
+        return ApiResponse.ok(PageResponse.from(
+                orderService.history(search, status, from, to, pageable)));
+    }
+
+    @GetMapping("/summary")
+    @Operation(summary = "History totals for a date range",
+            description = "Backs the four tiles above the history table.")
+    public ApiResponse<HistorySummary> summary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ApiResponse.ok(orderService.historySummary(from, to));
     }
 
     @GetMapping("/{id}")

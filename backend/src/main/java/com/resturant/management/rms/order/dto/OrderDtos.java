@@ -56,6 +56,15 @@ public final class OrderDtos {
             @PositiveOrZero(message = "cannot be negative") BigDecimal discount
     ) {}
 
+    /** The four tiles above the order-history table. */
+    public record HistorySummary(
+            BigDecimal totalSales,
+            long paidCount,
+            BigDecimal averageSale,
+            long cancelledCount,
+            long totalCount
+    ) {}
+
     /** Everything a printed receipt needs, so the frontend makes one request. */
     public record ReceiptResponse(
             String restaurantName,

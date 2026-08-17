@@ -44,4 +44,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     BigDecimal sumRevenueBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     long countByStatusAndPaidAtBetween(OrderStatus status, LocalDateTime from, LocalDateTime to);
+
+    /* ---- History screen -------------------------------------------------
+       Everything here filters on regDtm — when the bill was opened — so the
+       tiles always describe exactly the rows the table below them is showing.
+       Revenue reporting in milestone 12 uses paidAt instead, which is the
+       right basis for money actually taken.
+       -------------------------------------------------------------------- */
+
+    long countByRegDtmBetween(LocalDateTime from, LocalDateTime to);
+
+    long countByStatusAndRegDtmBetween(OrderStatus status, LocalDateTime from, LocalDateTime to);
+
+    @Query("""
+           SELECT COALESCE(SUM(o.total), 0) FROM Order o
+           WHERE o.status = 'PAID' AND o.regDtm BETWEEN :from AND :to
+           """)
+    BigDecimal sumPaidTotalByRegDtmBetween(@Param("from") LocalDateTime from,
+                                           @Param("to") LocalDateTime to);
 }
