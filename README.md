@@ -102,9 +102,9 @@ Behind the login, **28 routes** are wired. Built and working:
 |---|---|
 | Cashier (teal chrome) | ✅ tables · payment · receipt · receipt/[id] · history |
 | POS (navy, full-screen) | ✅ `/cashier/order` — no sidebar by design |
-| Admin (green chrome) | ✅ products · categories · tables · staff · ui-kit |
-
-| Admin (green chrome) | ✅ suppliers · purchase · stock |
+| Admin — master data | ✅ products · categories · tables · staff |
+| Admin — supply chain | ✅ suppliers · purchase · stock |
+| Admin — dev aid | ✅ ui-kit component gallery |
 
 Still placeholders, each naming the milestone that builds it:
 
