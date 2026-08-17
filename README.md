@@ -58,7 +58,7 @@ Component gallery at `/admin/ui-kit`.
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **52 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **65 tests, 0 failures, 0 skipped**
 - POS verified over real HTTP: open bill → table becomes OCCUPIED → re-opening
   reuses the same bill → items priced and taxed (15.00 + 10% = 16.50 = 67,650៛)
   → recovered after reload → cancel frees the table and locks the bill
