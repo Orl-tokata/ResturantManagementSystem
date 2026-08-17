@@ -24,4 +24,10 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
               OR LOWER(s.contactPerson) LIKE LOWER(CONCAT('%', :q, '%'))
            """)
     Page<Supplier> search(@Param("q") String q, Pageable pageable);
+
+    java.util.List<Supplier> findByStatus(com.resturant.management.rms.common.RecordStatus status);
+
+    /** Total outstanding to all suppliers — the payable tile. */
+    @Query("SELECT COALESCE(SUM(s.balance), 0) FROM Supplier s")
+    java.math.BigDecimal sumBalances();
 }

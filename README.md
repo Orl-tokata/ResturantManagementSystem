@@ -42,12 +42,16 @@ For PostgreSQL instead of H2, see [PROJECT-SPEC.md §9](PROJECT-SPEC.md).
 
 ## Status
 
-**Milestones 1–10 complete and verified.**
+**Milestones 1–11 complete and verified.**
 Scaffold · Schema · Auth backend · Auth frontend · App shell · UI kit ·
-Master data · POS · Payment · History
+Master data · POS · Payment · History · Supply chain
 
-The **whole cashier flow now works**: table → order → payment → receipt →
-history, with the receipt reachable again from any past bill.
+The **whole cashier flow works**: table → order → payment → receipt → history,
+with the receipt reachable again from any past bill.
+
+The **supply chain works too**: raise a purchase order, receive the goods, and
+stock rises, a movement is recorded per line, unit costs refresh and the
+supplier's payable goes up — all in one transaction.
 
 👉 **Ring up a real sale:** sign in as `cashier` → `/cashier/tables` → pick a
 table → tap dishes → **Pay** → choose cash, enter what the customer handed over
@@ -61,7 +65,7 @@ Component gallery at `/admin/ui-kit`.
 - `./gradlew build` passes; `/api/health` returns `status: UP`, `database: UP`
 - Flyway applies V1–V3; Hibernate `ddl-auto=validate` passes, so the entity
   mappings provably match the migrations
-- `./gradlew test` — **77 tests, 0 failures, 0 skipped**
+- `./gradlew test` — **97 tests, 0 failures, 0 skipped**
 - POS verified over real HTTP: open bill → table becomes OCCUPIED → re-opening
   reuses the same bill → items priced and taxed (15.00 + 10% = 16.50 = 67,650៛)
   → recovered after reload → cancel frees the table and locks the bill
@@ -100,11 +104,12 @@ Behind the login, **28 routes** are wired. Built and working:
 | POS (navy, full-screen) | ✅ `/cashier/order` — no sidebar by design |
 | Admin (green chrome) | ✅ products · categories · tables · staff · ui-kit |
 
+| Admin (green chrome) | ✅ suppliers · purchase · stock |
+
 Still placeholders, each naming the milestone that builds it:
 
 | Area | Screens | Milestone |
 |---|---|---|
-| Admin | suppliers · purchase · stock | 11 |
 | Admin | dashboard · reports | 12 |
 | Cashier / Admin | home · profile · settings · change-password | 12–13 |
 
@@ -112,8 +117,8 @@ Sign in as `admin` → lands on `/admin`; any other role → `/cashier/order`.
 The sidebar highlights the current page, collapses to a drawer under 768px,
 and the clocks tick live.
 
-Next: **milestone 11 (Supply chain)** — suppliers, purchase orders, stock and
-adjustments. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
+Next: **milestone 12 (Reports)** — dashboard KPIs, charts, report tabs and CSV
+export. See [PROJECT-SPEC.md](PROJECT-SPEC.md) §5 and §10.
 
 ### Trying the API
 

@@ -37,4 +37,10 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
            WHERE p.status <> 'CANCELLED' AND p.purchaseDate BETWEEN :from AND :to
            """)
     BigDecimal sumTotalBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    long countByPurchaseDateBetween(LocalDate from, LocalDate to);
+
+    long countByStatus(PurchaseStatus status);
+
+    long countBySupplierId(Long supplierId);
 }

@@ -268,7 +268,12 @@ Identical shape for each: `GET /` (paged, `?search=&page=&size=`),
 | GET | `/api/orders/{id}/receipt` | receipt projection |
 | GET | `/api/orders?search=&status=&from=&to=` | ✅ history, paged. Dates are `LocalDate` and cover **whole days** — an exclusive `to` at midnight would drop every bill taken on the last day of the range |
 | GET | `/api/orders/summary?from=&to=` | ✅ the four history tiles: paid total, paid count, average, cancelled count |
-| POST | `/api/stock/{id}/adjust` | type + qty + reason → writes StockMovement |
+| POST | `/api/stock/{id}/adjust` | ✅ type + qty + reason → writes a StockMovement. `qty` is **always positive**; the direction comes from the type, so a caller cannot accidentally add by sending a negative to an OUT |
+| GET | `/api/stock/{id}/movements` | ✅ audit trail for one item |
+| GET | `/api/stock/summary` · `/api/stock/low` | ✅ tiles and reorder list |
+| POST | `/api/purchases/{id}/receive` | ✅ one transaction: increase each line's stock, write an IN movement per line, refresh unit costs, add the total to the supplier's payable |
+| POST | `/api/purchases/{id}/cancel` | ✅ pending only — 400 once received, since cancelling then would overstate stock |
+| GET | `/api/purchases/summary` | ✅ month total, order count, pending count, total payable |
 | GET | `/api/reports/sales?from=&to=` | dashboard + reports |
 | GET | `/api/reports/best-sellers?limit=` | |
 | GET | `/api/reports/low-stock` | |
@@ -629,7 +634,7 @@ Each milestone should end in a runnable state.
 | 8 | ✅ **POS** | order screen, table picker, cart state, open order — 52 tests |
 | 9 | ✅ **Payment** | payment screen, `/pay` transaction, receipt + print, 65 tests |
 | 10 | ✅ **History** | order history with filters, summary tiles, 77 tests |
-| 11 | **Supply chain** | suppliers, purchases, stock, adjustments |
+| 11 | ✅ **Supply chain** | suppliers, purchases, stock, adjustments, 97 tests |
 | 12 | **Reports** | dashboard KPIs, charts, report tabs, CSV export |
 | 13 | **Settings** | app settings, change password |
 | 14 | **Hardening** | validation, error handling, tests, README |
