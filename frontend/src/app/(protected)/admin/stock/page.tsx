@@ -134,7 +134,7 @@ export default function StockPage() {
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
     { key: "name", header: tc("name"), render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "unit", header: tc("unit"), hideOnMobile: true, render: (r) => r.unit },
-    { key: "qty", header: t("stock"), numeric: true, render: (r) => r.qty },
+    { key: "qty", header: t("onHand"), numeric: true, render: (r) => r.qty },
     { key: "min", header: t("minQty"), numeric: true, hideOnMobile: true, render: (r) => r.minQty },
     {
       key: "level",
@@ -278,10 +278,10 @@ export default function StockPage() {
 
         <FieldRow>
           <Field label={tc("name")} htmlFor="k-name" required>
-            <Input id="k-name" value={draft.name} onChange={(e) => set("name", e.target.value)} placeholder="សាច់គោ" />
+            <Input id="k-name" value={draft.name} onChange={(e) => set("name", e.target.value)} placeholder={t("namePlaceholder")} />
           </Field>
           <Field label={tc("unit")} htmlFor="k-unit" required>
-            <Input id="k-unit" value={draft.unit} onChange={(e) => set("unit", e.target.value)} placeholder="គីឡូក្រាម" />
+            <Input id="k-unit" value={draft.unit} onChange={(e) => set("unit", e.target.value)} placeholder={t("unitPlaceholder")} />
           </Field>
         </FieldRow>
 
@@ -386,7 +386,7 @@ export default function StockPage() {
             id="a-why"
             value={adjustDraft.reason ?? ""}
             onChange={(e) => setAdjustDraft({ ...adjustDraft, reason: e.target.value })}
-            placeholder="ទិញបន្ថែម / ខូច / រាប់ឡើងវិញ"
+            placeholder={t("reasonPlaceholder")}
           />
         </Field>
       </Modal>
@@ -405,6 +405,7 @@ export default function StockPage() {
       >
         <DataTable
           columns={movementColumns}
+          maxHeight="46vh"
           rows={movements.data?.content ?? []}
           rowKey={(m) => m.id}
           loading={movements.isLoading}

@@ -20,6 +20,7 @@ export default function ReceiptPage() {
   const tH = useTranslations("history");
   const tCh = useTranslations("cashierHome");
   const tPay = useTranslations("enum.paymentMethod");
+  const tP = useTranslations("payment");
 
   const { id } = useParams<{ id: string }>();
 
@@ -132,7 +133,7 @@ export default function ReceiptPage() {
               label={order.paymentMethod ? tPay(order.paymentMethod) : "—"}
               value={formatUsd(order.amountTendered ?? 0)}
             />
-            <Row label={t("change")} value={formatUsd(order.changeAmount ?? 0)} />
+            <Row label={tP("change")} value={formatUsd(order.changeAmount ?? 0)} />
           </>
         )}
 

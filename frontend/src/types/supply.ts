@@ -35,24 +35,9 @@ export const SUPPLY_TYPES = [
   "OTHER",
 ] as const;
 
-export const SUPPLY_TYPE_LABEL: Record<string, string> = {
-  MEAT: "សាច់ · Meat",
-  VEGETABLE: "បន្លែ · Vegetable",
-  SEAFOOD: "គ្រឿងសមុទ្រ · Seafood",
-  DRINK: "ភេសជ្ជៈ · Drink",
-  RICE: "អង្ករ · Rice",
-  OTHER: "ផ្សេងៗ · Other",
-};
-
 /* ---- Stock --------------------------------------------------------------- */
 
 export type MovementType = "IN" | "OUT" | "DAMAGED";
-
-export const MOVEMENT_LABEL: Record<MovementType, string> = {
-  IN: "បញ្ចូល · Stock in",
-  OUT: "ដក · Stock out",
-  DAMAGED: "ខូច/បាត់ · Damaged",
-};
 
 export interface StockItem {
   id: number;
@@ -101,12 +86,6 @@ export interface StockSummary {
 /* ---- Purchase ------------------------------------------------------------ */
 
 export type PurchaseStatus = "PENDING" | "RECEIVED" | "CANCELLED";
-
-export const PURCHASE_STATUS_LABEL: Record<PurchaseStatus, string> = {
-  PENDING: "រង់ចាំ · Pending",
-  RECEIVED: "បានទទួល · Received",
-  CANCELLED: "បានលុប · Cancelled",
-};
 
 export interface PurchaseItem {
   id: number | null;

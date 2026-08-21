@@ -215,7 +215,7 @@ function PosScreen() {
       {/* ---- body ---- */}
       <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[92px_1fr_330px]">
         {/* category rail */}
-        <div className="hidden flex-col gap-1.5 overflow-y-auto bg-teal-800 p-1.5 md:flex">
+        <div className="scroll-invert hidden flex-col gap-1.5 overflow-y-auto bg-teal-800 p-1.5 md:flex">
           <button
             type="button"
             onClick={() => setCategoryId(null)}
@@ -244,7 +244,7 @@ function PosScreen() {
         {/* product grid */}
         <div className="grid auto-rows-min grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2.5 overflow-y-auto bg-ink-100 p-3">
           {products.isLoading && (
-            <p className="col-span-full py-10 text-center text-sm text-ink-500">កំពុងផ្ទុក…</p>
+            <p className="col-span-full py-10 text-center text-sm text-ink-500">{tc("loading")}</p>
           )}
 
           {products.data?.content

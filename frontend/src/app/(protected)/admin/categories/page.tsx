@@ -217,7 +217,7 @@ export default function CategoriesPage() {
             id="c-name"
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            placeholder="បាយ"
+            placeholder={t("namePlaceholder")}
           />
         </Field>
 

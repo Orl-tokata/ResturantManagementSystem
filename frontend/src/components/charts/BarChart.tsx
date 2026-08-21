@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export interface BarPoint {
   label: string;
@@ -30,19 +31,21 @@ export function BarChart({
   points,
   formatValue,
   height = 200,
-  emptyMessage = "គ្មានទិន្នន័យ · No data in this range",
+  emptyMessage,
 }: {
   points: BarPoint[];
   formatValue: (value: number) => string;
   height?: number;
+  /** Defaults to the translated "no data in this range". */
   emptyMessage?: string;
 }) {
+  const t = useTranslations("reports");
   const [hover, setHover] = useState<number | null>(null);
 
   if (points.length === 0) {
     return (
       <p className="grid place-items-center py-10 text-sm text-ink-500" style={{ height }}>
-        {emptyMessage}
+        {emptyMessage ?? t("noDataInRange")}
       </p>
     );
   }

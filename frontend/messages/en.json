@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Restaurant Management System",
-    "shortName": "Restaurant Manager"
+    "shortName": "Restaurant Manager",
+    "description": "Restaurant Management System"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -73,7 +74,8 @@
     "sevenDays": "7 days",
     "thirtyDays": "30 days",
     "thisMonth": "This month",
-    "allTime": "All time"
+    "allTime": "All time",
+    "notPermitted": "Not permitted"
   },
   "auth": {
     "loginTitle": "Restaurant Management System",
@@ -258,7 +260,8 @@
     "deleteNote": "Past receipts keep their own copy of the name and price, so they stay correct.",
     "errName": "Product name is required",
     "errCategory": "Please choose a category",
-    "errPrice": "Price cannot be negative"
+    "errPrice": "Price cannot be negative",
+    "namePlaceholder": "Seafood fried rice"
   },
   "categories": {
     "title": "Category list",
@@ -270,7 +273,9 @@
     "dishCount": "Dishes",
     "noCategories": "No categories found",
     "errName": "Category name is required",
-    "inUse": "This category still has {count} product(s), so the server will refuse."
+    "inUse": "This category still has {count} product(s), so the server will refuse.",
+    "namePlaceholder": "Rice",
+    "nameEn": "Name (English)"
   },
   "staff": {
     "title": "Staff list",
@@ -287,7 +292,8 @@
     "searchStaff": "Search staff",
     "noStaff": "No staff found",
     "errCode": "Staff code is required",
-    "errName": "Staff name is required"
+    "errName": "Staff name is required",
+    "role": "Role"
   },
   "suppliers": {
     "title": "Supplier list",
@@ -356,7 +362,11 @@
     "noMovements": "No movements recorded yet",
     "noItems": "No stock items found",
     "deleteNote": "An item with movement history cannot be deleted — set its quantity to zero instead.",
-    "errRequired": "Name and unit are required"
+    "errRequired": "Name and unit are required",
+    "namePlaceholder": "Beef",
+    "unitPlaceholder": "Kilogram",
+    "reasonPlaceholder": "Restock / damaged / recount",
+    "onHand": "In stock"
   },
   "reports": {
     "title": "Reports",
@@ -375,7 +385,9 @@
     "noSales": "No sales in this range",
     "noPaidInvoices": "No paid invoices in this range",
     "categoryNote": "Line totals before VAT, and only for dishes still in the catalog — a deleted product keeps its receipt but drops out of this breakdown.",
-    "exportFailed": "Could not export the CSV"
+    "exportFailed": "Could not export the CSV",
+    "invoiceCount": "{count} invoices",
+    "noDataInRange": "No data in this range"
   },
   "settings": {
     "title": "System settings",
@@ -489,6 +501,7 @@
     "unreachable": "Cannot reach the server. Is the backend running on port 8081?",
     "timeout": "The server took too long to respond.",
     "generic": "Something went wrong",
-    "requestFailed": "Request failed (HTTP {status})"
+    "requestFailed": "Request failed (HTTP {status})",
+    "notPermittedBody": "Your account ({role}) does not have access to this page."
   }
 }

@@ -265,7 +265,7 @@ export default function ProductsPage() {
               id="p-name"
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="បាយឆាគ្រឿងសមុទ្រ"
+              placeholder={t("namePlaceholder")}
             />
           </Field>
           <Field label={t("nameEn")} htmlFor="p-name-en">

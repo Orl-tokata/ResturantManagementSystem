@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
 import type { Role } from "@/types/auth";
 
@@ -21,6 +22,10 @@ export function RequireAuth({
   children: ReactNode;
   roles?: Role[];
 }) {
+  const t = useTranslations("common");
+  const tErr = useTranslations("error");
+  const tRole = useTranslations("enum.role");
+
   const { user, status } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -36,7 +41,7 @@ export function RequireAuth({
       <div className="grid min-h-screen place-items-center bg-ink-100">
         <div className="flex items-center gap-3 text-sm text-ink-500">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-          កំពុងផ្ទុក… · Loading
+          {t("loading")}
         </div>
       </div>
     );
@@ -51,11 +56,9 @@ export function RequireAuth({
       <div className="grid min-h-screen place-items-center bg-ink-100 p-6">
         <div className="max-w-md rounded-md border border-ink-200 bg-white p-6 text-center shadow-sm">
           <div className="mb-2 text-4xl">🚫</div>
-          <h1 className="mb-1 text-lg font-bold">គ្មានសិទ្ធិ · Not permitted</h1>
+          <h1 className="mb-1 text-lg font-bold">{t("notPermitted")}</h1>
           <p className="text-sm text-ink-500">
-            គណនីរបស់អ្នក ({user.role}) មិនអាចចូលទំព័រនេះបានទេ។
-            <br />
-            Your account does not have access to this page.
+            {tErr("notPermittedBody", { role: tRole(user.role) })}
           </p>
         </div>
       </div>

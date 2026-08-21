@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Khmer } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -16,10 +16,13 @@ const khmer = Noto_Sans_Khmer({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Restaurant Management System",
-  description: "ប្រព័ន្ធគ្រប់គ្រងភោជនីយដ្ឋាន · Restaurant Management System",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("app");
+  return {
+    title: "Restaurant Management System",
+    description: t("description"),
+  };
+}
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Resolved from the locale cookie by src/i18n/request.ts.

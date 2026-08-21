@@ -43,19 +43,6 @@ export interface CartLine {
   note?: string;
 }
 
-export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
-  OPEN: "កំពុងបើក · Open",
-  PAID: "បានបង់ · Paid",
-  CANCELLED: "បានលុប · Cancelled",
-};
-
-export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
-  CASH: "សាច់ប្រាក់ · Cash",
-  CARD: "កាត · Card",
-  KHQR: "ABA KHQR",
-  TRANSFER: "ផ្ទេរប្រាក់ · Transfer",
-};
-
 export const PAYMENT_ICON: Record<PaymentMethod, string> = {
   CASH: "💵",
   CARD: "💳",

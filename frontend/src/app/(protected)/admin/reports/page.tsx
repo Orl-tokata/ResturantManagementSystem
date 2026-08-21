@@ -222,20 +222,19 @@ export default function ReportsPage() {
         <Card title={t("revenueByCategory")} padded={false}>
           <DataTable
             columns={categoryColumns}
+            maxHeight="320px"
             rows={r?.byCategory ?? []}
             rowKey={(c) => c.name}
             loading={report.isLoading}
             emptyMessage={t("noSales")}
           />
-          <p className="px-4 py-3 text-xs text-ink-500">
-            Line totals before VAT, and only for dishes still in the catalog — a deleted
-            product keeps its receipt but drops out of this breakdown.
-          </p>
+          <p className="px-4 py-3 text-xs text-ink-500">{t("categoryNote")}</p>
         </Card>
 
         <Card title={t("bestSellers")} padded={false}>
           <DataTable
             columns={sellerColumns}
+            maxHeight="320px"
             rows={r?.bestSellers ?? []}
             rowKey={(s) => s.productName}
             loading={report.isLoading}
@@ -247,7 +246,9 @@ export default function ReportsPage() {
       <Card
         title={t("salesDetail")}
         action={
-          <span className="text-xs text-ink-500">{detail.data?.length ?? 0} វិក្កយបត្រ</span>
+          <span className="text-xs text-ink-500">
+            {t("invoiceCount", { count: detail.data?.length ?? 0 })}
+          </span>
         }
         padded={false}
       >
