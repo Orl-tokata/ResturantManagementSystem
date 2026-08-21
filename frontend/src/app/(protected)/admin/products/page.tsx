@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Alert,
   Badge,
@@ -20,9 +21,9 @@ import {
 } from "@/components/ui";
 import { useAll, useList, useRemove, useSave } from "@/hooks/useCrud";
 import { errorMessage } from "@/lib/errors";
+import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
 import {
-  RECORD_STATUS_LABEL,
   type Category,
   type Product,
   type ProductRequest,
@@ -44,6 +45,11 @@ const EMPTY: ProductRequest = {
 const SIZE = 20;
 
 export default function ProductsPage() {
+  const t = useTranslations("products");
+  const tc = useTranslations("common");
+  const tStatus = useTranslations("enum.recordStatus");
+  const locale = useLocale();
+
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<number | "">("");
   const [page, setPage] = useState(0);
@@ -88,15 +94,15 @@ export default function ProductsPage() {
 
   async function submit() {
     if (!draft.name.trim()) {
-      setFormError("ឈ្មោះផលិតផលត្រូវការ · Product name is required");
+      setFormError(t("errName"));
       return;
     }
     if (!draft.categoryId) {
-      setFormError("សូមជ្រើសរើសប្រភេទ · Please choose a category");
+      setFormError(t("errCategory"));
       return;
     }
     if (draft.price < 0) {
-      setFormError("តម្លៃមិនអាចអវិជ្ជមាន · Price cannot be negative");
+      setFormError(t("errPrice"));
       return;
     }
     try {
@@ -122,14 +128,14 @@ export default function ProductsPage() {
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
     {
       key: "img",
-      header: "រូបភាព",
+      header: t("image"),
       width: "64px",
       align: "center",
       render: (r) => <span className="text-xl">{r.imageUrl || "🍽️"}</span>,
     },
     {
       key: "name",
-      header: "ឈ្មោះ · Name",
+      header: tc("name"),
       render: (r) => (
         <>
           <div className="font-medium">{r.name}</div>
@@ -137,28 +143,28 @@ export default function ProductsPage() {
         </>
       ),
     },
-    { key: "cat", header: "ប្រភេទ", hideOnMobile: true, render: (r) => r.categoryName },
-    { key: "price", header: "តម្លៃ · Price", numeric: true, render: (r) => formatUsd(r.price) },
-    { key: "khr", header: "រៀល", numeric: true, hideOnMobile: true, render: (r) => formatKhr(r.price) },
-    { key: "cost", header: "ថ្លៃដើម", numeric: true, hideOnMobile: true, render: (r) => formatUsd(r.cost) },
-    { key: "stock", header: "ស្តុក", numeric: true, render: (r) => r.stockQty },
+    { key: "cat", header: t("category"), hideOnMobile: true, render: (r) => r.categoryName },
+    { key: "price", header: tc("price"), numeric: true, render: (r) => formatUsd(r.price) },
+    { key: "khr", header: tc("khr"), numeric: true, hideOnMobile: true, render: (r) => formatKhr(r.price) },
+    { key: "cost", header: tc("cost"), numeric: true, hideOnMobile: true, render: (r) => formatUsd(r.cost) },
+    { key: "stock", header: t("stock"), numeric: true, render: (r) => r.stockQty },
     {
       key: "status",
-      header: "ស្ថានភាព",
+      header: tc("status"),
       render: (r) =>
         r.status === "INACTIVE" ? (
-          <Badge tone="neutral">{RECORD_STATUS_LABEL.INACTIVE}</Badge>
+          <Badge tone="neutral">{tStatus("INACTIVE")}</Badge>
         ) : r.stockQty <= 0 ? (
-          <Badge tone="dead">អស់ស្តុក</Badge>
+          <Badge tone="dead">{t("outOfStock")}</Badge>
         ) : r.stockQty < 10 ? (
-          <Badge tone="warn">ជិតអស់</Badge>
+          <Badge tone="warn">{t("lowStock")}</Badge>
         ) : (
-          <Badge tone="ok">លក់</Badge>
+          <Badge tone="ok">{t("onSale")}</Badge>
         ),
     },
     {
       key: "actions",
-      header: "សកម្មភាព",
+      header: tc("actions"),
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
@@ -187,7 +193,7 @@ export default function ProductsPage() {
         left={
           <>
             <Button variant="admin" onClick={openNew}>
-              ➕ បន្ថែមថ្មី · Add product
+              ➕ {t("addProduct")}
             </Button>
             <Select
               className="w-auto"
@@ -197,10 +203,10 @@ export default function ProductsPage() {
                 setPage(0);
               }}
             >
-              <option value="">ប្រភេទទាំងអស់ · All categories</option>
+              <option value="">{t("allCategories")}</option>
               {categories.data?.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.icon} {c.name} · {c.nameEn}
+                  {c.icon} {pickName(locale, c.name, c.nameEn)}
                 </option>
               ))}
             </Select>
@@ -213,7 +219,7 @@ export default function ProductsPage() {
               setSearch(v);
               setPage(0);
             }}
-            placeholder="ស្វែងរកផលិតផល · Search"
+            placeholder={t("searchProduct")}
           />
         }
       />
@@ -223,7 +229,7 @@ export default function ProductsPage() {
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
         loading={list.isLoading}
-        emptyMessage="គ្មានផលិតផល · No products found"
+        emptyMessage={t("noProducts")}
       />
 
       {list.data && (
@@ -239,14 +245,14 @@ export default function ProductsPage() {
       <Modal
         open={editingId !== undefined}
         onClose={() => setEditingId(undefined)}
-        title="ព័ត៌មានផលិតផល · Product Details"
+        title={t("details")}
         footer={
           <>
             <Button variant="light" onClick={() => setEditingId(undefined)}>
-              បោះបង់ · Cancel
+              {tc("cancel")}
             </Button>
             <Button variant="admin" onClick={submit} loading={save.isPending}>
-              រក្សាទុក · Save
+              {tc("save")}
             </Button>
           </>
         }
@@ -254,7 +260,7 @@ export default function ProductsPage() {
         {formError && <Alert tone="error">{formError}</Alert>}
 
         <FieldRow>
-          <Field label="ឈ្មោះ · Name (Khmer)" htmlFor="p-name" required>
+          <Field label={t("nameKm")} htmlFor="p-name" required>
             <Input
               id="p-name"
               value={draft.name}
@@ -262,7 +268,7 @@ export default function ProductsPage() {
               placeholder="បាយឆាគ្រឿងសមុទ្រ"
             />
           </Field>
-          <Field label="Name (English)" htmlFor="p-name-en">
+          <Field label={t("nameEn")} htmlFor="p-name-en">
             <Input
               id="p-name-en"
               value={draft.nameEn}
@@ -272,25 +278,25 @@ export default function ProductsPage() {
           </Field>
         </FieldRow>
 
-        <Field label="ប្រភេទ · Category" htmlFor="p-cat" required>
+        <Field label={t("category")} htmlFor="p-cat" required>
           <Select
             id="p-cat"
             value={draft.categoryId || ""}
             onChange={(e) => setDraft({ ...draft, categoryId: Number(e.target.value) })}
           >
             <option value="" disabled>
-              — ជ្រើសរើស · Choose —
+              — {t("choose")} —
             </option>
             {categories.data?.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.icon} {c.name} · {c.nameEn}
+                {c.icon} {pickName(locale, c.name, c.nameEn)}
               </option>
             ))}
           </Select>
         </Field>
 
         <FieldRow>
-          <Field label="តម្លៃលក់ · Price ($)" htmlFor="p-price" required hint={formatKhr(draft.price)}>
+          <Field label={tc("price")} htmlFor="p-price" required hint={formatKhr(draft.price)}>
             <Input
               id="p-price"
               type="number"
@@ -300,7 +306,7 @@ export default function ProductsPage() {
               onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })}
             />
           </Field>
-          <Field label="ថ្លៃដើម · Cost ($)" htmlFor="p-cost">
+          <Field label={tc("cost")} htmlFor="p-cost">
             <Input
               id="p-cost"
               type="number"
@@ -313,7 +319,7 @@ export default function ProductsPage() {
         </FieldRow>
 
         <FieldRow>
-          <Field label="ស្តុក · Stock" htmlFor="p-stock">
+          <Field label={t("stock")} htmlFor="p-stock">
             <Input
               id="p-stock"
               type="number"
@@ -322,22 +328,22 @@ export default function ProductsPage() {
               onChange={(e) => setDraft({ ...draft, stockQty: Number(e.target.value) })}
             />
           </Field>
-          <Field label="ស្ថានភាព · Status" htmlFor="p-status">
+          <Field label={tc("status")} htmlFor="p-status">
             <Select
               id="p-status"
               value={draft.status}
               onChange={(e) => setDraft({ ...draft, status: e.target.value as RecordStatus })}
             >
-              <option value="ACTIVE">{RECORD_STATUS_LABEL.ACTIVE}</option>
-              <option value="INACTIVE">{RECORD_STATUS_LABEL.INACTIVE}</option>
+              <option value="ACTIVE">{tStatus("ACTIVE")}</option>
+              <option value="INACTIVE">{tStatus("INACTIVE")}</option>
             </Select>
           </Field>
         </FieldRow>
 
         <Field
-          label="រូបភាព · Image"
+          label={t("image")}
           htmlFor="p-img"
-          hint="Emoji for now — file upload is a later milestone"
+          hint={t("imageHint")}
         >
           <Input
             id="p-img"
@@ -347,7 +353,7 @@ export default function ProductsPage() {
           />
         </Field>
 
-        <Field label="ការពិពណ៌នា · Description" htmlFor="p-desc">
+        <Field label={t("description")} htmlFor="p-desc">
           <Textarea
             id="p-desc"
             value={draft.description}
@@ -361,8 +367,8 @@ export default function ProductsPage() {
         busy={remove.isPending}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
-        message={`តើអ្នកប្រាកដជាចង់លុប "${deleting?.name ?? ""}" មែនទេ?`}
-        detail="Past receipts keep their own copy of the name and price, so they stay correct."
+        message={tc("confirmDeleteMessage", { name: deleting?.name ?? "" })}
+        detail={t("deleteNote")}
       />
     </>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Badge,
@@ -21,7 +22,6 @@ import {
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { errorMessage } from "@/lib/errors";
 import {
-  RECORD_STATUS_LABEL,
   type Category,
   type CategoryRequest,
   type RecordStatus,
@@ -38,6 +38,10 @@ const EMPTY: CategoryRequest = {
 const SIZE = 20;
 
 export default function CategoriesPage() {
+  const t = useTranslations("categories");
+  const tc = useTranslations("common");
+  const tStatus = useTranslations("enum.recordStatus");
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
 
@@ -72,7 +76,7 @@ export default function CategoriesPage() {
 
   async function submit() {
     if (!draft.name.trim()) {
-      setFormError("ឈ្មោះប្រភេទត្រូវការ · Category name is required");
+      setFormError(t("errName"));
       return;
     }
     try {
@@ -98,14 +102,14 @@ export default function CategoriesPage() {
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
     {
       key: "icon",
-      header: "រូបតំណាង",
+      header: t("icon"),
       width: "72px",
       align: "center",
       render: (r) => <span className="text-xl">{r.icon}</span>,
     },
     {
       key: "name",
-      header: "ឈ្មោះប្រភេទ · Category name",
+      header: t("categoryName"),
       render: (r) => (
         <>
           <div className="font-medium">{r.name}</div>
@@ -115,22 +119,22 @@ export default function CategoriesPage() {
     },
     {
       key: "count",
-      header: "ចំនួនម្ហូប",
+      header: t("dishCount"),
       numeric: true,
       hideOnMobile: true,
       render: (r) => r.productCount,
     },
-    { key: "sort", header: "លំដាប់", numeric: true, hideOnMobile: true, render: (r) => r.sortOrder },
+    { key: "sort", header: t("sortOrder"), numeric: true, hideOnMobile: true, render: (r) => r.sortOrder },
     {
       key: "status",
-      header: "ស្ថានភាព",
+      header: tc("status"),
       render: (r) => (
-        <Badge tone={toneForRecordStatus(r.status)}>{RECORD_STATUS_LABEL[r.status]}</Badge>
+        <Badge tone={toneForRecordStatus(r.status)}>{tStatus(r.status)}</Badge>
       ),
     },
     {
       key: "actions",
-      header: "សកម្មភាព",
+      header: tc("actions"),
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
@@ -158,7 +162,7 @@ export default function CategoriesPage() {
       <Toolbar
         left={
           <Button variant="admin" onClick={openNew}>
-            ➕ បន្ថែមប្រភេទ · Add category
+            ➕ {t("addCategory")}
           </Button>
         }
         right={
@@ -177,7 +181,7 @@ export default function CategoriesPage() {
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
         loading={list.isLoading}
-        emptyMessage="គ្មានប្រភេទ · No categories found"
+        emptyMessage={t("noCategories")}
       />
 
       {list.data && (
@@ -193,22 +197,22 @@ export default function CategoriesPage() {
       <Modal
         open={editingId !== undefined}
         onClose={() => setEditingId(undefined)}
-        title="ព័ត៌មានប្រភេទ · Category Details"
+        title={t("details")}
         width="sm"
         footer={
           <>
             <Button variant="light" onClick={() => setEditingId(undefined)}>
-              បិទ · Close
+              {tc("close")}
             </Button>
             <Button variant="admin" onClick={submit} loading={save.isPending}>
-              រក្សាទុក · Save
+              {tc("save")}
             </Button>
           </>
         }
       >
         {formError && <Alert tone="error">{formError}</Alert>}
 
-        <Field label="ឈ្មោះប្រភេទ · Name (Khmer)" htmlFor="c-name" required>
+        <Field label={t("categoryName")} htmlFor="c-name" required>
           <Input
             id="c-name"
             value={draft.name}
@@ -217,7 +221,7 @@ export default function CategoriesPage() {
           />
         </Field>
 
-        <Field label="ឈ្មោះជាភាសាអង់គ្លេស · Name (English)" htmlFor="c-name-en">
+        <Field label={t("nameEn")} htmlFor="c-name-en">
           <Input
             id="c-name-en"
             value={draft.nameEn}
@@ -227,7 +231,7 @@ export default function CategoriesPage() {
         </Field>
 
         <FieldRow>
-          <Field label="រូបតំណាង · Icon" htmlFor="c-icon" hint="Emoji">
+          <Field label={t("icon")} htmlFor="c-icon" hint="Emoji">
             <Input
               id="c-icon"
               value={draft.icon}
@@ -235,7 +239,7 @@ export default function CategoriesPage() {
               placeholder="🍚"
             />
           </Field>
-          <Field label="លំដាប់ · Sort order" htmlFor="c-sort">
+          <Field label={t("sortOrder")} htmlFor="c-sort">
             <Input
               id="c-sort"
               type="number"
@@ -245,14 +249,14 @@ export default function CategoriesPage() {
           </Field>
         </FieldRow>
 
-        <Field label="ស្ថានភាព · Status" htmlFor="c-status">
+        <Field label={tc("status")} htmlFor="c-status">
           <Select
             id="c-status"
             value={draft.status}
             onChange={(e) => setDraft({ ...draft, status: e.target.value as RecordStatus })}
           >
-            <option value="ACTIVE">{RECORD_STATUS_LABEL.ACTIVE}</option>
-            <option value="INACTIVE">{RECORD_STATUS_LABEL.INACTIVE}</option>
+            <option value="ACTIVE">{tStatus("ACTIVE")}</option>
+            <option value="INACTIVE">{tStatus("INACTIVE")}</option>
           </Select>
         </Field>
       </Modal>
@@ -262,11 +266,11 @@ export default function CategoriesPage() {
         busy={remove.isPending}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
-        message={`តើអ្នកប្រាកដជាចង់លុប "${deleting?.name ?? ""}" មែនទេ?`}
+        message={tc("confirmDeleteMessage", { name: deleting?.name ?? "" })}
         detail={
           deleting && deleting.productCount > 0
-            ? `This category still has ${deleting.productCount} product(s), so the server will refuse.`
-            : "This action cannot be undone."
+            ? t("inUse", { count: deleting.productCount })
+            : tc("cannotUndo")
         }
       />
     </>

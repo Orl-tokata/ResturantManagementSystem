@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Badge,
@@ -22,10 +23,9 @@ import {
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { errorMessage } from "@/lib/errors";
 import { formatUsd } from "@/lib/format";
-import { RECORD_STATUS_LABEL, type RecordStatus } from "@/types/master";
+import type { RecordStatus } from "@/types/master";
 import {
   SUPPLY_TYPES,
-  SUPPLY_TYPE_LABEL,
   type Supplier,
   type SupplierRequest,
 } from "@/types/supply";
@@ -34,6 +34,11 @@ const EMPTY: SupplierRequest = { supplierCode: "", company: "", status: "ACTIVE"
 const SIZE = 20;
 
 export default function SuppliersPage() {
+  const t = useTranslations("suppliers");
+  const tc = useTranslations("common");
+  const tStatus = useTranslations("enum.recordStatus");
+  const tType = useTranslations("enum.supplyType");
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
 
@@ -74,7 +79,7 @@ export default function SuppliersPage() {
 
   async function submit() {
     if (!draft.supplierCode.trim() || !draft.company.trim()) {
-      setFormError("លេខកូដ និងឈ្មោះក្រុមហ៊ុនត្រូវការ · Code and company are required");
+      setFormError(t("errRequired"));
       return;
     }
     try {
@@ -98,10 +103,10 @@ export default function SuppliersPage() {
 
   const columns: Column<Supplier>[] = [
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
-    { key: "code", header: "លេខកូដ", render: (r) => r.supplierCode },
+    { key: "code", header: tc("code"), render: (r) => r.supplierCode },
     {
       key: "company",
-      header: "ឈ្មោះក្រុមហ៊ុន · Company",
+      header: t("company"),
       render: (r) => (
         <>
           <div className="font-medium">{r.company}</div>
@@ -109,17 +114,17 @@ export default function SuppliersPage() {
         </>
       ),
     },
-    { key: "contact", header: "អ្នកទំនាក់ទំនង", hideOnMobile: true, render: (r) => r.contactPerson ?? "—" },
-    { key: "phone", header: "ទូរស័ព្ទ", hideOnMobile: true, render: (r) => r.phone ?? "—" },
+    { key: "contact", header: t("contactPerson"), hideOnMobile: true, render: (r) => r.contactPerson ?? "—" },
+    { key: "phone", header: tc("phone"), hideOnMobile: true, render: (r) => r.phone ?? "—" },
     {
       key: "type",
-      header: "ប្រភេទទំនិញ",
+      header: t("supplyType"),
       hideOnMobile: true,
-      render: (r) => (r.supplyType ? SUPPLY_TYPE_LABEL[r.supplyType] ?? r.supplyType : "—"),
+      render: (r) => (r.supplyType ? tType(r.supplyType) : "—"),
     },
     {
       key: "balance",
-      header: "ជំពាក់ · Payable",
+      header: t("payable"),
       numeric: true,
       render: (r) =>
         r.balance > 0 ? (
@@ -130,9 +135,9 @@ export default function SuppliersPage() {
     },
     {
       key: "status",
-      header: "ស្ថានភាព",
+      header: tc("status"),
       render: (r) => (
-        <Badge tone={toneForRecordStatus(r.status)}>{RECORD_STATUS_LABEL[r.status]}</Badge>
+        <Badge tone={toneForRecordStatus(r.status)}>{tStatus(r.status)}</Badge>
       ),
     },
     {
@@ -165,7 +170,7 @@ export default function SuppliersPage() {
       <Toolbar
         left={
           <Button variant="admin" onClick={openNew}>
-            ➕ បន្ថែមអ្នកផ្គត់ផ្គង់ · Add supplier
+            ➕ {t("addSupplier")}
           </Button>
         }
         right={<SearchBar value={search} onChange={(v) => { setSearch(v); setPage(0); }} />}
@@ -176,7 +181,7 @@ export default function SuppliersPage() {
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
         loading={list.isLoading}
-        emptyMessage="គ្មានអ្នកផ្គត់ផ្គង់ · No suppliers found"
+        emptyMessage={t("noSuppliers")}
       />
 
       {list.data && (
@@ -192,14 +197,14 @@ export default function SuppliersPage() {
       <Modal
         open={editingId !== undefined}
         onClose={() => setEditingId(undefined)}
-        title="ព័ត៌មានអ្នកផ្គត់ផ្គង់ · Supplier Details"
+        title={t("details")}
         footer={
           <>
             <Button variant="light" onClick={() => setEditingId(undefined)}>
-              បិទ · Close
+              {tc("close")}
             </Button>
             <Button variant="admin" onClick={submit} loading={save.isPending}>
-              រក្សាទុក · Save
+              {tc("save")}
             </Button>
           </>
         }
@@ -207,7 +212,7 @@ export default function SuppliersPage() {
         {formError && <Alert tone="error">{formError}</Alert>}
 
         <FieldRow>
-          <Field label="លេខកូដ · Code" htmlFor="v-code" required>
+          <Field label={tc("code")} htmlFor="v-code" required>
             <Input
               id="v-code"
               value={draft.supplierCode}
@@ -215,23 +220,23 @@ export default function SuppliersPage() {
               placeholder="SUP-006"
             />
           </Field>
-          <Field label="ប្រភេទទំនិញ · Supply type" htmlFor="v-type">
+          <Field label={t("supplyType")} htmlFor="v-type">
             <Select
               id="v-type"
               value={draft.supplyType ?? ""}
               onChange={(e) => set("supplyType", e.target.value || undefined)}
             >
               <option value="">—</option>
-              {SUPPLY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {SUPPLY_TYPE_LABEL[t]}
+              {SUPPLY_TYPES.map((ty) => (
+                <option key={ty} value={ty}>
+                  {tType(ty)}
                 </option>
               ))}
             </Select>
           </Field>
         </FieldRow>
 
-        <Field label="ឈ្មោះក្រុមហ៊ុន · Company" htmlFor="v-company" required>
+        <Field label={t("company")} htmlFor="v-company" required>
           <Input
             id="v-company"
             value={draft.company}
@@ -240,14 +245,14 @@ export default function SuppliersPage() {
         </Field>
 
         <FieldRow>
-          <Field label="អ្នកទំនាក់ទំនង · Contact person" htmlFor="v-contact">
+          <Field label={t("contactPerson")} htmlFor="v-contact">
             <Input
               id="v-contact"
               value={draft.contactPerson ?? ""}
               onChange={(e) => set("contactPerson", e.target.value || undefined)}
             />
           </Field>
-          <Field label="ទូរស័ព្ទ · Phone" htmlFor="v-phone">
+          <Field label={tc("phone")} htmlFor="v-phone">
             <Input
               id="v-phone"
               value={draft.phone ?? ""}
@@ -257,7 +262,7 @@ export default function SuppliersPage() {
         </FieldRow>
 
         <FieldRow>
-          <Field label="អ៊ីមែល · Email" htmlFor="v-email">
+          <Field label={tc("email")} htmlFor="v-email">
             <Input
               id="v-email"
               type="email"
@@ -265,19 +270,19 @@ export default function SuppliersPage() {
               onChange={(e) => set("email", e.target.value || undefined)}
             />
           </Field>
-          <Field label="ស្ថានភាព · Status" htmlFor="v-status">
+          <Field label={tc("status")} htmlFor="v-status">
             <Select
               id="v-status"
               value={draft.status}
               onChange={(e) => set("status", e.target.value as RecordStatus)}
             >
-              <option value="ACTIVE">{RECORD_STATUS_LABEL.ACTIVE}</option>
-              <option value="INACTIVE">{RECORD_STATUS_LABEL.INACTIVE}</option>
+              <option value="ACTIVE">{tStatus("ACTIVE")}</option>
+              <option value="INACTIVE">{tStatus("INACTIVE")}</option>
             </Select>
           </Field>
         </FieldRow>
 
-        <Field label="អាសយដ្ឋាន · Address" htmlFor="v-addr">
+        <Field label={tc("address")} htmlFor="v-addr">
           <Textarea
             id="v-addr"
             value={draft.address ?? ""}
@@ -287,7 +292,7 @@ export default function SuppliersPage() {
 
         {editingId !== null && (
           <p className="text-xs text-ink-500">
-            ជំពាក់ · Payable is not editable here — it moves only when goods are received.
+            {t("balanceReadOnly")}
           </p>
         )}
       </Modal>
@@ -297,11 +302,11 @@ export default function SuppliersPage() {
         busy={remove.isPending}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
-        message={`តើអ្នកប្រាកដជាចង់លុប "${deleting?.company ?? ""}" មែនទេ?`}
+        message={tc("confirmDeleteMessage", { name: deleting?.company ?? "" })}
         detail={
           deleting && deleting.balance > 0
-            ? `${formatUsd(deleting.balance)} is still outstanding, so the server will refuse.`
-            : "This action cannot be undone."
+            ? t("outstanding", { amount: formatUsd(deleting.balance) })
+            : tc("cannotUndo")
         }
       />
     </>

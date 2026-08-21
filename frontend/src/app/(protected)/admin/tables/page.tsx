@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Badge,
@@ -25,8 +26,6 @@ import { useQuery } from "@tanstack/react-query";
 import { get } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import {
-  TABLE_STATUS_LABEL,
-  ZONE_LABEL,
   type DiningTable,
   type TableRequest,
   type TableStatus,
@@ -38,6 +37,11 @@ const EMPTY: TableRequest = { name: "", seats: 4, zone: "INDOOR", status: "FREE"
 const SIZE = 50;
 
 export default function TablesPage() {
+  const t = useTranslations("tables");
+  const tc = useTranslations("common");
+  const tZone = useTranslations("enum.zone");
+  const tStatus = useTranslations("enum.tableStatus");
+
   const [search, setSearch] = useState("");
   const [zone, setZone] = useState<TableZone | "">("");
   const [page, setPage] = useState(0);
@@ -75,11 +79,11 @@ export default function TablesPage() {
 
   async function submit() {
     if (!draft.name.trim()) {
-      setFormError("ឈ្មោះតុត្រូវការ · Table name is required");
+      setFormError(t("tableName") + " — " + tc("required"));
       return;
     }
     if (!draft.seats || draft.seats < 1) {
-      setFormError("ចំនួនអាសនៈត្រូវយ៉ាងតិច ១ · Seats must be at least 1");
+      setFormError(t("seats") + " ≥ 1");
       return;
     }
     try {
@@ -103,17 +107,17 @@ export default function TablesPage() {
 
   const columns: Column<DiningTable>[] = [
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
-    { key: "name", header: "ឈ្មោះតុ · Table name", render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "seats", header: "អាសនៈ · Seats", numeric: true, render: (r) => r.seats },
-    { key: "zone", header: "ទីតាំង · Zone", hideOnMobile: true, render: (r) => ZONE_LABEL[r.zone] },
+    { key: "name", header: t("tableName"), render: (r) => <span className="font-medium">{r.name}</span> },
+    { key: "seats", header: t("seats"), numeric: true, render: (r) => r.seats },
+    { key: "zone", header: t("zone"), hideOnMobile: true, render: (r) => tZone(r.zone) },
     {
       key: "status",
-      header: "ស្ថានភាព · Status",
-      render: (r) => <Badge tone={toneForTableStatus(r.status)}>{TABLE_STATUS_LABEL[r.status]}</Badge>,
+      header: tc("status"),
+      render: (r) => <Badge tone={toneForTableStatus(r.status)}>{tStatus(r.status)}</Badge>,
     },
     {
       key: "actions",
-      header: "សកម្មភាព",
+      header: tc("actions"),
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
@@ -139,17 +143,17 @@ export default function TablesPage() {
       {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
 
       <StatGrid>
-        <StatTile tone={1} label="ទំនេរ · Free" value={summary.data?.free ?? "—"} />
-        <StatTile tone={4} label="កំពុងប្រើ · Occupied" value={summary.data?.occupied ?? "—"} />
-        <StatTile tone={2} label="កក់ទុក · Reserved" value={summary.data?.reserved ?? "—"} />
-        <StatTile tone={3} label="សរុប · Total" value={summary.data?.total ?? "—"} />
+        <StatTile tone={1} label={tStatus("FREE")} value={summary.data?.free ?? "—"} />
+        <StatTile tone={4} label={tStatus("OCCUPIED")} value={summary.data?.occupied ?? "—"} />
+        <StatTile tone={2} label={tStatus("RESERVED")} value={summary.data?.reserved ?? "—"} />
+        <StatTile tone={3} label={tc("total")} value={summary.data?.total ?? "—"} />
       </StatGrid>
 
       <Toolbar
         left={
           <>
             <Button variant="admin" onClick={openNew}>
-              ➕ បន្ថែមតុ · Add table
+              ➕ {t("addTable")}
             </Button>
             <Select
               className="w-auto"
@@ -159,10 +163,10 @@ export default function TablesPage() {
                 setPage(0);
               }}
             >
-              <option value="">ទីតាំងទាំងអស់ · All zones</option>
-              <option value="INDOOR">{ZONE_LABEL.INDOOR}</option>
-              <option value="OUTDOOR">{ZONE_LABEL.OUTDOOR}</option>
-              <option value="VIP">{ZONE_LABEL.VIP}</option>
+              <option value="">{t("allZones")}</option>
+              <option value="INDOOR">{tZone("INDOOR")}</option>
+              <option value="OUTDOOR">{tZone("OUTDOOR")}</option>
+              <option value="VIP">{tZone("VIP")}</option>
             </Select>
           </>
         }
@@ -173,7 +177,7 @@ export default function TablesPage() {
               setSearch(v);
               setPage(0);
             }}
-            placeholder="ស្វែងរកតុ · Search table"
+            placeholder={t("searchTable")}
           />
         }
       />
@@ -183,7 +187,7 @@ export default function TablesPage() {
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
         loading={list.isLoading}
-        emptyMessage="គ្មានតុ · No tables found"
+        emptyMessage={t("noTables")}
       />
 
       {list.data && (
@@ -199,15 +203,15 @@ export default function TablesPage() {
       <Modal
         open={editingId !== undefined}
         onClose={() => setEditingId(undefined)}
-        title="ព័ត៌មានតុ · Table Details"
+        title={t("details")}
         width="sm"
         footer={
           <>
             <Button variant="light" onClick={() => setEditingId(undefined)}>
-              បិទ · Close
+              {tc("close")}
             </Button>
             <Button variant="admin" onClick={submit} loading={save.isPending}>
-              រក្សាទុក · Save
+              {tc("save")}
             </Button>
           </>
         }
@@ -215,7 +219,7 @@ export default function TablesPage() {
         {formError && <Alert tone="error">{formError}</Alert>}
 
         <FieldRow>
-          <Field label="ឈ្មោះតុ · Table name" htmlFor="t-name" required>
+          <Field label={t("tableName")} htmlFor="t-name" required>
             <Input
               id="t-name"
               value={draft.name}
@@ -223,7 +227,7 @@ export default function TablesPage() {
               placeholder="Table 13"
             />
           </Field>
-          <Field label="អាសនៈ · Seats" htmlFor="t-seats" required>
+          <Field label={t("seats")} htmlFor="t-seats" required>
             <Input
               id="t-seats"
               type="number"
@@ -235,26 +239,26 @@ export default function TablesPage() {
         </FieldRow>
 
         <FieldRow>
-          <Field label="ទីតាំង · Zone" htmlFor="t-zone">
+          <Field label={t("zone")} htmlFor="t-zone">
             <Select
               id="t-zone"
               value={draft.zone}
               onChange={(e) => setDraft({ ...draft, zone: e.target.value as TableZone })}
             >
-              <option value="INDOOR">{ZONE_LABEL.INDOOR}</option>
-              <option value="OUTDOOR">{ZONE_LABEL.OUTDOOR}</option>
-              <option value="VIP">{ZONE_LABEL.VIP}</option>
+              <option value="INDOOR">{tZone("INDOOR")}</option>
+              <option value="OUTDOOR">{tZone("OUTDOOR")}</option>
+              <option value="VIP">{tZone("VIP")}</option>
             </Select>
           </Field>
-          <Field label="ស្ថានភាព · Status" htmlFor="t-status">
+          <Field label={tc("status")} htmlFor="t-status">
             <Select
               id="t-status"
               value={draft.status}
               onChange={(e) => setDraft({ ...draft, status: e.target.value as TableStatus })}
             >
-              <option value="FREE">{TABLE_STATUS_LABEL.FREE}</option>
-              <option value="OCCUPIED">{TABLE_STATUS_LABEL.OCCUPIED}</option>
-              <option value="RESERVED">{TABLE_STATUS_LABEL.RESERVED}</option>
+              <option value="FREE">{tStatus("FREE")}</option>
+              <option value="OCCUPIED">{tStatus("OCCUPIED")}</option>
+              <option value="RESERVED">{tStatus("RESERVED")}</option>
             </Select>
           </Field>
         </FieldRow>
@@ -265,11 +269,11 @@ export default function TablesPage() {
         busy={remove.isPending}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
-        message={`តើអ្នកប្រាកដជាចង់លុប "${deleting?.name ?? ""}" មែនទេ?`}
+        message={tc("confirmDeleteMessage", { name: deleting?.name ?? "" })}
         detail={
           deleting?.status === "OCCUPIED"
-            ? "This table is occupied, so the server will refuse to delete it."
-            : "This action cannot be undone."
+            ? t("occupiedWarning")
+            : tc("cannotUndo")
         }
       />
     </>

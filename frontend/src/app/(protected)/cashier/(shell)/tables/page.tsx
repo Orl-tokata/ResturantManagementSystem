@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
@@ -14,8 +15,6 @@ import {
 import { get, type PageResponse } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import {
-  TABLE_STATUS_LABEL,
-  ZONE_LABEL,
   type DiningTable,
   type TableSummary,
 } from "@/types/master";
@@ -27,6 +26,11 @@ const CARD_TONE: Record<DiningTable["status"], string> = {
 };
 
 export default function CashierTablesPage() {
+  const t = useTranslations("tables");
+  const tc = useTranslations("common");
+  const tZone = useTranslations("enum.zone");
+  const tStatus = useTranslations("enum.tableStatus");
+
   const router = useRouter();
   const [search, setSearch] = useState("");
 
@@ -45,49 +49,49 @@ export default function CashierTablesPage() {
       {tables.isError && <Alert tone="error">{errorMessage(tables.error)}</Alert>}
 
       <StatGrid>
-        <StatTile tone={1} label="ទំនេរ · Free" value={summary.data?.free ?? "—"} />
-        <StatTile tone={4} label="កំពុងប្រើ · Occupied" value={summary.data?.occupied ?? "—"} />
-        <StatTile tone={2} label="កក់ទុក · Reserved" value={summary.data?.reserved ?? "—"} />
-        <StatTile tone={3} label="សរុប · Total" value={summary.data?.total ?? "—"} />
+        <StatTile tone={1} label={tStatus("FREE")} value={summary.data?.free ?? "—"} />
+        <StatTile tone={4} label={tStatus("OCCUPIED")} value={summary.data?.occupied ?? "—"} />
+        <StatTile tone={2} label={tStatus("RESERVED")} value={summary.data?.reserved ?? "—"} />
+        <StatTile tone={3} label={tc("total")} value={summary.data?.total ?? "—"} />
       </StatGrid>
 
       <Toolbar
         left={
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Badge tone="ok">{TABLE_STATUS_LABEL.FREE}</Badge>
-            <Badge tone="dead">{TABLE_STATUS_LABEL.OCCUPIED}</Badge>
-            <Badge tone="warn">{TABLE_STATUS_LABEL.RESERVED}</Badge>
+            <Badge tone="ok">{tStatus("FREE")}</Badge>
+            <Badge tone="dead">{tStatus("OCCUPIED")}</Badge>
+            <Badge tone="warn">{tStatus("RESERVED")}</Badge>
           </div>
         }
         right={
-          <SearchBar value={search} onChange={setSearch} placeholder="ស្វែងរកតុ · Search table" />
+          <SearchBar value={search} onChange={setSearch} placeholder={t("searchTable")} />
         }
       />
 
-      {tables.isLoading && <p className="py-10 text-center text-sm text-ink-500">កំពុងផ្ទុក…</p>}
+      {tables.isLoading && <p className="py-10 text-center text-sm text-ink-500">{tc("loading")}</p>}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3.5">
-        {tables.data?.content.map((t) => (
+        {tables.data?.content.map((tbl) => (
           <button
-            key={t.id}
+            key={tbl.id}
             type="button"
-            onClick={() => router.push(`/cashier/order?tableId=${t.id}`)}
+            onClick={() => router.push(`/cashier/order?tableId=${tbl.id}`)}
             className="overflow-hidden rounded-md border border-ink-300 bg-white text-left transition hover:-translate-y-0.5 hover:shadow-md"
           >
-            <div className={`px-3 py-2 text-sm font-semibold text-white ${CARD_TONE[t.status]}`}>
-              {t.name}
+            <div className={`px-3 py-2 text-sm font-semibold text-white ${CARD_TONE[tbl.status]}`}>
+              {tbl.name}
             </div>
             <div className="px-3 py-2.5 text-xs leading-6 text-ink-700">
-              <div>អាសនៈ · {t.seats} seats</div>
-              <div>{ZONE_LABEL[t.zone]}</div>
-              <div className="text-ink-500">{TABLE_STATUS_LABEL[t.status]}</div>
+              <div>{t("seats")}: {tbl.seats}</div>
+              <div>{tZone(tbl.zone)}</div>
+              <div className="text-ink-500">{tStatus(tbl.status)}</div>
             </div>
           </button>
         ))}
       </div>
 
       {tables.data?.content.length === 0 && (
-        <p className="py-10 text-center text-sm text-ink-500">គ្មានតុ · No tables found</p>
+        <p className="py-10 text-center text-sm text-ink-500">{t("noTables")}</p>
       )}
     </>
   );
