@@ -10,7 +10,7 @@ export {
   type BadgeTone,
 } from "./Badge";
 export { Button } from "./Button";
-export { Card, PageTitle, Toolbar } from "./Card";
+export { Card, ListPage, PageTitle, Toolbar } from "./Card";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { DataTable, type Column } from "./DataTable";
 export { EmptyState } from "./EmptyState";

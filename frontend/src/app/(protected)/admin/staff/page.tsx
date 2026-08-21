@@ -11,6 +11,7 @@ import {
   Field,
   FieldRow,
   Input,
+  ListPage,
   Modal,
   Pagination,
   SearchBar,
@@ -195,7 +196,7 @@ export default function StaffPage() {
   ];
 
   return (
-    <>
+    <ListPage>
       {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
@@ -235,6 +236,7 @@ export default function StaffPage() {
       />
 
       <DataTable
+        fill
         columns={columns}
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
@@ -242,15 +244,17 @@ export default function StaffPage() {
         emptyMessage={t("noStaff")}
       />
 
-      {list.data && (
-        <Pagination
-          page={list.data.page}
-          totalPages={list.data.totalPages}
-          totalElements={list.data.totalElements}
-          size={list.data.size}
-          onPage={setPage}
-        />
-      )}
+      {/* Always rendered, never conditional: on this layout the table
+          claims whatever height the pager does not use, so a pager that
+          appears when the data arrives would resize the table under the
+          reader. */}
+      <Pagination
+        page={list.data?.page ?? 0}
+        totalPages={list.data?.totalPages ?? 0}
+        totalElements={list.data?.totalElements ?? 0}
+        size={list.data?.size ?? SIZE}
+        onPage={setPage}
+      />
 
       <Modal
         open={editingId !== undefined}
@@ -408,6 +412,6 @@ export default function StaffPage() {
         onConfirm={confirmDelete}
         message={tc("confirmDeleteMessage", { name: deleting?.staffName ?? "" })}
       />
-    </>
+    </ListPage>
   );
 }

@@ -10,13 +10,14 @@ import {
   Button,
   DataTable,
   Input,
+  ListPage,
   Pagination,
   SearchBar,
   Select,
   StatGrid,
   StatTile,
-  Toolbar,
   toneForOrderStatus,
+  Toolbar,
   type Column,
 } from "@/components/ui";
 import { get, type PageResponse } from "@/lib/api";
@@ -156,7 +157,7 @@ export default function CashierHistoryPage() {
   ];
 
   return (
-    <>
+    <ListPage>
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>
@@ -254,6 +255,7 @@ export default function CashierHistoryPage() {
       </div>
 
       <DataTable
+        fill
         columns={columns}
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
@@ -261,15 +263,17 @@ export default function CashierHistoryPage() {
         emptyMessage={t("noOrders")}
       />
 
-      {list.data && (
-        <Pagination
-          page={list.data.page}
-          totalPages={list.data.totalPages}
-          totalElements={list.data.totalElements}
-          size={list.data.size}
-          onPage={setPage}
-        />
-      )}
-    </>
+      {/* Always rendered, never conditional: on this layout the table
+          claims whatever height the pager does not use, so a pager that
+          appears when the data arrives would resize the table under the
+          reader. */}
+      <Pagination
+        page={list.data?.page ?? 0}
+        totalPages={list.data?.totalPages ?? 0}
+        totalElements={list.data?.totalElements ?? 0}
+        size={list.data?.size ?? SIZE}
+        onPage={setPage}
+      />
+    </ListPage>
   );
 }

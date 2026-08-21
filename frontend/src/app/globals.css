@@ -71,12 +71,12 @@
   --background: #f4f5f7;
   --foreground: #22262b;
 
-  /* How tall a scrolling table body may get before its rows scroll under the
-     pinned header. Subtracts the shell chrome (topbar, status bar, page
-     padding) plus room for a card title, a search row and the pager, so the
-     table is the only thing that scrolls on a normal screen. Pages override
-     it per table with DataTable's maxHeight prop. */
-  --table-scroll-max: clamp(200px, calc(100vh - 340px), 620px);
+  /* Fixed height for a scrolling table body that is not filling a column.
+     Used by the tables that sit beside other content — dashboard panels,
+     report summaries, dialogs — where there is no leftover height to claim.
+     A full-page list should use DataTable's fill prop inside ListPage
+     instead, which measures the space rather than guessing at it. */
+  --table-scroll-height: clamp(200px, calc(100vh - 360px), 560px);
 }
 
 html,

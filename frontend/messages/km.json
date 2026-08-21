@@ -75,7 +75,8 @@
     "thirtyDays": "៣០ ថ្ងៃ",
     "thisMonth": "ខែនេះ",
     "allTime": "ទាំងអស់",
-    "notPermitted": "គ្មានសិទ្ធិ"
+    "notPermitted": "គ្មានសិទ្ធិ",
+    "showingNone": "បង្ហាញ ០ ក្នុង ០"
   },
   "auth": {
     "loginTitle": "កម្មវិធីគ្រប់គ្រងហាងបាយ",

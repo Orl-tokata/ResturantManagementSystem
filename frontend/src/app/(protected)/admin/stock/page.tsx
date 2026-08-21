@@ -12,6 +12,7 @@ import {
   Field,
   FieldRow,
   Input,
+  ListPage,
   Meter,
   Modal,
   Pagination,
@@ -210,7 +211,7 @@ export default function StockPage() {
   ];
 
   return (
-    <>
+    <ListPage>
       {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
@@ -242,6 +243,7 @@ export default function StockPage() {
       />
 
       <DataTable
+        fill
         columns={columns}
         rows={rows}
         rowKey={(r) => r.id}
@@ -249,15 +251,18 @@ export default function StockPage() {
         emptyMessage={t("noItems")}
       />
 
-      {list.data && !onlyLow && (
-        <Pagination
-          page={list.data.page}
-          totalPages={list.data.totalPages}
-          totalElements={list.data.totalElements}
-          size={list.data.size}
-          onPage={setPage}
-        />
-      )}
+      {/* The low-stock tab filters the rows already loaded rather than
+          asking the server, so it is a single page whose count is what the
+          filter left. Reporting the unfiltered total there would be a lie,
+          and reporting zero — which it briefly did — a worse one. The row is
+          always rendered so the table above keeps its height either way. */}
+      <Pagination
+        page={onlyLow ? 0 : (list.data?.page ?? 0)}
+        totalPages={onlyLow ? 1 : (list.data?.totalPages ?? 0)}
+        totalElements={onlyLow ? rows.length : (list.data?.totalElements ?? 0)}
+        size={onlyLow ? Math.max(rows.length, 1) : (list.data?.size ?? SIZE)}
+        onPage={setPage}
+      />
 
       {/* ---- create / edit ---- */}
       <Modal
@@ -407,7 +412,7 @@ export default function StockPage() {
       >
         <DataTable
           columns={movementColumns}
-          maxHeight="46vh"
+          height="46vh"
           rows={movements.data?.content ?? []}
           rowKey={(m) => m.id}
           loading={movements.isLoading}
@@ -423,6 +428,6 @@ export default function StockPage() {
         message={tc("confirmDeleteMessage", { name: deleting?.name ?? "" })}
         detail={t("deleteNote")}
       />
-    </>
+    </ListPage>
   );
 }

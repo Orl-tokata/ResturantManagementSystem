@@ -224,7 +224,7 @@ export default function ReportsPage() {
         <Card title={t("revenueByCategory")} padded={false}>
           <DataTable
             columns={categoryColumns}
-            maxHeight="320px"
+            height="320px"
             rows={r?.byCategory ?? []}
             rowKey={(c) => c.name}
             loading={report.isLoading}
@@ -236,7 +236,7 @@ export default function ReportsPage() {
         <Card title={t("bestSellers")} padded={false}>
           <DataTable
             columns={sellerColumns}
-            maxHeight="320px"
+            height="320px"
             rows={r?.bestSellers ?? []}
             rowKey={(s) => s.productName}
             loading={report.isLoading}

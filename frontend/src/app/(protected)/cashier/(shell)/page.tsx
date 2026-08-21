@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   DataTable,
+  ListPage,
   StatGrid,
   StatTile,
   toneForOrderStatus,
@@ -74,7 +75,7 @@ export default function CashierHomePage() {
   ];
 
   return (
-    <>
+    <ListPage>
       {summary.isError && <Alert tone="error">{apiError(summary.error)}</Alert>}
 
       <StatGrid>
@@ -118,8 +119,10 @@ export default function CashierHomePage() {
           </Link>
         }
         padded={false}
+        fill
       >
         <DataTable
+          fill
           columns={columns}
           rows={recent.data?.content ?? []}
           rowKey={(r) => r.id}
@@ -127,6 +130,6 @@ export default function CashierHomePage() {
           emptyMessage={t("noOrders")}
         />
       </Card>
-    </>
+    </ListPage>
   );
 }

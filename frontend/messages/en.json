@@ -75,7 +75,8 @@
     "thirtyDays": "30 days",
     "thisMonth": "This month",
     "allTime": "All time",
-    "notPermitted": "Not permitted"
+    "notPermitted": "Not permitted",
+    "showingNone": "Showing 0 of 0"
   },
   "auth": {
     "loginTitle": "Restaurant Management System",

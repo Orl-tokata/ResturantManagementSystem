@@ -23,7 +23,8 @@ export function DataTable<T>({
   loading = false,
   emptyMessage,
   onRowClick,
-  maxHeight = "var(--table-scroll-max)",
+  height = "var(--table-scroll-height)",
+  fill = false,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -33,11 +34,24 @@ export function DataTable<T>({
   emptyMessage?: ReactNode;
   onRowClick?: (row: T) => void;
   /**
-   * How tall the scrolling body may get before rows scroll under the pinned
-   * header. Any CSS length; the default adapts to the viewport. Pass "none"
-   * for a table that must never clip — a receipt being printed, say.
+   * A fixed height for the scrolling body, not a maximum.
+   *
+   * <p>Fixed on purpose: with a maximum, the box is as tall as its contents
+   * until it hits the cap, so the same screen is one height with three rows,
+   * another with twelve, and a third while loading. Everything below it — the
+   * pager, the buttons — moves as data arrives. A fixed height costs some empty
+   * space on a short list and buys a layout that never jumps.
+   *
+   * <p>Pass "none" for a table that must never clip, such as a receipt being
+   * printed. Ignored when `fill` is set.
    */
-  maxHeight?: string;
+  height?: string;
+  /**
+   * Grow to fill the remaining height of a flex-column parent, instead of
+   * taking a fixed height. Use inside {@link ListPage}, which is what gives
+   * the column a definite height to divide up.
+   */
+  fill?: boolean;
 }) {
   const t = useTranslations("common");
   function alignment(c: Column<T>) {
@@ -47,12 +61,25 @@ export function DataTable<T>({
   }
 
   return (
-    // The wrapper is the scroller, so the header can stick to its top edge.
-    // Capping the height here rather than on the table keeps the border and
-    // rounded corners around the whole box, scrollbar included.
+    // The wrapper is the scroller, so the header can stick to its top edge, and
+    // the height lives here rather than on the table so the border and rounded
+    // corners stay around the whole box, scrollbar included.
+    //
+    // The floor in the fill case is deliberate. Dividing up the leftover
+    // height works until there is barely any: on a phone the stat tiles stack
+    // four deep and the toolbar wraps, which left the table 129px — two rows —
+    // and would leave nothing at all on a shorter screen. Below the floor the
+    // column overflows and the page scrolls, which is the right trade on a
+    // phone, where scrolling the page is expected anyway.
+    //
+    // It is a min-height rather than min-h-0 because a scroll container already
+    // has an automatic minimum size of zero, so there is nothing to unset.
     <div
-      className="table-scroll overflow-auto rounded-md border border-ink-200 bg-white"
-      style={maxHeight === "none" ? undefined : { maxHeight }}
+      className={[
+        "table-scroll overflow-auto rounded-md border border-ink-200 bg-white",
+        fill ? "min-h-55 flex-1" : "",
+      ].join(" ")}
+      style={fill || height === "none" ? undefined : { height }}
     >
       <table className="w-full border-collapse">
         <thead>
