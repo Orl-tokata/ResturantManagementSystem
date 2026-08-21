@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import {
@@ -28,7 +29,6 @@ import { del, get, post, type PageResponse } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { formatUsd } from "@/lib/format";
 import {
-  PURCHASE_STATUS_LABEL,
   type Purchase,
   type PurchaseDraftLine,
   type PurchaseStatus,
@@ -51,6 +51,10 @@ function todayIso() {
 }
 
 export default function PurchasePage() {
+  const t = useTranslations("purchase");
+  const tc = useTranslations("common");
+  const tSt = useTranslations("enum.purchaseStatus");
+
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -166,7 +170,7 @@ export default function PurchasePage() {
     const item = stockItems.data?.content.find((s) => s.id === pickItemId);
     if (!item) return;
     if (lines.some((l) => l.stockItemId === item.id)) {
-      setFormError("ទំនិញនេះមានក្នុងបញ្ជីរួចហើយ · That item is already on the order");
+      setFormError(t("alreadyOnOrder"));
       return;
     }
     setFormError(null);
@@ -192,15 +196,15 @@ export default function PurchasePage() {
 
   function submit() {
     if (supplierId === "") {
-      setFormError("សូមជ្រើសរើសអ្នកផ្គត់ផ្គង់ · Choose a supplier");
+      setFormError(t("errSupplier"));
       return;
     }
     if (lines.length === 0) {
-      setFormError("សូមបន្ថែមទំនិញយ៉ាងតិចមួយ · Add at least one item");
+      setFormError(t("errItems"));
       return;
     }
     if (lines.some((l) => l.qty <= 0)) {
-      setFormError("ចំនួនត្រូវធំជាងសូន្យ · Every quantity must be greater than zero");
+      setFormError(t("errQty"));
       return;
     }
     create.mutate();
@@ -210,15 +214,15 @@ export default function PurchasePage() {
 
   const columns: Column<Purchase>[] = [
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
-    { key: "po", header: "លេខវិក្កយបត្រ · PO", render: (r) => <span className="font-medium">{r.poNo}</span> },
-    { key: "supplier", header: "អ្នកផ្គត់ផ្គង់ · Supplier", render: (r) => r.supplierName ?? "—" },
-    { key: "date", header: "កាលបរិច្ឆេទ", hideOnMobile: true, render: (r) => r.purchaseDate },
-    { key: "lines", header: "ចំនួនមុខ", numeric: true, render: (r) => r.items.length },
-    { key: "total", header: "សរុប · Total", numeric: true, render: (r) => formatUsd(r.total) },
+    { key: "po", header: t("poNo"), render: (r) => <span className="font-medium">{r.poNo}</span> },
+    { key: "supplier", header: t("supplier"), render: (r) => r.supplierName ?? "—" },
+    { key: "date", header: tc("date"), hideOnMobile: true, render: (r) => r.purchaseDate },
+    { key: "lines", header: tc("qty"), numeric: true, render: (r) => r.items.length },
+    { key: "total", header: tc("total"), numeric: true, render: (r) => formatUsd(r.total) },
     {
       key: "status",
-      header: "ស្ថានភាព",
-      render: (r) => <Badge tone={STATUS_TONE[r.status]}>{PURCHASE_STATUS_LABEL[r.status]}</Badge>,
+      header: tc("status"),
+      render: (r) => <Badge tone={STATUS_TONE[r.status]}>{tSt(r.status)}</Badge>,
     },
     {
       key: "actions",
@@ -232,10 +236,10 @@ export default function PurchasePage() {
           {r.status === "PENDING" && (
             <>
               <Button size="sm" variant="admin" onClick={() => setConfirmReceive(r)}>
-                📥 ទទួល
+                📥 {t("receive")}
               </Button>
               <Button size="sm" variant="light" onClick={() => setConfirmCancel(r)}>
-                បោះបង់
+                {tc("cancel")}
               </Button>
             </>
           )}
@@ -260,17 +264,17 @@ export default function PurchasePage() {
       {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
 
       <StatGrid>
-        <StatTile tone={1} label="ការទិញខែនេះ · This month" value={formatUsd(summary.data?.monthTotal ?? 0)} />
-        <StatTile tone={3} label="វិក្កយបត្រ · Orders" value={summary.data?.orderCount ?? "—"} />
-        <StatTile tone={2} label="រង់ចាំទទួល · Pending" value={summary.data?.pendingCount ?? "—"} />
-        <StatTile tone={4} label="ជំពាក់សរុប · Payable" value={formatUsd(summary.data?.payable ?? 0)} />
+        <StatTile tone={1} label={t("monthTotal")} value={formatUsd(summary.data?.monthTotal ?? 0)} />
+        <StatTile tone={3} label={t("orders")} value={summary.data?.orderCount ?? "—"} />
+        <StatTile tone={2} label={t("pending")} value={summary.data?.pendingCount ?? "—"} />
+        <StatTile tone={4} label={t("totalPayable")} value={formatUsd(summary.data?.payable ?? 0)} />
       </StatGrid>
 
       <Toolbar
         left={
           <>
             <Button variant="admin" onClick={openNew}>
-              ➕ ការទិញថ្មី · New purchase
+              ➕ {t("newPurchase")}
             </Button>
             <Select
               className="w-auto"
@@ -281,10 +285,10 @@ export default function PurchasePage() {
               }}
               aria-label="Status"
             >
-              <option value="">ស្ថានភាពទាំងអស់ · All status</option>
-              <option value="PENDING">{PURCHASE_STATUS_LABEL.PENDING}</option>
-              <option value="RECEIVED">{PURCHASE_STATUS_LABEL.RECEIVED}</option>
-              <option value="CANCELLED">{PURCHASE_STATUS_LABEL.CANCELLED}</option>
+              <option value="">{tc("all")}</option>
+              <option value="PENDING">{tSt("PENDING")}</option>
+              <option value="RECEIVED">{tSt("RECEIVED")}</option>
+              <option value="CANCELLED">{tSt("CANCELLED")}</option>
             </Select>
           </>
         }
@@ -295,7 +299,7 @@ export default function PurchasePage() {
               setSearch(v);
               setPage(0);
             }}
-            placeholder="លេខវិក្កយបត្រ · PO number"
+            placeholder={t("poNo")}
           />
         }
       />
@@ -305,7 +309,7 @@ export default function PurchasePage() {
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
         loading={list.isLoading}
-        emptyMessage="គ្មានវិក្កយបត្រទិញចូល · No purchase orders yet"
+        emptyMessage={t("noPurchases")}
       />
 
       {list.data && (
@@ -322,15 +326,15 @@ export default function PurchasePage() {
       <Modal
         open={creating}
         onClose={() => setCreating(false)}
-        title="វិក្កយបត្រទិញចូល · Purchase Order"
+        title={t("title")}
         width="lg"
         footer={
           <>
             <Button variant="light" onClick={() => setCreating(false)}>
-              បិទ · Close
+              {tc("close")}
             </Button>
             <Button variant="admin" onClick={submit} loading={create.isPending}>
-              រក្សាទុក · Save as pending
+              {t("saveAsPending")}
             </Button>
           </>
         }
@@ -338,14 +342,14 @@ export default function PurchasePage() {
         {formError && <Alert tone="error">{formError}</Alert>}
 
         <FieldRow>
-          <Field label="អ្នកផ្គត់ផ្គង់ · Supplier" htmlFor="p-supplier" required>
+          <Field label={t("supplier")} htmlFor="p-supplier" required>
             <Select
               id="p-supplier"
               value={supplierId}
               onChange={(e) => setSupplierId(e.target.value === "" ? "" : Number(e.target.value))}
             >
               <option value="" disabled>
-                — ជ្រើសរើស · Choose —
+                — {tc("all")} —
               </option>
               {suppliers.data?.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -354,20 +358,20 @@ export default function PurchasePage() {
               ))}
             </Select>
           </Field>
-          <Field label="កាលបរិច្ឆេទ · Date" htmlFor="p-date" required>
+          <Field label={tc("date")} htmlFor="p-date" required>
             <Input id="p-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
         </FieldRow>
 
         <div className="mb-2 flex flex-wrap items-end gap-2">
           <div className="min-w-52 flex-1">
-            <Field label="បន្ថែមទំនិញ · Add item" htmlFor="p-pick">
+            <Field label={t("addItem")} htmlFor="p-pick">
               <Select
                 id="p-pick"
                 value={pickItemId}
                 onChange={(e) => setPickItemId(e.target.value === "" ? "" : Number(e.target.value))}
               >
-                <option value="">— ជ្រើសរើសទំនិញ —</option>
+                <option value="">— {t("chooseItem")} —</option>
                 {stockItems.data?.content.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.unit})
@@ -378,7 +382,7 @@ export default function PurchasePage() {
           </div>
           <div className="mb-3.5">
             <Button variant="light" onClick={addLine} disabled={pickItemId === ""}>
-              ➕ បន្ថែម
+              ➕ {tc("add")}
             </Button>
           </div>
         </div>
@@ -387,10 +391,10 @@ export default function PurchasePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-ink-100 text-xs uppercase text-ink-500">
-                <th className="px-3 py-2 text-left">ទំនិញ · Item</th>
-                <th className="px-3 py-2 text-right">ចំនួន</th>
-                <th className="px-3 py-2 text-right">ថ្លៃដើម</th>
-                <th className="px-3 py-2 text-right">សរុប</th>
+                <th className="px-3 py-2 text-left">{tc("name")}</th>
+                <th className="px-3 py-2 text-right">{tc("qty")}</th>
+                <th className="px-3 py-2 text-right">{tc("cost")}</th>
+                <th className="px-3 py-2 text-right">{tc("total")}</th>
                 <th className="w-10" />
               </tr>
             </thead>
@@ -398,7 +402,7 @@ export default function PurchasePage() {
               {lines.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-3 py-6 text-center text-ink-500">
-                    មិនទាន់មានទំនិញ · No items yet
+                    {t("noItemsYet")}
                   </td>
                 </tr>
               )}
@@ -449,16 +453,16 @@ export default function PurchasePage() {
         </div>
 
         <div className="mb-3 flex justify-between text-lg font-bold">
-          <span>សរុប · Total</span>
+          <span>{tc("total")}</span>
           <span className="font-[family-name:var(--font-num)]">{formatUsd(draftTotal)}</span>
         </div>
 
-        <Field label="ចំណាំ · Note" htmlFor="p-note">
+        <Field label={tc("note")} htmlFor="p-note">
           <Textarea id="p-note" value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
 
         <p className="text-xs text-ink-500">
-          Saved as <b>PENDING</b>. Stock only changes when you press Receive.
+          {t("pendingNote")}
         </p>
       </Modal>
 
@@ -470,18 +474,18 @@ export default function PurchasePage() {
         width="lg"
         footer={
           <Button variant="light" onClick={() => setViewing(null)}>
-            បិទ · Close
+            {tc("close")}
           </Button>
         }
       >
         <div className="mb-3 flex flex-wrap gap-4 text-sm">
           <span>
-            កាលបរិច្ឆេទ · <b>{viewing?.purchaseDate}</b>
+            {tc("date")} · <b>{viewing?.purchaseDate}</b>
           </span>
           <span>
-            ស្ថានភាព ·{" "}
+            {tc("status")} ·{" "}
             {viewing && (
-              <Badge tone={STATUS_TONE[viewing.status]}>{PURCHASE_STATUS_LABEL[viewing.status]}</Badge>
+              <Badge tone={STATUS_TONE[viewing.status]}>{tSt(viewing.status)}</Badge>
             )}
           </span>
         </div>
@@ -490,10 +494,10 @@ export default function PurchasePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-ink-100 text-xs uppercase text-ink-500">
-                <th className="px-3 py-2 text-left">ទំនិញ</th>
-                <th className="px-3 py-2 text-right">ចំនួន</th>
-                <th className="px-3 py-2 text-right">ថ្លៃដើម</th>
-                <th className="px-3 py-2 text-right">សរុប</th>
+                <th className="px-3 py-2 text-left">{tc("name")}</th>
+                <th className="px-3 py-2 text-right">{tc("qty")}</th>
+                <th className="px-3 py-2 text-right">{tc("cost")}</th>
+                <th className="px-3 py-2 text-right">{tc("total")}</th>
               </tr>
             </thead>
             <tbody>
@@ -510,7 +514,7 @@ export default function PurchasePage() {
         </div>
 
         <div className="mt-3 flex justify-between text-lg font-bold">
-          <span>សរុប · Total</span>
+          <span>{tc("total")}</span>
           <span className="font-[family-name:var(--font-num)]">{formatUsd(viewing?.total ?? 0)}</span>
         </div>
 
@@ -523,12 +527,12 @@ export default function PurchasePage() {
         destructive={false}
         onClose={() => setConfirmReceive(null)}
         onConfirm={() => confirmReceive && receive.mutate(confirmReceive.id)}
-        title="ទទួលទំនិញ · Receive goods"
-        message={`ទទួលទំនិញពី ${confirmReceive?.poNo ?? ""} មែនទេ?`}
+        title={t("receiveTitle")}
+        message={t("receiveConfirm", { poNo: confirmReceive?.poNo ?? "" })}
         detail={`This adds every line to stock, records a movement for each, and puts ${formatUsd(
           confirmReceive?.total ?? 0,
         )} on the supplier's payable. It cannot be undone.`}
-        confirmLabel="បាទ/ចាស ទទួល · Yes, receive"
+        confirmLabel={t("yesReceive")}
       />
 
       <ConfirmDialog
@@ -536,10 +540,10 @@ export default function PurchasePage() {
         busy={cancel.isPending}
         onClose={() => setConfirmCancel(null)}
         onConfirm={() => confirmCancel && cancel.mutate(confirmCancel.id)}
-        title="បោះបង់វិក្កយបត្រ · Cancel order"
-        message={`បោះបង់ ${confirmCancel?.poNo ?? ""} មែនទេ?`}
-        detail="Only a pending order can be cancelled."
-        confirmLabel="បាទ/ចាស បោះបង់ · Yes, cancel"
+        title={t("cancelTitle")}
+        message={t("cancelConfirm", { poNo: confirmCancel?.poNo ?? "" })}
+        detail={t("cancelDetail")}
+        confirmLabel={t("yesCancel")}
       />
     </>
   );

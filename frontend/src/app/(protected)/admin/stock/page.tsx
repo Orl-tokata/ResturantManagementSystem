@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -27,7 +28,6 @@ import { get, post, type PageResponse } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { formatUsd } from "@/lib/format";
 import {
-  MOVEMENT_LABEL,
   type AdjustRequest,
   type Movement,
   type MovementType,
@@ -41,6 +41,10 @@ const EMPTY_ADJUST: AdjustRequest = { type: "IN", qty: 1, reason: "" };
 const SIZE = 20;
 
 export default function StockPage() {
+  const t = useTranslations("stock");
+  const tc = useTranslations("common");
+  const tMv = useTranslations("enum.movementType");
+
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -103,7 +107,7 @@ export default function StockPage() {
 
   async function submit() {
     if (!draft.name.trim() || !draft.unit.trim()) {
-      setFormError("ឈ្មោះ និងឯកតាត្រូវការ · Name and unit are required");
+      setFormError(t("errRequired"));
       return;
     }
     try {
@@ -128,28 +132,28 @@ export default function StockPage() {
 
   const columns: Column<StockItem>[] = [
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
-    { key: "name", header: "ទំនិញ · Item", render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "unit", header: "ឯកតា", hideOnMobile: true, render: (r) => r.unit },
-    { key: "qty", header: "ស្តុក", numeric: true, render: (r) => r.qty },
-    { key: "min", header: "អប្បបរមា", numeric: true, hideOnMobile: true, render: (r) => r.minQty },
+    { key: "name", header: tc("name"), render: (r) => <span className="font-medium">{r.name}</span> },
+    { key: "unit", header: tc("unit"), hideOnMobile: true, render: (r) => r.unit },
+    { key: "qty", header: t("stock"), numeric: true, render: (r) => r.qty },
+    { key: "min", header: t("minQty"), numeric: true, hideOnMobile: true, render: (r) => r.minQty },
     {
       key: "level",
-      header: "កម្រិត · Level",
+      header: t("level"),
       width: "130px",
       render: (r) => <Meter value={r.qty} max={r.minQty} />,
     },
-    { key: "cost", header: "ថ្លៃដើម", numeric: true, hideOnMobile: true, render: (r) => formatUsd(r.unitCost) },
-    { key: "value", header: "តម្លៃ", numeric: true, hideOnMobile: true, render: (r) => formatUsd(r.value) },
+    { key: "cost", header: tc("cost"), numeric: true, hideOnMobile: true, render: (r) => formatUsd(r.unitCost) },
+    { key: "value", header: t("value"), numeric: true, hideOnMobile: true, render: (r) => formatUsd(r.value) },
     {
       key: "status",
-      header: "ស្ថានភាព",
+      header: tc("status"),
       render: (r) =>
         r.outOfStock ? (
-          <Badge tone="dead">អស់ស្តុក</Badge>
+          <Badge tone="dead">{t("outOfStock")}</Badge>
         ) : r.lowStock ? (
-          <Badge tone="warn">ជិតអស់</Badge>
+          <Badge tone="warn">{t("lowStock")}</Badge>
         ) : (
-          <Badge tone="ok">គ្រប់គ្រាន់</Badge>
+          <Badge tone="ok">{t("healthy")}</Badge>
         ),
     },
     {
@@ -167,7 +171,7 @@ export default function StockPage() {
               setAdjustError(null);
             }}
           >
-            📦 កែតម្រូវ
+            📦 {t("adjust")}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setHistoryFor(r)} aria-label="History">
             🕘
@@ -186,21 +190,21 @@ export default function StockPage() {
   const movementColumns: Column<Movement>[] = [
     {
       key: "when",
-      header: "កាលបរិច្ឆេទ",
+      header: tc("date"),
       render: (m) => new Date(m.createdAt).toLocaleString(),
     },
     {
       key: "type",
-      header: "ប្រភេទ",
+      header: t("movementType"),
       render: (m) => (
         <Badge tone={m.type === "IN" ? "ok" : m.type === "OUT" ? "info" : "dead"}>
-          {MOVEMENT_LABEL[m.type]}
+          {tMv(m.type)}
         </Badge>
       ),
     },
-    { key: "qty", header: "ចំនួន", numeric: true, render: (m) => m.qty },
-    { key: "by", header: "អ្នកធ្វើ", render: (m) => m.createdBy ?? "—" },
-    { key: "why", header: "មូលហេតុ", render: (m) => m.reason ?? "—" },
+    { key: "qty", header: tc("qty"), numeric: true, render: (m) => m.qty },
+    { key: "by", header: t("movementBy"), render: (m) => m.createdBy ?? "—" },
+    { key: "why", header: tc("reason"), render: (m) => m.reason ?? "—" },
   ];
 
   return (
@@ -209,17 +213,17 @@ export default function StockPage() {
       {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
 
       <StatGrid>
-        <StatTile tone={1} label="ទំនិញសរុប · Total items" value={summary.data?.totalItems ?? "—"} />
-        <StatTile tone={3} label="តម្លៃស្តុក · Stock value" value={formatUsd(summary.data?.stockValue ?? 0)} />
-        <StatTile tone={2} label="ជិតអស់ · Low stock" value={summary.data?.lowStockCount ?? "—"} />
-        <StatTile tone={4} label="អស់ស្តុក · Out of stock" value={summary.data?.outOfStockCount ?? "—"} />
+        <StatTile tone={1} label={t("totalItems")} value={summary.data?.totalItems ?? "—"} />
+        <StatTile tone={3} label={t("stockValue")} value={formatUsd(summary.data?.stockValue ?? 0)} />
+        <StatTile tone={2} label={t("lowStock")} value={summary.data?.lowStockCount ?? "—"} />
+        <StatTile tone={4} label={t("outOfStock")} value={summary.data?.outOfStockCount ?? "—"} />
       </StatGrid>
 
       <Toolbar
         left={
           <>
             <Button variant="admin" onClick={openNew}>
-              ➕ បន្ថែមទំនិញ · Add item
+              ➕ {t("addItem")}
             </Button>
             <Select
               className="w-auto"
@@ -227,8 +231,8 @@ export default function StockPage() {
               onChange={(e) => setOnlyLow(e.target.value === "low")}
               aria-label="Filter"
             >
-              <option value="all">ទាំងអស់ · All</option>
-              <option value="low">ជិតអស់ · Low stock only</option>
+              <option value="all">{tc("all")}</option>
+              <option value="low">{t("lowStockOnly")}</option>
             </Select>
           </>
         }
@@ -240,7 +244,7 @@ export default function StockPage() {
         rows={rows}
         rowKey={(r) => r.id}
         loading={list.isLoading}
-        emptyMessage="គ្មានទំនិញ · No stock items found"
+        emptyMessage={t("noItems")}
       />
 
       {list.data && !onlyLow && (
@@ -257,15 +261,15 @@ export default function StockPage() {
       <Modal
         open={editingId !== undefined}
         onClose={() => setEditingId(undefined)}
-        title="ព័ត៌មានទំនិញ · Stock Item"
+        title={t("details")}
         width="sm"
         footer={
           <>
             <Button variant="light" onClick={() => setEditingId(undefined)}>
-              បិទ · Close
+              {tc("close")}
             </Button>
             <Button variant="admin" onClick={submit} loading={save.isPending}>
-              រក្សាទុក · Save
+              {tc("save")}
             </Button>
           </>
         }
@@ -273,19 +277,19 @@ export default function StockPage() {
         {formError && <Alert tone="error">{formError}</Alert>}
 
         <FieldRow>
-          <Field label="ឈ្មោះ · Name" htmlFor="k-name" required>
+          <Field label={tc("name")} htmlFor="k-name" required>
             <Input id="k-name" value={draft.name} onChange={(e) => set("name", e.target.value)} placeholder="សាច់គោ" />
           </Field>
-          <Field label="ឯកតា · Unit" htmlFor="k-unit" required>
+          <Field label={tc("unit")} htmlFor="k-unit" required>
             <Input id="k-unit" value={draft.unit} onChange={(e) => set("unit", e.target.value)} placeholder="គីឡូក្រាម" />
           </Field>
         </FieldRow>
 
         <FieldRow>
           <Field
-            label="ស្តុក · Quantity"
+            label={tc("qty")}
             htmlFor="k-qty"
-            hint={editingId !== null ? "Editing this directly leaves no audit trail — prefer Adjust" : undefined}
+            hint={editingId !== null ? t("qtyDirectHint") : undefined}
           >
             <Input
               id="k-qty"
@@ -296,7 +300,7 @@ export default function StockPage() {
               onChange={(e) => set("qty", Number(e.target.value))}
             />
           </Field>
-          <Field label="កម្រិតអប្បបរមា · Minimum" htmlFor="k-min">
+          <Field label={t("minQty")} htmlFor="k-min">
             <Input
               id="k-min"
               type="number"
@@ -308,7 +312,7 @@ export default function StockPage() {
           </Field>
         </FieldRow>
 
-        <Field label="ថ្លៃដើមក្នុងឯកតា · Unit cost ($)" htmlFor="k-cost">
+        <Field label={t("unitCost")} htmlFor="k-cost">
           <Input
             id="k-cost"
             type="number"
@@ -324,15 +328,15 @@ export default function StockPage() {
       <Modal
         open={adjusting !== null}
         onClose={() => setAdjusting(null)}
-        title={`កែតម្រូវស្តុក · Adjust — ${adjusting?.name ?? ""}`}
+        title={`${t("adjustTitle")} — ${adjusting?.name ?? ""}`}
         width="sm"
         footer={
           <>
             <Button variant="light" onClick={() => setAdjusting(null)}>
-              បិទ · Close
+              {tc("close")}
             </Button>
             <Button variant="admin" onClick={() => adjust.mutate()} loading={adjust.isPending}>
-              រក្សាទុក · Save
+              {tc("save")}
             </Button>
           </>
         }
@@ -340,14 +344,14 @@ export default function StockPage() {
         {adjustError && <Alert tone="error">{adjustError}</Alert>}
 
         <p className="mb-3 text-sm text-ink-500">
-          ស្តុកបច្ចុប្បន្ន · Currently{" "}
+          {t("currently")}{" "}
           <b className="text-ink-900">
             {adjusting?.qty} {adjusting?.unit}
           </b>
         </p>
 
         <FieldRow>
-          <Field label="ប្រភេទ · Type" htmlFor="a-type" required>
+          <Field label={t("movementType")} htmlFor="a-type" required>
             <Select
               id="a-type"
               value={adjustDraft.type}
@@ -355,16 +359,16 @@ export default function StockPage() {
                 setAdjustDraft({ ...adjustDraft, type: e.target.value as MovementType })
               }
             >
-              <option value="IN">{MOVEMENT_LABEL.IN}</option>
-              <option value="OUT">{MOVEMENT_LABEL.OUT}</option>
-              <option value="DAMAGED">{MOVEMENT_LABEL.DAMAGED}</option>
+              <option value="IN">{tMv("IN")}</option>
+              <option value="OUT">{tMv("OUT")}</option>
+              <option value="DAMAGED">{tMv("DAMAGED")}</option>
             </Select>
           </Field>
           <Field
-            label="ចំនួន · Quantity"
+            label={tc("qty")}
             htmlFor="a-qty"
             required
-            hint="Always positive — the type decides the direction"
+            hint={t("qtyHint")}
           >
             <Input
               id="a-qty"
@@ -377,7 +381,7 @@ export default function StockPage() {
           </Field>
         </FieldRow>
 
-        <Field label="មូលហេតុ · Reason" htmlFor="a-why">
+        <Field label={tc("reason")} htmlFor="a-why">
           <Textarea
             id="a-why"
             value={adjustDraft.reason ?? ""}
@@ -391,11 +395,11 @@ export default function StockPage() {
       <Modal
         open={historyFor !== null}
         onClose={() => setHistoryFor(null)}
-        title={`ប្រវត្តិស្តុក · Movements — ${historyFor?.name ?? ""}`}
+        title={`${t("movements")} — ${historyFor?.name ?? ""}`}
         width="lg"
         footer={
           <Button variant="light" onClick={() => setHistoryFor(null)}>
-            បិទ · Close
+            {tc("close")}
           </Button>
         }
       >
@@ -404,7 +408,7 @@ export default function StockPage() {
           rows={movements.data?.content ?? []}
           rowKey={(m) => m.id}
           loading={movements.isLoading}
-          emptyMessage="គ្មានចលនាស្តុក · No movements recorded yet"
+          emptyMessage={t("noMovements")}
         />
       </Modal>
 
@@ -413,8 +417,8 @@ export default function StockPage() {
         busy={remove.isPending}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
-        message={`តើអ្នកប្រាកដជាចង់លុប "${deleting?.name ?? ""}" មែនទេ?`}
-        detail="An item with movement history cannot be deleted — set its quantity to zero instead."
+        message={tc("confirmDeleteMessage", { name: deleting?.name ?? "" })}
+        detail={t("deleteNote")}
       />
     </>
   );
