@@ -1,24 +1,29 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button, Card, EmptyState } from "@/components/ui";
 
 /**
  * The sidebar links here, but a receipt only exists for a specific bill.
  * Point the user at the two ways to reach one rather than showing an empty slip.
  */
-export default function CashierReceiptPage() {
+export default async function CashierReceiptPage() {
+  const t = await getTranslations("receipt");
+  const tH = await getTranslations("history");
+  const tCh = await getTranslations("cashierHome");
+
   return (
     <Card>
       <EmptyState
         icon="🧾"
-        title="ជ្រើសរើសវិក្កយបត្រជាមុនសិន"
-        description="A receipt belongs to a specific bill. Pick one from the order history, or take a new order and settle it."
+        title={t("pickFirst")}
+        description={t("pickHelp")}
         action={
           <div className="flex flex-wrap justify-center gap-2">
             <Link href="/cashier/history">
-              <Button variant="primary">🕘 ប្រវត្តិបញ្ជាទិញ · Order history</Button>
+              <Button variant="primary">🕘 {tH("title")}</Button>
             </Link>
             <Link href="/cashier/tables">
-              <Button variant="accent">🛒 បញ្ជាទិញថ្មី · New order</Button>
+              <Button variant="accent">🛒 {tCh("newOrder")}</Button>
             </Link>
           </div>
         }

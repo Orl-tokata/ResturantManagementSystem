@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Printer, ShoppingCart } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Alert, Button } from "@/components/ui";
 import { get } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
@@ -11,9 +12,15 @@ import { errorMessage } from "@/lib/errors";
 // figure the customer actually paid, which the server stored on the order — so
 // totalKhr is printed as-is rather than recomputed.
 import { formatUsd } from "@/lib/format";
-import { PAYMENT_LABEL, type Receipt } from "@/types/order";
+import type { Receipt } from "@/types/order";
 
 export default function ReceiptPage() {
+  const t = useTranslations("receipt");
+  const tc = useTranslations("common");
+  const tH = useTranslations("history");
+  const tCh = useTranslations("cashierHome");
+  const tPay = useTranslations("enum.paymentMethod");
+
   const { id } = useParams<{ id: string }>();
 
   const receipt = useQuery({
@@ -23,7 +30,7 @@ export default function ReceiptPage() {
   });
 
   if (receipt.isLoading) {
-    return <p className="text-sm text-ink-500">កំពុងផ្ទុក… · Loading</p>;
+    return <p className="text-sm text-ink-500">{tc("loading")}</p>;
   }
 
   if (receipt.isError || !receipt.data) {
@@ -31,7 +38,7 @@ export default function ReceiptPage() {
       <Alert tone="error">
         {errorMessage(receipt.error, "Could not load the receipt")}{" "}
         <Link href="/cashier/history" className="underline">
-          ប្រវត្តិ · History
+          {tH("title")}
         </Link>
       </Alert>
     );
@@ -45,15 +52,15 @@ export default function ReceiptPage() {
       {/* Toolbar is screen-only; the print stylesheet drops it. */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
         <Link href="/cashier/history">
-          <Button variant="ghost">← ប្រវត្តិ · History</Button>
+          <Button variant="ghost">← {tH("title")}</Button>
         </Link>
         <div className="flex gap-2">
           <Button variant="light" onClick={() => window.print()}>
-            <Printer size={15} /> បោះពុម្ព · Print
+            <Printer size={15} /> {tc("print")}
           </Button>
           <Link href="/cashier/tables">
             <Button variant="accent">
-              <ShoppingCart size={15} /> បញ្ជាទិញថ្មី · New order
+              <ShoppingCart size={15} /> {tCh("newOrder")}
             </Button>
           </Link>
         </div>
@@ -62,7 +69,7 @@ export default function ReceiptPage() {
       {order.status !== "PAID" && (
         <div className="mx-auto mb-3 max-w-85 print:hidden">
           <Alert tone="info">
-            វិក្កយបត្រនេះមិនទាន់បង់ · This bill is {order.status.toLowerCase()}, not paid.
+            {t("notPaid")}
           </Alert>
         </div>
       )}
@@ -78,13 +85,13 @@ export default function ReceiptPage() {
 
         <Dashes />
 
-        <Row label="វិក្កយបត្រ · Invoice" value={order.invoiceNo} />
-        <Row label="តុ · Table" value={order.tableName ?? "—"} />
+        <Row label={t("invoice")} value={order.invoiceNo} />
+        <Row label={t("table")} value={order.tableName ?? "—"} />
         {order.guestCount != null && (
-          <Row label="អតិថិជន · Guests" value={String(order.guestCount)} />
+          <Row label={t("guests")} value={String(order.guestCount)} />
         )}
-        <Row label="អ្នកគិតលុយ · Cashier" value={order.cashierName ?? "—"} />
-        <Row label="កាលបរិច្ឆេទ · Date" value={paidAt} />
+        <Row label={t("cashier")} value={order.cashierName ?? "—"} />
+        <Row label={tc("date")} value={paidAt} />
 
         <Dashes />
 
@@ -107,33 +114,33 @@ export default function ReceiptPage() {
 
         <Dashes />
 
-        <Row label="សរុបរង · Subtotal" value={formatUsd(order.subtotal)} />
+        <Row label={tc("subtotal")} value={formatUsd(order.subtotal)} />
         {order.discount > 0 && (
-          <Row label="បញ្ចុះតម្លៃ · Discount" value={`-${formatUsd(order.discount)}`} />
+          <Row label={tc("discount")} value={`-${formatUsd(order.discount)}`} />
         )}
-        <Row label={`ពន្ធ · VAT ${order.vatRate}%`} value={formatUsd(order.vatAmount)} />
+        <Row label={`${tc("vat")} ${order.vatRate}%`} value={formatUsd(order.vatAmount)} />
         <div className="flex justify-between text-[15px] font-bold">
-          <span>សរុប · TOTAL</span>
+          <span>{t("totalCaps")}</span>
           <span>{formatUsd(order.total)}</span>
         </div>
-        <Row label="រៀល · KHR" value={`${order.totalKhr.toLocaleString()} ៛`} />
+        <Row label={tc("khr")} value={`${order.totalKhr.toLocaleString()} ៛`} />
 
         {order.status === "PAID" && (
           <>
             <Dashes />
             <Row
-              label={order.paymentMethod ? PAYMENT_LABEL[order.paymentMethod] : "—"}
+              label={order.paymentMethod ? tPay(order.paymentMethod) : "—"}
               value={formatUsd(order.amountTendered ?? 0)}
             />
-            <Row label="ប្រាក់អាប់ · Change" value={formatUsd(order.changeAmount ?? 0)} />
+            <Row label={t("change")} value={formatUsd(order.changeAmount ?? 0)} />
           </>
         )}
 
         <Dashes />
 
         <div className="text-center">
-          <div>អរគុណសម្រាប់ការគាំទ្រ!</div>
-          <div>Thank you — please come again</div>
+          <div>{t("thanks")}</div>
+          <div>{t("comeAgain")}</div>
           <div className="mt-2 tracking-[2px]">||||| |||| || ||||| |||</div>
           <div>{order.invoiceNo}</div>
         </div>

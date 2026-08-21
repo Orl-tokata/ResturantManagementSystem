@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Badge,
@@ -22,8 +23,6 @@ import { get, type PageResponse } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { formatUsd } from "@/lib/format";
 import {
-  ORDER_STATUS_LABEL,
-  PAYMENT_LABEL,
   type Order,
   type OrderStatus,
 } from "@/types/order";
@@ -47,6 +46,13 @@ interface Summary {
 }
 
 export default function CashierHistoryPage() {
+  const t = useTranslations("history");
+  const tc = useTranslations("common");
+  const tPos = useTranslations("pos");
+  const tOs = useTranslations("enum.orderStatus");
+  const tPay = useTranslations("enum.paymentMethod");
+  const tCh = useTranslations("cashierHome");
+
   const today = todayIso();
 
   const [from, setFrom] = useState(today);
@@ -89,34 +95,34 @@ export default function CashierHistoryPage() {
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
     {
       key: "invoice",
-      header: "វិក្កយបត្រ · Invoice",
+      header: t("invoice"),
       render: (r) => <span className="font-medium">{r.invoiceNo}</span>,
     },
-    { key: "table", header: "តុ", render: (r) => r.tableName ?? "—" },
+    { key: "table", header: tPos("table"), render: (r) => r.tableName ?? "—" },
     {
       key: "cashier",
-      header: "អ្នកគិតលុយ",
+      header: tPos("cashier"),
       hideOnMobile: true,
       render: (r) => r.cashierName ?? "—",
     },
-    { key: "items", header: "មុខម្ហូប", numeric: true, render: (r) => r.items.length },
-    { key: "total", header: "សរុប · Total", numeric: true, render: (r) => formatUsd(r.total) },
+    { key: "items", header: t("dishes"), numeric: true, render: (r) => r.items.length },
+    { key: "total", header: tc("total"), numeric: true, render: (r) => formatUsd(r.total) },
     {
       key: "method",
-      header: "វិធីបង់",
+      header: t("paymentMethod"),
       hideOnMobile: true,
-      render: (r) => (r.paymentMethod ? PAYMENT_LABEL[r.paymentMethod] : "—"),
+      render: (r) => (r.paymentMethod ? tPay(r.paymentMethod) : "—"),
     },
     {
       key: "status",
-      header: "ស្ថានភាព",
+      header: tc("status"),
       render: (r) => (
-        <Badge tone={toneForOrderStatus(r.status)}>{ORDER_STATUS_LABEL[r.status]}</Badge>
+        <Badge tone={toneForOrderStatus(r.status)}>{tOs(r.status)}</Badge>
       ),
     },
     {
       key: "time",
-      header: "ម៉ោង",
+      header: tc("time"),
       hideOnMobile: true,
       render: (r) =>
         r.createdAt ? new Date(r.createdAt).toLocaleTimeString(undefined, {
@@ -132,13 +138,13 @@ export default function CashierHistoryPage() {
         <div className="flex justify-end gap-1.5">
           <Link href={`/cashier/receipt/${r.id}`}>
             <Button size="sm" variant="ghost">
-              🧾 មើល
+              🧾 {tc("view")}
             </Button>
           </Link>
           {r.status === "OPEN" && (
             <Link href={`/cashier/order?tableId=${r.tableId ?? ""}`}>
               <Button size="sm" variant="accent">
-                បន្ត
+                {tCh("continue")}
               </Button>
             </Link>
           )}
@@ -154,18 +160,18 @@ export default function CashierHistoryPage() {
       <StatGrid>
         <StatTile
           tone={1}
-          label="សរុបការលក់ · Total sales"
+          label={t("totalSales")}
           value={formatUsd(summary.data?.totalSales ?? 0)}
         />
-        <StatTile tone={3} label="បានបង់ · Paid" value={summary.data?.paidCount ?? "—"} />
+        <StatTile tone={3} label={t("paid")} value={summary.data?.paidCount ?? "—"} />
         <StatTile
           tone={2}
-          label="មធ្យម · Average"
+          label={t("average")}
           value={formatUsd(summary.data?.averageSale ?? 0)}
         />
         <StatTile
           tone={4}
-          label="បានលុប · Cancelled"
+          label={t("cancelled")}
           value={summary.data?.cancelledCount ?? "—"}
         />
       </StatGrid>
@@ -203,10 +209,10 @@ export default function CashierHistoryPage() {
               }}
               aria-label="Status"
             >
-              <option value="">ស្ថានភាពទាំងអស់ · All status</option>
-              <option value="PAID">{ORDER_STATUS_LABEL.PAID}</option>
-              <option value="OPEN">{ORDER_STATUS_LABEL.OPEN}</option>
-              <option value="CANCELLED">{ORDER_STATUS_LABEL.CANCELLED}</option>
+              <option value="">{t("allStatus")}</option>
+              <option value="PAID">{tOs("PAID")}</option>
+              <option value="OPEN">{tOs("OPEN")}</option>
+              <option value="CANCELLED">{tOs("CANCELLED")}</option>
             </Select>
           </>
         }
@@ -217,20 +223,20 @@ export default function CashierHistoryPage() {
               setSearch(v);
               setPage(0);
             }}
-            placeholder="លេខវិក្កយបត្រ · Invoice no."
+            placeholder={t("invoiceNo")}
           />
         }
       />
 
       <div className="mb-3.5 flex flex-wrap gap-1.5">
         <Button size="sm" variant="light" onClick={() => resetRange(0)}>
-          ថ្ងៃនេះ · Today
+          {tc("today")}
         </Button>
         <Button size="sm" variant="light" onClick={() => resetRange(6)}>
-          ៧ ថ្ងៃ · 7 days
+          {tc("sevenDays")}
         </Button>
         <Button size="sm" variant="light" onClick={() => resetRange(29)}>
-          ៣០ ថ្ងៃ · 30 days
+          {tc("thirtyDays")}
         </Button>
         <Button
           size="sm"
@@ -241,7 +247,7 @@ export default function CashierHistoryPage() {
             setPage(0);
           }}
         >
-          ទាំងអស់ · All time
+          {tc("allTime")}
         </Button>
       </div>
 
@@ -250,7 +256,7 @@ export default function CashierHistoryPage() {
         rows={list.data?.content ?? []}
         rowKey={(r) => r.id}
         loading={list.isLoading}
-        emptyMessage="គ្មានវិក្កយបត្រក្នុងចន្លោះពេលនេះ · No orders in this range"
+        emptyMessage={t("noOrders")}
       />
 
       {list.data && (

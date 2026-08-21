@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Alert, Button, Card, DataTable, Field, Input, type Column } from "@/components/ui";
 import { get, post } from "@/lib/api";
@@ -10,7 +11,6 @@ import { errorMessage } from "@/lib/errors";
 import { formatKhr, formatUsd } from "@/lib/format";
 import {
   PAYMENT_ICON,
-  PAYMENT_LABEL,
   type Order,
   type OrderItem,
   type PaymentMethod,
@@ -22,6 +22,11 @@ const KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "0", ".", "⌫"];
 function PaymentScreen() {
   const params = useSearchParams();
   const router = useRouter();
+  const t = useTranslations("payment");
+  const tc = useTranslations("common");
+  const tH = useTranslations("history");
+  const tPay = useTranslations("enum.paymentMethod");
+
   const orderId = Number(params.get("orderId") || 0);
 
   const [method, setMethod] = useState<PaymentMethod>("CASH");
@@ -69,18 +74,18 @@ function PaymentScreen() {
     (method !== "CASH" || (tendered !== "" && change >= 0));
 
   const columns: Column<OrderItem>[] = [
-    { key: "name", header: "ទំនិញ · Item", render: (r) => r.productName },
-    { key: "qty", header: "ចំនួន", numeric: true, render: (r) => r.qty },
-    { key: "price", header: "តម្លៃ", numeric: true, render: (r) => formatUsd(r.unitPrice) },
-    { key: "sum", header: "សរុប", numeric: true, render: (r) => formatUsd(r.lineTotal) },
+    { key: "name", header: tc("name"), render: (r) => r.productName },
+    { key: "qty", header: tc("qty"), numeric: true, render: (r) => r.qty },
+    { key: "price", header: tc("price"), numeric: true, render: (r) => formatUsd(r.unitPrice) },
+    { key: "sum", header: tc("total"), numeric: true, render: (r) => formatUsd(r.lineTotal) },
   ];
 
   if (!orderId) {
     return (
       <Alert tone="error">
-        គ្មានវិក្កយបត្រ · No order selected.{" "}
+        {t("noOrder")}{" "}
         <Link href="/cashier/tables" className="underline">
-          ជ្រើសរើសតុ · Pick a table
+          {t("pickTable")}
         </Link>
       </Alert>
     );
@@ -95,8 +100,8 @@ function PaymentScreen() {
       {/* ---- left: what is being paid for ---- */}
       <div className="space-y-4">
         <Card
-          title={`វិក្កយបត្រ ${order.data?.invoiceNo ?? "…"} · ${order.data?.tableName ?? ""}`}
-          action={<span className="text-xs text-ink-500">{order.data?.items.length ?? 0} មុខ</span>}
+          title={`${tH("invoice")} ${order.data?.invoiceNo ?? "…"} · ${order.data?.tableName ?? ""}`}
+          action={<span className="text-xs text-ink-500">{order.data?.items.length ?? 0} {t("items")}</span>}
           padded={false}
         >
           <DataTable
@@ -107,7 +112,7 @@ function PaymentScreen() {
           />
         </Card>
 
-        <Card title="វិធីបង់ប្រាក់ · Payment method">
+        <Card title={t("method")}>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {METHODS.map((m) => (
               <button
@@ -125,7 +130,7 @@ function PaymentScreen() {
                 }`}
               >
                 <span className="text-xl">{PAYMENT_ICON[m]}</span>
-                {PAYMENT_LABEL[m]}
+                {tPay(m)}
               </button>
             ))}
           </div>
@@ -138,41 +143,40 @@ function PaymentScreen() {
 
         {order.data && order.data.status !== "OPEN" && (
           <Alert tone="info">
-            វិក្កយបត្រនេះ {order.data.status === "PAID" ? "បានបង់រួច" : "បានលុប"} · This bill is
-            already {order.data.status.toLowerCase()}.{" "}
+            {order.data.status === "PAID" ? t("alreadyPaid") : t("alreadyCancelled")}{" "}
             <Link href={`/cashier/receipt/${orderId}`} className="underline">
-              មើលវិក្កយបត្រ · View receipt
+              {t("viewReceipt")}
             </Link>
           </Alert>
         )}
 
         <Card>
           <dl className="space-y-1.5 text-sm">
-            <Line label="សរុបរង · Subtotal" value={formatUsd(order.data?.subtotal ?? 0)} />
+            <Line label={tc("subtotal")} value={formatUsd(order.data?.subtotal ?? 0)} />
             {(order.data?.discount ?? 0) > 0 && (
-              <Line label="បញ្ចុះតម្លៃ · Discount" value={`-${formatUsd(order.data!.discount)}`} />
+              <Line label={tc("discount")} value={`-${formatUsd(order.data!.discount)}`} />
             )}
             <Line
-              label={`ពន្ធ · VAT ${order.data?.vatRate ?? 0}%`}
+              label={`${tc("vat")} ${order.data?.vatRate ?? 0}%`}
               value={formatUsd(order.data?.vatAmount ?? 0)}
             />
             <div className="my-2 border-t border-ink-200" />
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold">ត្រូវបង់ · Due</span>
+              <span className="font-semibold">{t("due")}</span>
               <span className="font-[family-name:var(--font-num)] text-2xl font-bold text-danger">
                 {formatUsd(total)}
               </span>
             </div>
-            <Line label="រៀល · KHR" value={formatKhr(total)} muted />
+            <Line label={tc("khr")} value={formatKhr(total)} muted />
           </dl>
 
           {method === "CASH" && (
             <>
               <div className="mt-4">
                 <Field
-                  label="ទឹកប្រាក់ទទួល · Amount tendered"
+                  label={t("tendered")}
                   htmlFor="tendered"
-                  error={shortfall ? "តិចជាងចំនួនត្រូវបង់ · Less than the amount due" : undefined}
+                  error={shortfall ? t("shortfall") : undefined}
                 >
                   <Input
                     id="tendered"
@@ -186,7 +190,7 @@ function PaymentScreen() {
               </div>
 
               <div className="mb-3 flex items-baseline justify-between text-sm">
-                <span>ប្រាក់អាប់ · Change</span>
+                <span>{t("change")}</span>
                 <b
                   className={`font-[family-name:var(--font-num)] text-lg ${
                     change >= 0 ? "text-success" : "text-danger"
@@ -204,7 +208,7 @@ function PaymentScreen() {
                   </Button>
                 ))}
                 <Button size="sm" variant="light" onClick={() => setTendered(total.toFixed(2))}>
-                  ត្រង់ · Exact
+                  {t("exact")}
                 </Button>
               </div>
 
@@ -236,14 +240,14 @@ function PaymentScreen() {
               loading={payment.isPending}
               onClick={() => payment.mutate()}
             >
-              ✔ បញ្ជាក់ការទូទាត់ · Confirm payment
+              ✔ {t("confirm")} payment
             </Button>
             <Button
               variant="ghost"
               block
               onClick={() => router.push(`/cashier/order?tableId=${order.data?.tableId ?? ""}`)}
             >
-              ត្រឡប់ក្រោយ · Back to order
+              {t("backToOrder")}
             </Button>
           </div>
         </Card>
@@ -263,7 +267,7 @@ function Line({ label, value, muted = false }: { label: string; value: string; m
 
 export default function CashierPaymentPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-ink-500">កំពុងផ្ទុក… · Loading</p>}>
+    <Suspense fallback={<p className="text-sm text-ink-500">…</p>}>
       <PaymentScreen />
     </Suspense>
   );

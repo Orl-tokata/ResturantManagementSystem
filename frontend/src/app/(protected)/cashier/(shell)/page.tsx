@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Badge,
@@ -16,10 +17,16 @@ import {
 import { get, type PageResponse } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { formatUsd } from "@/lib/format";
-import { ORDER_STATUS_LABEL, type Order } from "@/types/order";
+import type { Order } from "@/types/order";
 import type { CashierSummary } from "@/types/report";
 
 export default function CashierHomePage() {
+  const t = useTranslations("cashierHome");
+  const tc = useTranslations("common");
+  const tH = useTranslations("history");
+  const tOs = useTranslations("enum.orderStatus");
+  const tPos = useTranslations("pos");
+
   const summary = useQuery({
     queryKey: ["dashboard", "cashier"],
     queryFn: () => get<CashierSummary>("/dashboard/cashier"),
@@ -33,15 +40,15 @@ export default function CashierHomePage() {
   const s = summary.data;
 
   const columns: Column<Order>[] = [
-    { key: "inv", header: "វិក្កយបត្រ", render: (r) => r.invoiceNo },
-    { key: "table", header: "តុ", render: (r) => r.tableName ?? "—" },
-    { key: "items", header: "មុខម្ហូប", numeric: true, render: (r) => r.items.length },
-    { key: "total", header: "សរុប", numeric: true, render: (r) => formatUsd(r.total) },
+    { key: "inv", header: tH("invoice"), render: (r) => r.invoiceNo },
+    { key: "table", header: tPos("table"), render: (r) => r.tableName ?? "—" },
+    { key: "items", header: tH("dishes"), numeric: true, render: (r) => r.items.length },
+    { key: "total", header: tc("total"), numeric: true, render: (r) => formatUsd(r.total) },
     {
       key: "status",
-      header: "ស្ថានភាព",
+      header: tc("status"),
       render: (r) => (
-        <Badge tone={toneForOrderStatus(r.status)}>{ORDER_STATUS_LABEL[r.status]}</Badge>
+        <Badge tone={toneForOrderStatus(r.status)}>{tOs(r.status)}</Badge>
       ),
     },
     {
@@ -52,7 +59,7 @@ export default function CashierHomePage() {
         r.status === "OPEN" ? (
           <Link href={`/cashier/order?tableId=${r.tableId ?? ""}`}>
             <Button size="sm" variant="accent">
-              បន្ត
+              {t("continue")}
             </Button>
           </Link>
         ) : (
@@ -70,42 +77,42 @@ export default function CashierHomePage() {
       {summary.isError && <Alert tone="error">{errorMessage(summary.error)}</Alert>}
 
       <StatGrid>
-        <StatTile tone={1} label="ការលក់ថ្ងៃនេះ · Today's sales" value={formatUsd(s?.todaySales ?? 0)} />
-        <StatTile tone={3} label="វិក្កយបត្រថ្ងៃនេះ · Invoices" value={s?.todayInvoices ?? "—"} />
+        <StatTile tone={1} label={t("todaySales")} value={formatUsd(s?.todaySales ?? 0)} />
+        <StatTile tone={3} label={t("todayInvoices")} value={s?.todayInvoices ?? "—"} />
         <StatTile
           tone={2}
-          label="តុកំពុងប្រើ · Occupied"
+          label={t("occupied")}
           value={s ? `${s.tablesOccupied} / ${s.tablesTotal}` : "—"}
         />
-        <StatTile tone={4} label="វិក្កយបត្រកំពុងបើក · Open bills" value={s?.openBills ?? "—"} />
+        <StatTile tone={4} label={t("openBills")} value={s?.openBills ?? "—"} />
       </StatGrid>
 
-      <h2 className="mb-3 text-xl font-semibold">ចាប់ផ្តើមរហ័ស · Quick actions</h2>
+      <h2 className="mb-3 text-xl font-semibold">{t("quickActions")}</h2>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Link href="/cashier/tables">
           <Button variant="accent" size="lg">
-            🪑 ជ្រើសរើសតុ · Select table
+            🪑 {t("selectTable")}
           </Button>
         </Link>
         <Link href="/cashier/order">
           <Button variant="primary" size="lg">
-            🛒 បញ្ជាទិញថ្មី · New order
+            🛒 {t("newOrder")}
           </Button>
         </Link>
         <Link href="/cashier/history">
           <Button variant="ghost" size="lg">
-            🕘 ប្រវត្តិ · History
+            🕘 {tH("title")}
           </Button>
         </Link>
       </div>
 
       <Card
-        title="បញ្ជាទិញថ្មីៗ · Recent orders"
+        title={t("recentOrders")}
         action={
           <Link href="/cashier/history">
             <Button size="sm" variant="ghost">
-              មើលទាំងអស់ · View all
+              {tc("viewAll")}
             </Button>
           </Link>
         }
@@ -116,7 +123,7 @@ export default function CashierHomePage() {
           rows={recent.data?.content ?? []}
           rowKey={(r) => r.id}
           loading={recent.isLoading}
-          emptyMessage="មិនទាន់មានបញ្ជាទិញ · No orders yet"
+          emptyMessage={t("noOrders")}
         />
       </Card>
     </>

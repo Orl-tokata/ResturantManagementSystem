@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Minus, Plus, Trash2, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { Clock } from "@/components/layout/Clock";
 import { Alert, Button, SearchBar } from "@/components/ui";
 import { get, post, put, type PageResponse } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
+import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import type { Category, Product } from "@/types/master";
@@ -21,6 +23,10 @@ function PosScreen() {
   const { user } = useAuth();
 
   const tableId = Number(params.get("tableId") || 0);
+
+  const t = useTranslations("pos");
+  const tc = useTranslations("common");
+  const locale = useLocale();
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -155,13 +161,10 @@ function PosScreen() {
       <div className="grid min-h-screen place-items-center bg-ink-100 p-6">
         <div className="max-w-md rounded-md border border-ink-200 bg-white p-8 text-center shadow-sm">
           <div className="mb-2 text-4xl">🪑</div>
-          <h1 className="mb-1 text-lg font-bold">ជ្រើសរើសតុជាមុនសិន</h1>
-          <p className="mb-5 text-sm text-ink-500">
-            Choose a table before taking an order.
-          </p>
+          <h1 className="mb-1 text-lg font-bold">{t("pickTableFirst")}</h1>
           <Link href="/cashier/tables">
             <Button variant="accent" size="lg">
-              ជ្រើសរើសតុ · Select a table
+              {t("backToTables")}
             </Button>
           </Link>
         </div>
@@ -185,7 +188,7 @@ function PosScreen() {
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="ស្វែងរកម្ហូប · Search dishes"
+            placeholder={t("searchDishes")}
             className="max-w-64 border-white/25 bg-white/10 text-white [&_input]:text-white [&_input]:placeholder:text-white/60"
           />
         </div>
@@ -220,9 +223,7 @@ function PosScreen() {
               categoryId === null ? "bg-orange-500" : "bg-white/12 hover:bg-white/25"
             }`}
           >
-            ទាំងអស់
-            <br />
-            All
+            {tc("all")}
           </button>
 
           {categories.data?.map((c) => (
@@ -235,7 +236,7 @@ function PosScreen() {
               }`}
             >
               <span className="block text-base">{c.icon}</span>
-              {c.name}
+              {pickName(locale, c.name, c.nameEn)}
             </button>
           ))}
         </div>
@@ -269,7 +270,7 @@ function PosScreen() {
 
           {products.data && products.data.content.length === 0 && (
             <p className="col-span-full py-10 text-center text-sm text-ink-500">
-              គ្មានម្ហូប · No dishes match
+              {t("noDishes")}
             </p>
           )}
         </div>
@@ -277,16 +278,16 @@ function PosScreen() {
         {/* order panel */}
         <div className="flex min-h-0 flex-col border-l border-ink-300 bg-cream-100">
           <div className="flex items-center justify-between bg-navy-800 px-3 py-2 text-sm font-semibold text-white">
-            <span>បញ្ជីបញ្ជាទិញ · Order</span>
+            <span>{t("order")}</span>
             <span className="font-[family-name:var(--font-num)]">{cart.length}</span>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             {cart.length === 0 ? (
               <p className="p-6 text-center text-xs text-ink-500">
-                មិនទាន់មានទំនិញ
+                {t("noItems")}
                 <br />
-                Tap a dish to add it
+                {t("tapToAdd")}
               </p>
             ) : (
               <table className="w-full text-xs">
@@ -343,24 +344,24 @@ function PosScreen() {
           {/* totals */}
           <div className="border-t-2 border-navy-800 bg-[#f7edd8] px-3 py-2.5 text-sm">
             <div className="flex justify-between py-0.5">
-              <span>សរុបរង · Subtotal</span>
+              <span>{tc("subtotal")}</span>
               <b className="font-[family-name:var(--font-num)]">{formatUsd(totals.subtotal)}</b>
             </div>
             <div className="flex justify-between py-0.5">
-              <span>ពន្ធ · VAT {totals.rate}%</span>
+              <span>{tc("vat")} {totals.rate}%</span>
               <b className="font-[family-name:var(--font-num)]">{formatUsd(totals.vat)}</b>
             </div>
             <div className="mt-1 flex justify-between border-t border-ink-400 pt-1.5 text-lg font-bold text-danger">
-              <span>សរុប · Total</span>
+              <span>{tc("total")}</span>
               <span className="font-[family-name:var(--font-num)]">{formatUsd(totals.total)}</span>
             </div>
             <div className="flex justify-between text-xs text-ink-500">
-              <span>រៀល · KHR</span>
+              <span>{tc("khr")}</span>
               <span className="font-[family-name:var(--font-num)]">{formatKhr(totals.total)}</span>
             </div>
             {dirty && (
               <p className="mt-1.5 text-center text-xs font-semibold text-warning">
-                មិនទាន់រក្សាទុក · Unsaved changes
+                {t("unsaved")}
               </p>
             )}
           </div>
@@ -372,7 +373,7 @@ function PosScreen() {
               loading={saveItems.isPending}
               disabled={!order.data || !dirty}
             >
-              💾 រក្សាទុក · Save
+              💾 {tc("save")}
             </Button>
             <Button
               variant="accent"
@@ -380,7 +381,7 @@ function PosScreen() {
               disabled={!order.data || cart.length === 0}
               loading={saveItems.isPending}
             >
-              💵 បង់ប្រាក់ · Pay
+              💵 {t("pay")}
             </Button>
             <Button
               variant="danger"
@@ -389,7 +390,7 @@ function PosScreen() {
               loading={cancelOrder.isPending}
               disabled={!order.data}
             >
-              បោះបង់វិក្កយបត្រ · Cancel bill
+              {t("cancelBill")}
             </Button>
           </div>
         </div>
@@ -397,7 +398,7 @@ function PosScreen() {
 
       {/* ---- bottom bar ---- */}
       <div className="flex shrink-0 items-center justify-between bg-navy-800 px-3.5 py-1.5 text-xs text-white/85">
-        <span>អ្នកគិតលុយ · Cashier: {user?.fullName ?? "—"}</span>
+        <span>{t("cashier")}: {user?.fullName ?? "—"}</span>
         <Clock mode="full" />
       </div>
     </div>
@@ -409,7 +410,7 @@ export default function CashierOrderPage() {
     <Suspense
       fallback={
         <div className="grid min-h-screen place-items-center bg-ink-100 text-sm text-ink-500">
-          កំពុងផ្ទុក… · Loading
+          …
         </div>
       }
     >
