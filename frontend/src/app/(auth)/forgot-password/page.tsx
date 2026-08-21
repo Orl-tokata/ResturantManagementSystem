@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +11,9 @@ import { post } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
+
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,19 +35,15 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthCard icon="🔒" title="ភ្លេចពាក្យសម្ងាត់" subtitle="Forgot your password?">
+    <AuthCard icon="🔒" title={t("forgotTitle")} subtitle={t("forgotSubtitle")}>
       {error && <Alert tone="error">{error}</Alert>}
 
       <p className="mb-4 text-sm leading-relaxed text-white/85">
-        សូមបញ្ចូលអ៊ីមែលរបស់អ្នក។ យើងនឹងផ្ញើលេខកូដបញ្ជាក់ ៦ ខ្ទង់ទៅកាន់អ៊ីមែលនោះ។
-        <br />
-        <span className="text-white/60">
-          Enter your email and we&apos;ll send a 6-digit verification code.
-        </span>
+        {t("forgotHelp")}
       </p>
 
       <form onSubmit={onSubmit} noValidate>
-        <Field label="អ៊ីមែល · Email" htmlFor="email">
+        <Field label={tc("email")} htmlFor="email">
           <Input
             id="email"
             type="email"
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
 
         <div className="flex gap-2.5">
           <Button type="submit" block loading={busy}>
-            ផ្ញើលេខកូដ · Send code
+            {t("sendCode")}
           </Button>
           <Button
             type="button"
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
             block
             onClick={() => router.push("/login")}
           >
-            ត្រឡប់ក្រោយ · Back
+            {tc("back")}
           </Button>
         </div>
       </form>

@@ -10,6 +10,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { useTranslations } from "next-intl";
 import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,9 @@ const LENGTH = 6;
 const RESEND_SECONDS = 60;
 
 function VerifyOtpForm() {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
+
   const router = useRouter();
   const params = useSearchParams();
   const email = params.get("email") ?? "";
@@ -77,7 +81,7 @@ function VerifyOtpForm() {
     setError(null);
     const code = digits.join("");
     if (code.length !== LENGTH) {
-      setError("សូមបញ្ចូលលេខកូដ ៦ ខ្ទង់ · Enter all 6 digits");
+      setError(t("errOtpIncomplete"));
       return;
     }
 
@@ -99,7 +103,7 @@ function VerifyOtpForm() {
       setDigits(Array(LENGTH).fill(""));
       inputs.current[0]?.focus();
       setCountdown(RESEND_SECONDS);
-      setNotice("បានផ្ញើលេខកូដម្តងទៀត · A new code has been sent.");
+      setNotice(t("codeResent"));
     } catch (e) {
       setError(errorMessage(e, "Could not resend the code"));
     }
@@ -108,12 +112,12 @@ function VerifyOtpForm() {
   const masked = email.replace(/^(.).*(@.*)$/, "$1***$2");
 
   return (
-    <AuthCard icon="✉️" title="បញ្ជាក់លេខកូដ" subtitle="Enter verification code">
+    <AuthCard icon="✉️" title={t("otpTitle")} subtitle={t("otpSubtitle")}>
       {error && <Alert tone="error">{error}</Alert>}
       {notice && <Alert tone="success">{notice}</Alert>}
 
       <p className="mb-1 text-center text-sm leading-relaxed text-white/85">
-        យើងបានផ្ញើលេខកូដ ៦ ខ្ទង់ទៅ
+        {t("otpSentTo")}
         <br />
         <b>{masked || "your email"}</b>
       </p>
@@ -141,21 +145,21 @@ function VerifyOtpForm() {
         </div>
 
         <div className="mb-4 text-center text-xs text-white/80">
-          មិនបានទទួលលេខកូដ?{" "}
+          {t("noCode")}{" "}
           {countdown > 0 ? (
             <span className="text-white/50">
-              ផ្ញើម្តងទៀតក្នុង {String(countdown).padStart(2, "0")} វិនាទី
+              {t("resendIn", { seconds: String(countdown).padStart(2, "0") })}
             </span>
           ) : (
             <button type="button" onClick={resend} className="text-teal-100 underline">
-              ផ្ញើម្តងទៀត · Resend
+              {t("resend")}
             </button>
           )}
         </div>
 
         <div className="flex gap-2.5">
           <Button type="submit" block loading={busy}>
-            បញ្ជាក់ · Verify
+            {t("verify")}
           </Button>
           <Button
             type="button"
@@ -163,7 +167,7 @@ function VerifyOtpForm() {
             block
             onClick={() => router.push("/forgot-password")}
           >
-            ត្រឡប់ក្រោយ · Back
+            {tc("back")}
           </Button>
         </div>
       </form>

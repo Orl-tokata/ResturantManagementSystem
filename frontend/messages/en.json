@@ -3,7 +3,6 @@
     "name": "Restaurant Management System",
     "shortName": "Restaurant Manager"
   },
-
   "nav": {
     "dashboard": "Dashboard",
     "products": "Products",
@@ -24,7 +23,6 @@
     "profile": "Profile",
     "logout": "Log out"
   },
-
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -77,7 +75,6 @@
     "thisMonth": "This month",
     "allTime": "All time"
   },
-
   "auth": {
     "loginTitle": "Restaurant Management System",
     "loginSubtitle": "Sign in to continue",
@@ -122,9 +119,14 @@
     "errPasswordMismatch": "Passwords do not match",
     "errNameRequired": "Name is required",
     "errUsernameShort": "At least 3 characters",
-    "errOtpIncomplete": "Enter all 6 digits"
+    "errOtpIncomplete": "Enter all 6 digits",
+    "forgotSubtitle": "Reset your password",
+    "signupSubtitle": "Fill in your details to get started",
+    "otpSubtitle": "Enter the code sent to your email",
+    "resetSubtitle": "Choose a new password",
+    "codeResent": "A new code has been sent",
+    "invalidResetLink": "This link is missing its reset token. Start again from forgot password."
   },
-
   "dashboard": {
     "todaySales": "Today's sales",
     "monthSales": "This month",
@@ -145,7 +147,6 @@
     "stockHealthy": "Everything is above its reorder level",
     "invoices": "invoices"
   },
-
   "cashierHome": {
     "todaySales": "Today's sales",
     "todayInvoices": "Invoices today",
@@ -158,7 +159,6 @@
     "noOrders": "No orders yet",
     "continue": "Continue"
   },
-
   "pos": {
     "title": "Order screen",
     "searchDishes": "Search dishes",
@@ -176,7 +176,6 @@
     "notSelected": "none selected",
     "backToTables": "Back to tables"
   },
-
   "tables": {
     "title": "Table list",
     "selectTitle": "Select a table",
@@ -193,7 +192,6 @@
     "allZones": "All zones",
     "occupiedWarning": "This table is occupied, so the server will refuse."
   },
-
   "payment": {
     "title": "Payment",
     "method": "Payment method",
@@ -211,7 +209,6 @@
     "viewReceipt": "View receipt",
     "items": "items"
   },
-
   "receipt": {
     "title": "Receipt",
     "invoice": "Invoice",
@@ -227,7 +224,6 @@
     "pickHelp": "A receipt belongs to a specific bill. Pick one from the order history, or take a new order and settle it.",
     "orderHistory": "Order history"
   },
-
   "history": {
     "title": "Order history",
     "totalSales": "Total sales",
@@ -241,7 +237,6 @@
     "allStatus": "All statuses",
     "noOrders": "No orders in this range"
   },
-
   "products": {
     "title": "Product list",
     "addProduct": "Add product",
@@ -265,7 +260,6 @@
     "errCategory": "Please choose a category",
     "errPrice": "Price cannot be negative"
   },
-
   "categories": {
     "title": "Category list",
     "addCategory": "Add category",
@@ -278,7 +272,6 @@
     "errName": "Category name is required",
     "inUse": "This category still has {count} product(s), so the server will refuse."
   },
-
   "staff": {
     "title": "Staff list",
     "addStaff": "Add staff",
@@ -296,7 +289,6 @@
     "errCode": "Staff code is required",
     "errName": "Staff name is required"
   },
-
   "suppliers": {
     "title": "Supplier list",
     "addSupplier": "Add supplier",
@@ -310,7 +302,6 @@
     "errRequired": "Code and company are required",
     "outstanding": "{amount} is still outstanding, so the server will refuse."
   },
-
   "purchase": {
     "title": "Purchase orders",
     "newPurchase": "New purchase",
@@ -340,7 +331,6 @@
     "errItems": "Add at least one item",
     "errQty": "Every quantity must be greater than zero"
   },
-
   "stock": {
     "title": "Stock management",
     "addItem": "Add item",
@@ -368,7 +358,6 @@
     "deleteNote": "An item with movement history cannot be deleted — set its quantity to zero instead.",
     "errRequired": "Name and unit are required"
   },
-
   "reports": {
     "title": "Reports",
     "revenue": "Revenue",
@@ -388,7 +377,6 @@
     "categoryNote": "Line totals before VAT, and only for dishes still in the catalog — a deleted product keeps its receipt but drops out of this breakdown.",
     "exportFailed": "Could not export the CSV"
   },
-
   "settings": {
     "title": "System settings",
     "restaurantInfo": "Restaurant information",
@@ -412,7 +400,6 @@
     "saved": "Settings saved",
     "saveFailed": "Could not save the settings"
   },
-
   "profile": {
     "title": "Profile",
     "general": "General information",
@@ -424,25 +411,46 @@
     "saved": "Profile saved",
     "errName": "Name is required"
   },
-
   "enum": {
-    "recordStatus": { "ACTIVE": "Active", "INACTIVE": "Inactive" },
+    "recordStatus": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
     "role": {
       "ADMIN": "Admin",
       "CASHIER": "Cashier",
       "WAITER": "Waiter",
       "CHEF": "Chef"
     },
-    "shift": { "MORNING": "Morning", "EVENING": "Evening", "FULL_TIME": "Full time" },
+    "shift": {
+      "MORNING": "Morning",
+      "EVENING": "Evening",
+      "FULL_TIME": "Full time"
+    },
     "staffStatus": {
       "ACTIVE": "Active",
       "ON_LEAVE": "On leave",
       "RESIGNED": "Resigned"
     },
-    "gender": { "MALE": "Male", "FEMALE": "Female" },
-    "zone": { "INDOOR": "Indoor", "OUTDOOR": "Outdoor", "VIP": "VIP room" },
-    "tableStatus": { "FREE": "Free", "OCCUPIED": "Occupied", "RESERVED": "Reserved" },
-    "orderStatus": { "OPEN": "Open", "PAID": "Paid", "CANCELLED": "Cancelled" },
+    "gender": {
+      "MALE": "Male",
+      "FEMALE": "Female"
+    },
+    "zone": {
+      "INDOOR": "Indoor",
+      "OUTDOOR": "Outdoor",
+      "VIP": "VIP room"
+    },
+    "tableStatus": {
+      "FREE": "Free",
+      "OCCUPIED": "Occupied",
+      "RESERVED": "Reserved"
+    },
+    "orderStatus": {
+      "OPEN": "Open",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    },
     "paymentMethod": {
       "CASH": "Cash",
       "CARD": "Card",
@@ -454,7 +462,11 @@
       "RECEIVED": "Received",
       "CANCELLED": "Cancelled"
     },
-    "movementType": { "IN": "Stock in", "OUT": "Stock out", "DAMAGED": "Damaged" },
+    "movementType": {
+      "IN": "Stock in",
+      "OUT": "Stock out",
+      "DAMAGED": "Damaged"
+    },
     "supplyType": {
       "MEAT": "Meat",
       "VEGETABLE": "Vegetable",
@@ -464,7 +476,6 @@
       "OTHER": "Other"
     }
   },
-
   "weekday": {
     "0": "Sun",
     "1": "Mon",
@@ -474,7 +485,6 @@
     "5": "Fri",
     "6": "Sat"
   },
-
   "error": {
     "unreachable": "Cannot reach the server. Is the backend running on port 8081?",
     "timeout": "The server took too long to respond.",

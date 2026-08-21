@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +14,8 @@ import { errorMessage } from "@/lib/errors";
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 function ResetPasswordForm() {
+  const t = useTranslations("auth");
+
   const router = useRouter();
   const params = useSearchParams();
   const resetToken = params.get("token") ?? "";
@@ -29,10 +32,10 @@ function ResetPasswordForm() {
 
     const errors: Record<string, string> = {};
     if (!PASSWORD_RE.test(password)) {
-      errors.password = "យ៉ាងតិច ៨ តួ មានអក្សរធំ និងលេខ · 8+ chars, one uppercase, one number";
+      errors.password = t("errPasswordWeak");
     }
     if (password !== confirm) {
-      errors.confirm = "ពាក្យសម្ងាត់មិនត្រូវគ្នា · Passwords do not match";
+      errors.confirm = t("errPasswordMismatch");
     }
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
@@ -49,13 +52,12 @@ function ResetPasswordForm() {
 
   if (!resetToken) {
     return (
-      <AuthCard icon="🔑" title="កំណត់ពាក្យសម្ងាត់ថ្មី" subtitle="Set a new password">
+      <AuthCard icon="🔑" title={t("resetTitle")} subtitle={t("resetSubtitle")}>
         <Alert tone="error">
-          តំណភ្ជាប់មិនត្រឹមត្រូវ · This link is missing its reset token. Start again from
-          forgot password.
+          {t("invalidResetLink")}
         </Alert>
         <Link href="/forgot-password">
-          <Button block>ភ្លេចពាក្យសម្ងាត់ · Forgot password</Button>
+          <Button block>{t("forgotTitle")}</Button>
         </Link>
       </AuthCard>
     );
@@ -64,11 +66,11 @@ function ResetPasswordForm() {
   return (
     <AuthCard
       icon="🔑"
-      title="កំណត់ពាក្យសម្ងាត់ថ្មី"
-      subtitle="Set a new password"
+      title={t("resetTitle")}
+      subtitle={t("resetSubtitle")}
       footer={
         <Link href="/login" className="text-teal-100 underline">
-          ត្រឡប់ទៅទំព័រចូល
+          {t("backToLogin")}
         </Link>
       }
     >
@@ -76,7 +78,7 @@ function ResetPasswordForm() {
 
       <form onSubmit={onSubmit} noValidate>
         <Field
-          label="ពាក្យសម្ងាត់ថ្មី · New password"
+          label={t("newPassword")}
           htmlFor="password"
           error={fieldErrors.password}
         >
@@ -90,7 +92,7 @@ function ResetPasswordForm() {
         </Field>
 
         <Field
-          label="បញ្ជាក់ពាក្យសម្ងាត់ · Confirm password"
+          label={t("confirmPassword")}
           htmlFor="confirm"
           error={fieldErrors.confirm}
         >
@@ -104,12 +106,12 @@ function ResetPasswordForm() {
         </Field>
 
         <ul className="mb-4 list-disc pl-5 text-xs leading-7 text-white/75">
-          <li>យ៉ាងតិច ៨ តួអក្សរ · at least 8 characters</li>
-          <li>មានអក្សរធំ និងលេខ · one uppercase letter and one number</li>
+          <li>{t("ruleLength")}</li>
+          <li>{t("ruleUpper")}</li>
         </ul>
 
         <Button type="submit" block size="lg" loading={busy}>
-          រក្សាទុក · Save password
+          {t("savePassword")}
         </Button>
       </form>
     </AuthCard>

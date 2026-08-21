@@ -3,14 +3,17 @@
 import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
 import { Card, Field, Input } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslations } from "next-intl";
 
 export default function AdminChangePasswordPage() {
   const { user } = useAuth();
+  const t = useTranslations("profile");
+  const tA = useTranslations("auth");
 
   return (
     <div className="mx-auto max-w-130">
-      <Card title="ប្តូរពាក្យសម្ងាត់ · Change password">
-        <Field label="ឈ្មោះអ្នកប្រើប្រាស់ · Username" htmlFor="cp-user">
+      <Card title={t("changePassword")}>
+        <Field label={tA("username")} htmlFor="cp-user">
           <Input id="cp-user" value={user?.username ?? ""} readOnly disabled />
         </Field>
 

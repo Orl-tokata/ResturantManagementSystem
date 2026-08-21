@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +13,8 @@ import { errorMessage } from "@/lib/errors";
 import { HOME_BY_ROLE } from "@/types/auth";
 
 function LoginForm() {
+  const t = useTranslations("auth");
+
   const router = useRouter();
   const params = useSearchParams();
   const { login } = useAuth();
@@ -45,26 +48,26 @@ function LoginForm() {
   return (
     <AuthCard
       icon="🍽️"
-      title="កម្មវិធីគ្រប់គ្រងហាងបាយ"
-      subtitle="Restaurant Management System"
+      title={t("loginTitle")}
+      subtitle={t("loginSubtitle")}
       footer={
         <>
-          មិនទាន់មានគណនី?{" "}
+          {t("noAccount")}{" "}
           <Link href="/signup" className="text-teal-100 underline">
-            បង្កើតគណនីថ្មី
+            {t("createAccount")}
           </Link>
         </>
       }
     >
       {reason === "expired" && (
         <Alert tone="info">
-          វគ្គរបស់អ្នកបានផុតកំណត់ · Your session expired. Please sign in again.
+          {t("sessionExpired")}
         </Alert>
       )}
       {error && <Alert tone="error">{error}</Alert>}
 
       <form onSubmit={onSubmit} noValidate>
-        <Field label="ឈ្មោះអ្នកប្រើប្រាស់ · Username" htmlFor="username">
+        <Field label={t("username")} htmlFor="username">
           <Input
             id="username"
             name="username"
@@ -75,7 +78,7 @@ function LoginForm() {
           />
         </Field>
 
-        <Field label="ពាក្យសម្ងាត់ · Password" htmlFor="password">
+        <Field label={t("password")} htmlFor="password">
           <Input
             id="password"
             name="password"
@@ -90,15 +93,15 @@ function LoginForm() {
         <div className="mb-4 flex items-center justify-between text-xs">
           <label className="flex items-center gap-2 text-white/90">
             <input type="checkbox" defaultChecked />
-            ចងចាំខ្ញុំ · Remember me
+            {t("rememberMe")}
           </label>
           <Link href="/forgot-password" className="text-teal-100 underline">
-            ភ្លេចពាក្យសម្ងាត់?
+            {t("forgotPassword")}
           </Link>
         </div>
 
         <Button type="submit" block size="lg" loading={busy}>
-          {busy ? "កំពុងចូល…" : "ចូល · Login"}
+          {busy ? t("loggingIn") : t("login")}
         </Button>
       </form>
     </AuthCard>

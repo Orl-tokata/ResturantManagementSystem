@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +16,10 @@ import type { Role } from "@/types/auth";
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 export default function SignupPage() {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
+  const tRole = useTranslations("enum.role");
+
   const router = useRouter();
   const { register } = useAuth();
 
@@ -37,13 +42,13 @@ export default function SignupPage() {
 
   function validate() {
     const errors: Record<string, string> = {};
-    if (form.fullName.trim().length < 2) errors.fullName = "សូមបញ្ចូលឈ្មោះ · Name is required";
-    if (form.username.trim().length < 3) errors.username = "យ៉ាងតិច ៣ តួអក្សរ · At least 3 characters";
+    if (form.fullName.trim().length < 2) errors.fullName = t("errNameRequired");
+    if (form.username.trim().length < 3) errors.username = t("errUsernameShort");
     if (!PASSWORD_RE.test(form.password)) {
-      errors.password = "យ៉ាងតិច ៨ តួ មានអក្សរធំ និងលេខ · 8+ chars, one uppercase, one number";
+      errors.password = t("errPasswordWeak");
     }
     if (form.password !== form.confirm) {
-      errors.confirm = "ពាក្យសម្ងាត់មិនត្រូវគ្នា · Passwords do not match";
+      errors.confirm = t("errPasswordMismatch");
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -74,14 +79,14 @@ export default function SignupPage() {
   return (
     <AuthCard
       icon="🍽️"
-      title="បង្កើតគណនីថ្មី"
-      subtitle="Create a new account"
+      title={t("signupTitle")}
+      subtitle={t("signupSubtitle")}
       wide
       footer={
         <>
-          មានគណនីរួចហើយ?{" "}
+          {t("haveAccount")}{" "}
           <Link href="/login" className="text-teal-100 underline">
-            ចូលប្រើប្រាស់
+            {t("signIn")}
           </Link>
         </>
       }
@@ -89,7 +94,7 @@ export default function SignupPage() {
       {error && <Alert tone="error">{error}</Alert>}
 
       <form onSubmit={onSubmit} noValidate>
-        <Field label="ឈ្មោះពេញ · Full name" htmlFor="fullName" error={fieldErrors.fullName}>
+        <Field label={t("fullName")} htmlFor="fullName" error={fieldErrors.fullName}>
           <Input
             id="fullName"
             value={form.fullName}
@@ -98,7 +103,7 @@ export default function SignupPage() {
           />
         </Field>
 
-        <Field label="ឈ្មោះអ្នកប្រើប្រាស់ · Username" htmlFor="username" error={fieldErrors.username}>
+        <Field label={t("username")} htmlFor="username" error={fieldErrors.username}>
           <Input
             id="username"
             autoComplete="username"
@@ -109,7 +114,7 @@ export default function SignupPage() {
 
         <div className="flex gap-3.5">
           <div className="flex-1">
-            <Field label="អ៊ីមែល · Email" htmlFor="email">
+            <Field label={tc("email")} htmlFor="email">
               <Input
                 id="email"
                 type="email"
@@ -121,7 +126,7 @@ export default function SignupPage() {
             </Field>
           </div>
           <div className="flex-1">
-            <Field label="ទូរស័ព្ទ · Phone" htmlFor="phone">
+            <Field label={tc("phone")} htmlFor="phone">
               <Input
                 id="phone"
                 value={form.phone}
@@ -132,18 +137,18 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <Field label="តួនាទី · Role" htmlFor="role">
+        <Field label={t("role")} htmlFor="role">
           <Select id="role" value={form.role} onChange={(e) => set("role", e.target.value as Role)}>
-            <option value="CASHIER">អ្នកគិតលុយ · Cashier</option>
-            <option value="WAITER">អ្នករត់តុ · Waiter</option>
-            <option value="CHEF">ចុងភៅ · Chef</option>
-            <option value="ADMIN">អ្នកគ្រប់គ្រង · Admin</option>
+            <option value="CASHIER">{tRole("CASHIER")}</option>
+            <option value="WAITER">{tRole("WAITER")}</option>
+            <option value="CHEF">{tRole("CHEF")}</option>
+            <option value="ADMIN">{tRole("ADMIN")}</option>
           </Select>
         </Field>
 
         <div className="flex gap-3.5">
           <div className="flex-1">
-            <Field label="ពាក្យសម្ងាត់ · Password" htmlFor="password" error={fieldErrors.password}>
+            <Field label={t("password")} htmlFor="password" error={fieldErrors.password}>
               <Input
                 id="password"
                 type="password"
@@ -154,7 +159,7 @@ export default function SignupPage() {
             </Field>
           </div>
           <div className="flex-1">
-            <Field label="បញ្ជាក់ · Confirm" htmlFor="confirm" error={fieldErrors.confirm}>
+            <Field label={t("confirm")} htmlFor="confirm" error={fieldErrors.confirm}>
               <Input
                 id="confirm"
                 type="password"
@@ -167,7 +172,7 @@ export default function SignupPage() {
         </div>
 
         <Button type="submit" block size="lg" loading={busy}>
-          បង្កើតគណនី · Create account
+          {t("createAccount")}
         </Button>
       </form>
     </AuthCard>

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslations } from "next-intl";
 import { HOME_BY_ROLE } from "@/types/auth";
 
 /**
@@ -11,6 +12,7 @@ import { HOME_BY_ROLE } from "@/types/auth";
  */
 export default function RootPage() {
   const { user, status } = useAuth();
+  const tc = useTranslations("common");
   const router = useRouter();
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export default function RootPage() {
     <div className="grid min-h-screen place-items-center bg-teal-800">
       <div className="flex items-center gap-3 text-sm text-white/80">
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
-        កំពុងផ្ទុក… · Loading
+        {tc("loading")}
       </div>
     </div>
   );

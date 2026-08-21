@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -20,14 +21,17 @@ type Settings = Record<string, string>;
 
 /** Toggle keys rendered as switches, in the order the prototype showed them. */
 const TOGGLES: Array<[string, string]> = [
-  ["option.autoPrint", "បោះពុម្ពវិក្កយបត្រស្វ័យប្រវត្តិ · Auto print receipt"],
-  ["option.showKhr", "បង្ហាញតម្លៃជារៀល · Show KHR price"],
-  ["option.lowStockAlert", "ជូនដំណឹងស្តុកជិតអស់ · Low stock alert"],
-  ["option.requireTable", "តម្រូវឲ្យជ្រើសរើសតុ · Require table selection"],
-  ["option.allowDiscount", "អនុញ្ញាតការបញ្ចុះតម្លៃ · Allow discount"],
+  ["option.autoPrint", "autoPrint"],
+  ["option.showKhr", "showKhr"],
+  ["option.lowStockAlert", "lowStockAlert"],
+  ["option.requireTable", "requireTable"],
+  ["option.allowDiscount", "allowDiscount"],
 ];
 
 export default function SettingsPage() {
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
+
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Settings | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
@@ -49,13 +53,13 @@ export default function SettingsPage() {
     mutationFn: (patch: Settings) => put<Settings>("/settings", patch),
     onSuccess: (fresh) => {
       qc.setQueryData(["settings"], fresh);
-      setSaved("បានរក្សាទុក · Settings saved");
+      setSaved(t("saved"));
       setError(null);
       // Totals shown anywhere depend on the VAT and riel rate.
       void qc.invalidateQueries({ queryKey: ["order"] });
     },
     onError: (e) => {
-      setError(errorMessage(e, "Could not save the settings"));
+      setError(errorMessage(e, t("saveFailed")));
       setSaved(null);
     },
   });
@@ -79,7 +83,7 @@ export default function SettingsPage() {
   }
 
   if (settings.isLoading) {
-    return <p className="text-sm text-ink-500">កំពុងផ្ទុក… · Loading</p>;
+    return <p className="text-sm text-ink-500">{tc("loading")}</p>;
   }
 
   if (settings.isError) {
@@ -93,15 +97,15 @@ export default function SettingsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         {/* ---- restaurant identity ---- */}
-        <Card title="ព័ត៌មានហាង · Restaurant information">
-          <Field label="ឈ្មោះហាង · Name (Khmer)" htmlFor="s-name">
+        <Card title={t("restaurantInfo")}>
+          <Field label={t("nameKm")} htmlFor="s-name">
             <Input
               id="s-name"
               value={v("restaurant.name")}
               onChange={(e) => set("restaurant.name", e.target.value)}
             />
           </Field>
-          <Field label="ឈ្មោះជាភាសាអង់គ្លេស · Name (English)" htmlFor="s-name-en">
+          <Field label={t("nameEn")} htmlFor="s-name-en">
             <Input
               id="s-name-en"
               value={v("restaurant.nameEn")}
@@ -109,14 +113,14 @@ export default function SettingsPage() {
             />
           </Field>
           <FieldRow>
-            <Field label="ទូរស័ព្ទ · Phone" htmlFor="s-phone">
+            <Field label={tc("phone")} htmlFor="s-phone">
               <Input
                 id="s-phone"
                 value={v("restaurant.phone")}
                 onChange={(e) => set("restaurant.phone", e.target.value)}
               />
             </Field>
-            <Field label="អ៊ីមែល · Email" htmlFor="s-email">
+            <Field label={tc("email")} htmlFor="s-email">
               <Input
                 id="s-email"
                 type="email"
@@ -125,14 +129,14 @@ export default function SettingsPage() {
               />
             </Field>
           </FieldRow>
-          <Field label="អាសយដ្ឋាន · Address" htmlFor="s-addr">
+          <Field label={tc("address")} htmlFor="s-addr">
             <Textarea
               id="s-addr"
               value={v("restaurant.address")}
               onChange={(e) => set("restaurant.address", e.target.value)}
             />
           </Field>
-          <p className="mb-3 text-xs text-ink-500">These appear on every printed receipt.</p>
+          <p className="mb-3 text-xs text-ink-500">{t("receiptNote")}</p>
           <div className="flex justify-end">
             <Button
               variant="admin"
@@ -147,16 +151,16 @@ export default function SettingsPage() {
                 ])
               }
             >
-              រក្សាទុក · Save
+              {tc("save")}
             </Button>
           </div>
         </Card>
 
         <div className="space-y-4">
           {/* ---- sales settings ---- */}
-          <Card title="ការកំណត់ការលក់ · Sales settings">
+          <Card title={t("salesSettings")}>
             <FieldRow>
-              <Field label="រូបិយប័ណ្ណគោល · Base currency" htmlFor="s-cur">
+              <Field label={t("baseCurrency")} htmlFor="s-cur">
                 <Select
                   id="s-cur"
                   value={v("currency.base") || "USD"}
@@ -167,9 +171,9 @@ export default function SettingsPage() {
                 </Select>
               </Field>
               <Field
-                label="អត្រាប្តូរប្រាក់ · Exchange rate"
+                label={t("exchangeRate")}
                 htmlFor="s-rate"
-                hint="Riel per 1 USD"
+                hint={t("exchangeHint")}
               >
                 <Input
                   id="s-rate"
@@ -183,9 +187,9 @@ export default function SettingsPage() {
 
             <FieldRow>
               <Field
-                label="អត្រាពន្ធ · VAT (%)"
+                label={t("vatRate")}
                 htmlFor="s-vat"
-                hint="Applies to bills opened from now on"
+                hint={t("vatHint")}
               >
                 <Input
                   id="s-vat"
@@ -197,7 +201,7 @@ export default function SettingsPage() {
                   onChange={(e) => set("sales.vatRate", e.target.value)}
                 />
               </Field>
-              <Field label="បុព្វបទវិក្កយបត្រ · Invoice prefix" htmlFor="s-prefix">
+              <Field label={t("invoicePrefix")} htmlFor="s-prefix">
                 <Input
                   id="s-prefix"
                   value={v("sales.invoicePrefix")}
@@ -207,9 +211,7 @@ export default function SettingsPage() {
             </FieldRow>
 
             <Alert tone="info">
-              ការផ្លាស់ប្តូរពន្ធមានប្រសិទ្ធភាពលើវិក្កយបត្រថ្មីតែប៉ុណ្ណោះ · A VAT change applies
-              only to bills opened afterwards. Bills already open keep the rate they were
-              opened with, so nothing is restated behind a cashier&apos;s back.
+              {t("vatWarning")}
             </Alert>
 
             <div className="flex justify-end">
@@ -225,23 +227,23 @@ export default function SettingsPage() {
                   ])
                 }
               >
-                រក្សាទុក · Save
+                {tc("save")}
               </Button>
             </div>
           </Card>
 
           {/* ---- toggles ---- */}
-          <Card title="ជម្រើសប្រព័ន្ធ · System options">
+          <Card title={t("systemOptions")}>
             <div className="space-y-1">
               {TOGGLES.map(([key, label]) => (
                 <div
                   key={key}
                   className="flex items-center justify-between border-b border-ink-200 py-2.5 text-sm last:border-0"
                 >
-                  <span>{label}</span>
+                  <span>{t(label)}</span>
                   <Checkbox
                     label=""
-                    aria-label={label}
+                    aria-label={t(label)}
                     checked={v(key) === "true"}
                     onChange={(e) => set(key, e.target.checked ? "true" : "false")}
                   />
@@ -254,7 +256,7 @@ export default function SettingsPage() {
                 loading={save.isPending}
                 onClick={() => saveGroup(TOGGLES.map(([k]) => k))}
               >
-                រក្សាទុក · Save
+                {tc("save")}
               </Button>
             </div>
           </Card>
