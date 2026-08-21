@@ -70,6 +70,13 @@
 :root {
   --background: #f4f5f7;
   --foreground: #22262b;
+
+  /* How tall a scrolling table body may get before its rows scroll under the
+     pinned header. Subtracts the shell chrome (topbar, status bar, page
+     padding) plus room for a card title, a search row and the pager, so the
+     table is the only thing that scrolls on a normal screen. Pages override
+     it per table with DataTable's maxHeight prop. */
+  --table-scroll-max: clamp(200px, calc(100vh - 340px), 620px);
 }
 
 html,
@@ -123,4 +130,67 @@ body {
 
 .auth-surface .btn-ghost:hover {
   background-color: rgb(255 255 255 / 0.1);
+}
+
+/* ---- Scrollbars ----------------------------------------------------------
+   Slim, quiet scrollbars everywhere: a 6px rounded pill on an invisible
+   track, darkening on hover. The thumb is translucent ink rather than a
+   fixed grey so one rule reads correctly on white cards, the cream POS
+   panel and the ink page background, with no per-surface override.
+
+   Firefox understands only the two standard properties; the ::-webkit rules
+   cover Chrome, Edge and Safari. The transparent border plus content-box
+   clip is what insets the pill from the edge of the gutter — without it the
+   thumb sits flush against the border and reads as a bar, not a pill.
+   ------------------------------------------------------------------------ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(34 38 43 / 0.24) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(34 38 43 / 0.22);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  transition: background-color 0.15s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(34 38 43 / 0.42);
+}
+
+/* Dark chrome — the sidebar and the POS category rail — needs the opposite
+   polarity, or the thumb disappears into the teal. */
+.scroll-invert {
+  scrollbar-color: rgb(255 255 255 / 0.28) transparent;
+}
+
+.scroll-invert::-webkit-scrollbar-thumb {
+  background-color: rgb(255 255 255 / 0.26);
+}
+
+.scroll-invert::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(255 255 255 / 0.5);
+}
+
+/* A scrolling box clips on paper, so a printed report would show only the rows
+   that happened to be visible. Let the table run its full length instead.
+   !important because the cap arrives as an inline style. */
+@media print {
+  .table-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+  }
 }

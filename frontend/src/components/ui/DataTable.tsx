@@ -23,6 +23,7 @@ export function DataTable<T>({
   loading = false,
   emptyMessage,
   onRowClick,
+  maxHeight = "var(--table-scroll-max)",
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -31,6 +32,12 @@ export function DataTable<T>({
   /** Defaults to the translated "no data" string. */
   emptyMessage?: ReactNode;
   onRowClick?: (row: T) => void;
+  /**
+   * How tall the scrolling body may get before rows scroll under the pinned
+   * header. Any CSS length; the default adapts to the viewport. Pass "none"
+   * for a table that must never clip — a receipt being printed, say.
+   */
+  maxHeight?: string;
 }) {
   const t = useTranslations("common");
   function alignment(c: Column<T>) {
@@ -40,7 +47,13 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-ink-200 bg-white">
+    // The wrapper is the scroller, so the header can stick to its top edge.
+    // Capping the height here rather than on the table keeps the border and
+    // rounded corners around the whole box, scrollbar included.
+    <div
+      className="table-scroll overflow-auto rounded-md border border-ink-200 bg-white"
+      style={maxHeight === "none" ? undefined : { maxHeight }}
+    >
       <table className="w-full border-collapse">
         <thead>
           <tr>
@@ -50,8 +63,12 @@ export function DataTable<T>({
                 scope="col"
                 style={c.width ? { width: c.width } : undefined}
                 className={[
-                  "whitespace-nowrap border-b border-ink-300 bg-ink-100 px-3 py-2.5",
+                  "sticky top-0 z-10 whitespace-nowrap bg-ink-100 px-3 py-2.5",
                   "text-xs font-semibold uppercase tracking-wide text-ink-500",
+                  // An inset shadow, not border-b: on a collapsed-border table
+                  // the bottom border belongs to the row boundary and scrolls
+                  // away with the rows, leaving the header floating.
+                  "shadow-[inset_0_-1px_0_var(--color-ink-300)]",
                   alignment(c),
                   c.hideOnMobile ? "hidden sm:table-cell" : "",
                 ].join(" ")}

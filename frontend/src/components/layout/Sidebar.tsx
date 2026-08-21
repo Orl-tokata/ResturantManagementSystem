@@ -34,7 +34,7 @@ export function Sidebar({
       </div>
 
       {/* navigation */}
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="scroll-invert flex-1 overflow-y-auto py-2">
         {items.map((item) => {
           // Exact match for the section root, prefix match for its children —
           // otherwise "/admin" would light up on every admin page.

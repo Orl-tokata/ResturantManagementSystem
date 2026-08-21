@@ -111,6 +111,7 @@ export default function AdminDashboardPage() {
           <Card title={t("bestSellers")} padded={false}>
             <DataTable
               columns={sellerColumns}
+              maxHeight="300px"
               rows={d?.bestSellers ?? []}
               rowKey={(r) => r.productName}
               loading={dash.isLoading}
@@ -136,6 +137,7 @@ export default function AdminDashboardPage() {
           <Card title={t("lowStockAlert")} padded={false}>
             <DataTable
               columns={lowColumns}
+              maxHeight="300px"
               rows={d?.lowStock ?? []}
               rowKey={(r) => r.id}
               loading={dash.isLoading}

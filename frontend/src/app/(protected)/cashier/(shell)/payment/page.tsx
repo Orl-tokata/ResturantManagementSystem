@@ -106,6 +106,7 @@ function PaymentScreen() {
         >
           <DataTable
             columns={columns}
+            maxHeight="340px"
             rows={order.data?.items ?? []}
             rowKey={(r, i) => r.id ?? i}
             loading={order.isLoading}

@@ -387,15 +387,15 @@ export default function PurchasePage() {
           </div>
         </div>
 
-        <div className="mb-3 overflow-x-auto rounded-md border border-ink-200">
+        <div className="mb-3 max-h-[42vh] overflow-auto rounded-md border border-ink-200">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-ink-100 text-xs uppercase text-ink-500">
-                <th className="px-3 py-2 text-left">{tc("name")}</th>
-                <th className="px-3 py-2 text-right">{tc("qty")}</th>
-                <th className="px-3 py-2 text-right">{tc("cost")}</th>
-                <th className="px-3 py-2 text-right">{tc("total")}</th>
-                <th className="w-10" />
+              <tr className="text-xs uppercase text-ink-500">
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-left">{tc("name")}</th>
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-right">{tc("qty")}</th>
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-right">{tc("cost")}</th>
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-right">{tc("total")}</th>
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] w-10" />
               </tr>
             </thead>
             <tbody>
@@ -490,14 +490,14 @@ export default function PurchasePage() {
           </span>
         </div>
 
-        <div className="overflow-x-auto rounded-md border border-ink-200">
+        <div className="max-h-[46vh] overflow-auto rounded-md border border-ink-200">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-ink-100 text-xs uppercase text-ink-500">
-                <th className="px-3 py-2 text-left">{tc("name")}</th>
-                <th className="px-3 py-2 text-right">{tc("qty")}</th>
-                <th className="px-3 py-2 text-right">{tc("cost")}</th>
-                <th className="px-3 py-2 text-right">{tc("total")}</th>
+              <tr className="text-xs uppercase text-ink-500">
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-left">{tc("name")}</th>
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-right">{tc("qty")}</th>
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-right">{tc("cost")}</th>
+                <th className="sticky top-0 z-10 bg-ink-100 shadow-[inset_0_-1px_0_var(--color-ink-200)] px-3 py-2 text-right">{tc("total")}</th>
               </tr>
             </thead>
             <tbody>
