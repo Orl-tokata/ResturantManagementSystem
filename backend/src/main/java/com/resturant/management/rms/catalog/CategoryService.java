@@ -60,7 +60,7 @@ public class CategoryService {
         // foreign-key violation from the database.
         long inUse = productRepository.countByCategoryId(id);
         if (inUse > 0) {
-            throw ConflictHelper.inUse("Category", category.getName(), inUse, "product(s)");
+            throw ConflictHelper.inUse("entity.category", category.getName(), inUse, "usedBy.products");
         }
         categoryRepository.delete(category);
     }
@@ -69,7 +69,7 @@ public class CategoryService {
 
     private Category find(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Category", id));
+                .orElseThrow(() -> NotFoundException.of("entity.category", id));
     }
 
     private void apply(Category category, CategoryRequest r) {

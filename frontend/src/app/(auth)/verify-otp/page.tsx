@@ -15,7 +15,7 @@ import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { post } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import type { VerifyOtpResponse } from "@/types/auth";
 
 const LENGTH = 6;
@@ -24,6 +24,8 @@ const RESEND_SECONDS = 60;
 function VerifyOtpForm() {
   const t = useTranslations("auth");
   const tc = useTranslations("common");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const router = useRouter();
   const params = useSearchParams();
@@ -90,7 +92,7 @@ function VerifyOtpForm() {
       const data = await post<VerifyOtpResponse>("/auth/verify-otp", { email, code });
       router.replace(`/reset-password?token=${encodeURIComponent(data.resetToken)}`);
     } catch (e) {
-      setError(errorMessage(e, "Invalid code"));
+      setError(apiError(e, "invalidCode"));
       setBusy(false);
     }
   }
@@ -105,7 +107,7 @@ function VerifyOtpForm() {
       setCountdown(RESEND_SECONDS);
       setNotice(t("codeResent"));
     } catch (e) {
-      setError(errorMessage(e, "Could not resend the code"));
+      setError(apiError(e, "resendCode"));
     }
   }
 
@@ -137,7 +139,7 @@ function VerifyOtpForm() {
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={1}
-              aria-label={`Digit ${i + 1}`}
+              aria-label={tA11y("digit", { index: i + 1 })}
               className="h-14 w-11 rounded bg-white/95 text-center text-2xl font-bold text-ink-900
                          focus:outline-2 focus:outline-teal-500"
             />

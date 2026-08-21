@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Alert, Button, Card, DataTable, Field, Input, type Column } from "@/components/ui";
 import { get, post } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatKhr, formatUsd } from "@/lib/format";
 import {
   PAYMENT_ICON,
@@ -26,6 +26,7 @@ function PaymentScreen() {
   const tc = useTranslations("common");
   const tH = useTranslations("history");
   const tPay = useTranslations("enum.paymentMethod");
+  const apiError = useApiError();
 
   const orderId = Number(params.get("orderId") || 0);
 
@@ -48,7 +49,7 @@ function PaymentScreen() {
         amountTendered: method === "CASH" ? Number(tendered || 0) : undefined,
       }),
     onSuccess: () => router.replace(`/cashier/receipt/${orderId}`),
-    onError: (e) => setError(errorMessage(e, "Payment was not accepted")),
+    onError: (e) => setError(apiError(e, "paymentRejected")),
   });
 
   function press(key: string) {
@@ -92,7 +93,7 @@ function PaymentScreen() {
   }
 
   if (order.isError) {
-    return <Alert tone="error">{errorMessage(order.error, "Could not load the order")}</Alert>;
+    return <Alert tone="error">{apiError(order.error, "loadOrder")}</Alert>;
   }
 
   return (

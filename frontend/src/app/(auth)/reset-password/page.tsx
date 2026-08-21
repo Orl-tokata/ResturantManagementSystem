@@ -9,12 +9,13 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { post } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 function ResetPasswordForm() {
   const t = useTranslations("auth");
+  const apiError = useApiError();
 
   const router = useRouter();
   const params = useSearchParams();
@@ -45,7 +46,7 @@ function ResetPasswordForm() {
       await post("/auth/reset-password", { resetToken, newPassword: password });
       router.replace("/login?reset=1");
     } catch (e) {
-      setError(errorMessage(e, "Could not reset the password"));
+      setError(apiError(e, "resetPassword"));
       setBusy(false);
     }
   }

@@ -15,7 +15,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { get } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import {
   dayOfMonth,
@@ -31,6 +31,7 @@ export default function AdminDashboardPage() {
   const tw = useTranslations("weekday");
   const tNav = useTranslations("nav");
   const tTable = useTranslations("enum.tableStatus");
+  const apiError = useApiError();
 
   const dash = useQuery({
     queryKey: ["dashboard", "summary"],
@@ -72,7 +73,7 @@ export default function AdminDashboardPage() {
 
   return (
     <>
-      {dash.isError && <Alert tone="error">{errorMessage(dash.error)}</Alert>}
+      {dash.isError && <Alert tone="error">{apiError(dash.error)}</Alert>}
 
       <StatGrid>
         <StatTile tone={1} label={t("todaySales")} value={formatUsd(d?.todaySales ?? 0)} />

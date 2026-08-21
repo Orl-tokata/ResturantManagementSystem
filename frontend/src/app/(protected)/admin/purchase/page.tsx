@@ -26,7 +26,7 @@ import {
 } from "@/components/ui";
 import { useList } from "@/hooks/useCrud";
 import { del, get, post, type PageResponse } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import {
   type Purchase,
@@ -54,6 +54,8 @@ export default function PurchasePage() {
   const t = useTranslations("purchase");
   const tc = useTranslations("common");
   const tSt = useTranslations("enum.purchaseStatus");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const qc = useQueryClient();
 
@@ -120,7 +122,7 @@ export default function PurchasePage() {
       invalidate();
       setCreating(false);
     },
-    onError: (e) => setFormError(errorMessage(e, "Could not raise the purchase order")),
+    onError: (e) => setFormError(apiError(e, "raisePurchase")),
   });
 
   const receive = useMutation({
@@ -130,7 +132,7 @@ export default function PurchasePage() {
       setConfirmReceive(null);
     },
     onError: (e) => {
-      setListError(errorMessage(e, "Could not receive the goods"));
+      setListError(apiError(e, "receiveGoods"));
       setConfirmReceive(null);
     },
   });
@@ -142,7 +144,7 @@ export default function PurchasePage() {
       setConfirmCancel(null);
     },
     onError: (e) => {
-      setListError(errorMessage(e, "Could not cancel the order"));
+      setListError(apiError(e, "cancelPurchase"));
       setConfirmCancel(null);
     },
   });
@@ -150,7 +152,7 @@ export default function PurchasePage() {
   const removeOrder = useMutation({
     mutationFn: (id: number) => del<void>(`/purchases/${id}`),
     onSuccess: invalidate,
-    onError: (e) => setListError(errorMessage(e, "Could not delete the order")),
+    onError: (e) => setListError(apiError(e, "deletePurchase")),
   });
 
   /* ---- draft lines ---- */
@@ -230,7 +232,7 @@ export default function PurchasePage() {
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => setViewing(r)} aria-label="View">
+          <Button size="sm" variant="ghost" onClick={() => setViewing(r)} aria-label={tA11y("view")}>
             👁️
           </Button>
           {r.status === "PENDING" && (
@@ -248,7 +250,7 @@ export default function PurchasePage() {
               size="sm"
               variant="danger"
               onClick={() => removeOrder.mutate(r.id)}
-              aria-label={`Delete ${r.poNo}`}
+              aria-label={tA11y("delete", { name: r.poNo })}
             >
               <Trash2 size={13} />
             </Button>
@@ -261,7 +263,7 @@ export default function PurchasePage() {
   return (
     <>
       {listError && <Alert tone="error">{listError}</Alert>}
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>
         <StatTile tone={1} label={t("monthTotal")} value={formatUsd(summary.data?.monthTotal ?? 0)} />
@@ -283,7 +285,7 @@ export default function PurchasePage() {
                 setStatus(e.target.value as PurchaseStatus | "");
                 setPage(0);
               }}
-              aria-label="Status"
+              aria-label={tc("status")}
             >
               <option value="">{tc("all")}</option>
               <option value="PENDING">{tSt("PENDING")}</option>
@@ -419,7 +421,7 @@ export default function PurchasePage() {
                       value={l.qty}
                       onChange={(e) => updateLine(l.stockItemId, { qty: Number(e.target.value) })}
                       className="w-24 text-right"
-                      aria-label={`Quantity for ${l.itemName}`}
+                      aria-label={tA11y("quantityFor", { name: l.itemName })}
                     />
                   </td>
                   <td className="px-2 py-1.5 text-right">
@@ -430,7 +432,7 @@ export default function PurchasePage() {
                       value={l.unitCost}
                       onChange={(e) => updateLine(l.stockItemId, { unitCost: Number(e.target.value) })}
                       className="w-24 text-right"
-                      aria-label={`Unit cost for ${l.itemName}`}
+                      aria-label={tA11y("unitCostFor", { name: l.itemName })}
                     />
                   </td>
                   <td className="px-3 py-2 text-right font-[family-name:var(--font-num)]">
@@ -441,7 +443,7 @@ export default function PurchasePage() {
                       type="button"
                       onClick={() => setLines((ls) => ls.filter((x) => x.stockItemId !== l.stockItemId))}
                       className="text-danger-soft"
-                      aria-label={`Remove ${l.itemName}`}
+                      aria-label={tA11y("remove", { name: l.itemName })}
                     >
                       <Trash2 size={14} />
                     </button>

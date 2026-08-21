@@ -20,7 +20,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { useAll, useList, useRemove, useSave } from "@/hooks/useCrud";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
 import {
@@ -48,6 +48,8 @@ export default function ProductsPage() {
   const t = useTranslations("products");
   const tc = useTranslations("common");
   const tStatus = useTranslations("enum.recordStatus");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
   const locale = useLocale();
 
   const [search, setSearch] = useState("");
@@ -109,7 +111,7 @@ export default function ProductsPage() {
       await save.mutateAsync({ id: editingId ?? null, body: draft });
       setEditingId(undefined);
     } catch (e) {
-      setFormError(errorMessage(e, "Could not save the product"));
+      setFormError(apiError(e, "saveProduct"));
     }
   }
 
@@ -118,7 +120,7 @@ export default function ProductsPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(errorMessage(e, "Could not delete the product"));
+      setListError(apiError(e, "deleteProduct"));
     } finally {
       setDeleting(null);
     }
@@ -168,14 +170,14 @@ export default function ProductsPage() {
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={`Edit ${r.name}`}>
+          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={tA11y("edit", { name: r.name })}>
             ✏️
           </Button>
           <Button
             size="sm"
             variant="danger"
             onClick={() => setDeleting(r)}
-            aria-label={`Delete ${r.name}`}
+            aria-label={tA11y("delete", { name: r.name })}
           >
             🗑️
           </Button>
@@ -187,7 +189,7 @@ export default function ProductsPage() {
   return (
     <>
       {listError && <Alert tone="error">{listError}</Alert>}
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar
         left={

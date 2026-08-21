@@ -20,7 +20,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import {
   type Category,
   type CategoryRequest,
@@ -41,6 +41,8 @@ export default function CategoriesPage() {
   const t = useTranslations("categories");
   const tc = useTranslations("common");
   const tStatus = useTranslations("enum.recordStatus");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -83,7 +85,7 @@ export default function CategoriesPage() {
       await save.mutateAsync({ id: editingId ?? null, body: draft });
       setEditingId(undefined);
     } catch (e) {
-      setFormError(errorMessage(e, "Could not save the category"));
+      setFormError(apiError(e, "saveCategory"));
     }
   }
 
@@ -92,7 +94,7 @@ export default function CategoriesPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(errorMessage(e, "Could not delete the category"));
+      setListError(apiError(e, "deleteCategory"));
     } finally {
       setDeleting(null);
     }
@@ -138,14 +140,14 @@ export default function CategoriesPage() {
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={`Edit ${r.name}`}>
+          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={tA11y("edit", { name: r.name })}>
             ✏️
           </Button>
           <Button
             size="sm"
             variant="danger"
             onClick={() => setDeleting(r)}
-            aria-label={`Delete ${r.name}`}
+            aria-label={tA11y("delete", { name: r.name })}
           >
             🗑️
           </Button>
@@ -157,7 +159,7 @@ export default function CategoriesPage() {
   return (
     <>
       {listError && <Alert tone="error">{listError}</Alert>}
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar
         left={

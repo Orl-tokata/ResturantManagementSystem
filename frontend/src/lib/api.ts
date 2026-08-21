@@ -3,6 +3,7 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from "axios";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale } from "@/i18n/config";
 
 /**
  * Single axios instance for the whole app. Components must not call `fetch`
@@ -51,10 +52,32 @@ export const api: AxiosInstance = axios.create({
   timeout: 15_000,
 });
 
+/**
+ * Which language the API should answer in.
+ *
+ * <p>Read from the cookie rather than from next-intl: this module is not a
+ * component, so there is no useLocale() to call, and the interceptor has to
+ * serve requests fired from event handlers and react-query alike. It is the
+ * same cookie the server reads, so the two cannot disagree about the locale.
+ */
+function preferredLanguage(): string {
+  if (typeof document === "undefined") return DEFAULT_LOCALE;
+  const prefix = LOCALE_COOKIE + "=";
+  const value = document.cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(prefix))
+    ?.slice(prefix.length);
+  return isLocale(value) ? value : DEFAULT_LOCALE;
+}
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken) {
     config.headers.set("Authorization", `Bearer ${accessToken}`);
   }
+  // Without this the backend answers in its default language, and a Khmer
+  // cashier reads English validation messages under a Khmer form.
+  config.headers.set("Accept-Language", preferredLanguage());
   return config;
 });
 
@@ -67,7 +90,9 @@ async function refreshAccessToken(): Promise<string | null> {
     const res = await axios.post<ApiResponse<{ accessToken: string }>>(
       `${BASE_URL}/auth/refresh`,
       {},
-      { withCredentials: true },
+      // Bare axios, not the instance: the instance would try to refresh
+      // again on a 401 from here. So the language header is set by hand.
+      { withCredentials: true, headers: { "Accept-Language": preferredLanguage() } },
     );
     const token = res.data.data.accessToken;
     setAccessToken(token);

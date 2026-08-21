@@ -15,15 +15,15 @@ public final class StaffDtos {
     }
 
     public record StaffRequest(
-            @NotBlank(message = "is required") @Size(max = 20) String staffCode,
-            @NotBlank(message = "is required") @Size(max = 100) String staffName,
+            @NotBlank(message = "{valid.required}") @Size(max = 20) String staffCode,
+            @NotBlank(message = "{valid.required}") @Size(max = 100) String staffName,
             Gender gender,
-            @Past(message = "must be in the past") LocalDate dateOfBirth,
+            @Past(message = "{valid.past}") LocalDate dateOfBirth,
             @Size(max = 30) String phone,
-            @Email(message = "must be a valid email address") @Size(max = 120) String email,
-            @NotNull(message = "is required") Role role,
+            @Email(message = "{valid.email}") @Size(max = 120) String email,
+            @NotNull(message = "{valid.required}") Role role,
             Shift shift,
-            @PositiveOrZero(message = "cannot be negative") BigDecimal salary,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal salary,
             LocalDate hireDate,
             @Size(max = 500) String address,
             StaffStatus status

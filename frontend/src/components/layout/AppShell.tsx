@@ -32,6 +32,7 @@ export function AppShell({
   const pathname = usePathname();
   const tNav = useTranslations("nav");
   const tApp = useTranslations("app");
+  const tA11y = useTranslations("a11y");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Close the mobile drawer on any route change, including back/forward, which
@@ -63,7 +64,7 @@ export function AppShell({
       {drawerOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <button
-            aria-label="Close menu"
+            aria-label={tA11y("closeMenu")}
             className="absolute inset-0 bg-black/50"
             onClick={() => setDrawerOpen(false)}
           />
@@ -80,7 +81,7 @@ export function AppShell({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded hover:bg-white/15 md:hidden"
-              aria-label={drawerOpen ? "Close menu" : "Open menu"}
+              aria-label={drawerOpen ? tA11y("closeMenu") : tA11y("openMenu")}
               onClick={() => setDrawerOpen((v) => !v)}
             >
               {drawerOpen ? <X size={18} /> : <Menu size={18} />}
@@ -95,7 +96,7 @@ export function AppShell({
             </span>
             <Link
               href={settingsHref}
-              aria-label="Settings"
+              aria-label={tNav("settings")}
               className="grid h-8 w-8 place-items-center rounded hover:bg-white/15"
             >
               <Settings size={16} />

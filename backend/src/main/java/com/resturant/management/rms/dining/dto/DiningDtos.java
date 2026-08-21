@@ -10,10 +10,10 @@ public final class DiningDtos {
     }
 
     public record TableRequest(
-            @NotBlank(message = "is required") @Size(max = 50) String name,
-            @NotNull(message = "is required")
-            @Positive(message = "must be at least 1")
-            @Max(value = 50, message = "seems too large") Integer seats,
+            @NotBlank(message = "{valid.required}") @Size(max = 50) String name,
+            @NotNull(message = "{valid.required}")
+            @Positive(message = "{valid.min1}")
+            @Max(value = 50, message = "{valid.tooLarge}") Integer seats,
             TableZone zone,
             TableStatus status
     ) {}
@@ -28,7 +28,7 @@ public final class DiningDtos {
 
     /** Body of {@code PATCH /api/tables/{id}/status}. */
     public record TableStatusRequest(
-            @NotNull(message = "is required") TableStatus status
+            @NotNull(message = "{valid.required}") TableStatus status
     ) {}
 
     /** Counts behind the cashier's table picker legend. */

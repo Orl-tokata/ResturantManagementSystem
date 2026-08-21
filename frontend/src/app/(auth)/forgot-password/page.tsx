@@ -8,11 +8,12 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { post } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("auth");
   const tc = useTranslations("common");
+  const apiError = useApiError();
 
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -29,7 +30,7 @@ export default function ForgotPasswordPage() {
       // nothing to branch on — go straight to the code screen.
       router.push(`/verify-otp?email=${encodeURIComponent(email.trim())}`);
     } catch (e) {
-      setError(errorMessage(e, "Could not send the code"));
+      setError(apiError(e, "sendCode"));
       setBusy(false);
     }
   }

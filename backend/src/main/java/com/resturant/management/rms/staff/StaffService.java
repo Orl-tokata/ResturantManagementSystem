@@ -32,7 +32,7 @@ public class StaffService {
     @Transactional
     public StaffResponse create(StaffRequest request) {
         if (staffRepository.existsByStaffCode(request.staffCode())) {
-            throw ConflictHelper.duplicate("Staff", "code", request.staffCode());
+            throw ConflictHelper.duplicate("entity.staff", "field.code", request.staffCode());
         }
         Staff staff = new Staff();
         apply(staff, request);
@@ -46,7 +46,7 @@ public class StaffService {
         staffRepository.findByStaffCode(request.staffCode())
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
-                    throw ConflictHelper.duplicate("Staff", "code", request.staffCode());
+                    throw ConflictHelper.duplicate("entity.staff", "field.code", request.staffCode());
                 });
 
         apply(staff, request);
@@ -62,7 +62,7 @@ public class StaffService {
 
     private Staff find(Long id) {
         return staffRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Staff", id));
+                .orElseThrow(() -> NotFoundException.of("entity.staff", id));
     }
 
     private void apply(Staff staff, StaffRequest r) {

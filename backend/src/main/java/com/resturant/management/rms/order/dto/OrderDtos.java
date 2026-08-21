@@ -16,14 +16,14 @@ public final class OrderDtos {
 
     /** Open a bill for a table, or return the one already open there. */
     public record OpenOrderRequest(
-            @NotNull(message = "is required") Long tableId,
-            @Positive(message = "must be at least 1") Integer guestCount
+            @NotNull(message = "{valid.required}") Long tableId,
+            @Positive(message = "{valid.min1}") Integer guestCount
     ) {}
 
     public record OrderItemRequest(
-            @NotNull(message = "is required") Long productId,
-            @NotNull(message = "is required")
-            @Positive(message = "must be greater than zero")
+            @NotNull(message = "{valid.required}") Long productId,
+            @NotNull(message = "{valid.required}")
+            @Positive(message = "{valid.positive}")
             BigDecimal qty,
             @Size(max = 255) String note
     ) {}
@@ -34,8 +34,8 @@ public final class OrderDtos {
      * dropped offline mid-order.
      */
     public record UpdateItemsRequest(
-            @Valid @NotNull(message = "is required") List<OrderItemRequest> items,
-            @PositiveOrZero(message = "cannot be negative") BigDecimal discount
+            @Valid @NotNull(message = "{valid.required}") List<OrderItemRequest> items,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal discount
     ) {}
 
     public record OrderItemResponse(
@@ -50,10 +50,10 @@ public final class OrderDtos {
 
     /** Body of {@code POST /api/orders/{id}/pay}. */
     public record PayRequest(
-            @NotNull(message = "is required") PaymentMethod paymentMethod,
+            @NotNull(message = "{valid.required}") PaymentMethod paymentMethod,
             /** Cash handed over. Required for CASH so change can be worked out. */
-            @PositiveOrZero(message = "cannot be negative") BigDecimal amountTendered,
-            @PositiveOrZero(message = "cannot be negative") BigDecimal discount
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal amountTendered,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal discount
     ) {}
 
     /** The four tiles above the order-history table. */

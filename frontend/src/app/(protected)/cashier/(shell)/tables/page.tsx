@@ -13,7 +13,7 @@ import {
   Toolbar,
 } from "@/components/ui";
 import { get, type PageResponse } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import {
   type DiningTable,
   type TableSummary,
@@ -30,6 +30,7 @@ export default function CashierTablesPage() {
   const tc = useTranslations("common");
   const tZone = useTranslations("enum.zone");
   const tStatus = useTranslations("enum.tableStatus");
+  const apiError = useApiError();
 
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -46,7 +47,7 @@ export default function CashierTablesPage() {
 
   return (
     <>
-      {tables.isError && <Alert tone="error">{errorMessage(tables.error)}</Alert>}
+      {tables.isError && <Alert tone="error">{apiError(tables.error)}</Alert>}
 
       <StatGrid>
         <StatTile tone={1} label={tStatus("FREE")} value={summary.data?.free ?? "—"} />

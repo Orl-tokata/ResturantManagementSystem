@@ -9,7 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Clock } from "@/components/layout/Clock";
 import { Alert, Button, SearchBar } from "@/components/ui";
 import { get, post, put, type PageResponse } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
@@ -26,6 +26,8 @@ function PosScreen() {
 
   const t = useTranslations("pos");
   const tc = useTranslations("common");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
   const locale = useLocale();
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -150,7 +152,7 @@ function PosScreen() {
       if (dirty) await saveItems.mutateAsync(cart);
       router.push(`/cashier/payment?orderId=${order.data!.id}`);
     } catch (e) {
-      setError(errorMessage(e, "Could not save the order"));
+      setError(apiError(e, "saveOrder"));
     }
   }
 
@@ -178,7 +180,7 @@ function PosScreen() {
       <div className="flex shrink-0 items-center gap-2.5 bg-navy-800 px-3 py-2 text-white">
         <Link
           href="/cashier/tables"
-          aria-label="Back to tables"
+          aria-label={tA11y("backToTables")}
           className="grid h-8 w-8 place-items-center rounded text-orange-500 hover:bg-white/15"
         >
           <X size={18} />
@@ -208,7 +210,7 @@ function PosScreen() {
       )}
       {order.isError && (
         <div className="px-3 pt-2">
-          <Alert tone="error">{errorMessage(order.error, "Could not open the bill")}</Alert>
+          <Alert tone="error">{apiError(order.error, "openBill")}</Alert>
         </div>
       )}
 
@@ -302,7 +304,7 @@ function PosScreen() {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            aria-label={`Decrease ${l.productName}`}
+                            aria-label={tA11y("decrease", { name: l.productName })}
                             onClick={() => changeQty(l.productId, -1)}
                             className="grid h-6 w-6 place-items-center rounded border border-ink-300 bg-white"
                           >
@@ -313,7 +315,7 @@ function PosScreen() {
                           </span>
                           <button
                             type="button"
-                            aria-label={`Increase ${l.productName}`}
+                            aria-label={tA11y("increase", { name: l.productName })}
                             onClick={() => changeQty(l.productId, 1)}
                             className="grid h-6 w-6 place-items-center rounded border border-ink-300 bg-white"
                           >
@@ -327,7 +329,7 @@ function PosScreen() {
                       <td className="pr-2">
                         <button
                           type="button"
-                          aria-label={`Remove ${l.productName}`}
+                          aria-label={tA11y("remove", { name: l.productName })}
                           onClick={() => removeLine(l.productId)}
                           className="text-danger-soft"
                         >

@@ -14,10 +14,10 @@ public final class CatalogDtos {
     /* ---- Category -------------------------------------------------------- */
 
     public record CategoryRequest(
-            @NotBlank(message = "is required") @Size(max = 100) String name,
+            @NotBlank(message = "{valid.required}") @Size(max = 100) String name,
             @Size(max = 100) String nameEn,
             @Size(max = 20) String icon,
-            @PositiveOrZero(message = "cannot be negative") Integer sortOrder,
+            @PositiveOrZero(message = "{valid.notNegative}") Integer sortOrder,
             RecordStatus status
     ) {}
 
@@ -34,17 +34,17 @@ public final class CatalogDtos {
     /* ---- Product --------------------------------------------------------- */
 
     public record ProductRequest(
-            @NotBlank(message = "is required") @Size(max = 150) String name,
+            @NotBlank(message = "{valid.required}") @Size(max = 150) String name,
             @Size(max = 150) String nameEn,
-            @NotNull(message = "is required") Long categoryId,
-            @NotNull(message = "is required")
-            @PositiveOrZero(message = "cannot be negative")
-            @Digits(integer = 10, fraction = 2, message = "allows at most 2 decimal places")
+            @NotNull(message = "{valid.required}") Long categoryId,
+            @NotNull(message = "{valid.required}")
+            @PositiveOrZero(message = "{valid.notNegative}")
+            @Digits(integer = 10, fraction = 2, message = "{valid.decimals}")
             BigDecimal price,
-            @PositiveOrZero(message = "cannot be negative")
-            @Digits(integer = 10, fraction = 2, message = "allows at most 2 decimal places")
+            @PositiveOrZero(message = "{valid.notNegative}")
+            @Digits(integer = 10, fraction = 2, message = "{valid.decimals}")
             BigDecimal cost,
-            @PositiveOrZero(message = "cannot be negative") BigDecimal stockQty,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal stockQty,
             @Size(max = 255) String imageUrl,
             @Size(max = 1000) String description,
             RecordStatus status

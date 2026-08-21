@@ -20,7 +20,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { get, type PageResponse } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import {
   type Order,
@@ -52,6 +52,8 @@ export default function CashierHistoryPage() {
   const tOs = useTranslations("enum.orderStatus");
   const tPay = useTranslations("enum.paymentMethod");
   const tCh = useTranslations("cashierHome");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const today = todayIso();
 
@@ -155,7 +157,7 @@ export default function CashierHistoryPage() {
 
   return (
     <>
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>
         <StatTile
@@ -187,7 +189,7 @@ export default function CashierHistoryPage() {
                 setPage(0);
               }}
               className="w-auto"
-              aria-label="From date"
+              aria-label={tA11y("fromDate")}
             />
             <span className="text-ink-500">→</span>
             <Input
@@ -198,7 +200,7 @@ export default function CashierHistoryPage() {
                 setPage(0);
               }}
               className="w-auto"
-              aria-label="To date"
+              aria-label={tA11y("toDate")}
             />
             <Select
               className="w-auto"
@@ -207,7 +209,7 @@ export default function CashierHistoryPage() {
                 setStatus(e.target.value as OrderStatus | "");
                 setPage(0);
               }}
-              aria-label="Status"
+              aria-label={tc("status")}
             >
               <option value="">{t("allStatus")}</option>
               <option value="PAID">{tOs("PAID")}</option>

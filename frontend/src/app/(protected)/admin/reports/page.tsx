@@ -17,7 +17,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { api, get } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import {
   dayOfMonth,
@@ -40,6 +40,8 @@ export default function ReportsPage() {
   const tD = useTranslations("dashboard");
   const tH = useTranslations("history");
   const tPos = useTranslations("pos");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -82,7 +84,7 @@ export default function ReportsPage() {
       link.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setExportError(errorMessage(e, t("exportFailed")));
+      setExportError(apiError(e, "exportReport"));
     } finally {
       setExporting(false);
     }
@@ -143,7 +145,7 @@ export default function ReportsPage() {
 
   return (
     <>
-      {report.isError && <Alert tone="error">{errorMessage(report.error)}</Alert>}
+      {report.isError && <Alert tone="error">{apiError(report.error)}</Alert>}
       {exportError && <Alert tone="error">{exportError}</Alert>}
 
       <Toolbar
@@ -154,7 +156,7 @@ export default function ReportsPage() {
               value={from}
               onChange={(e) => setFrom(e.target.value)}
               className="w-auto"
-              aria-label="From date"
+              aria-label={tA11y("fromDate")}
             />
             <span className="text-ink-500">→</span>
             <Input
@@ -162,7 +164,7 @@ export default function ReportsPage() {
               value={to}
               onChange={(e) => setTo(e.target.value)}
               className="w-auto"
-              aria-label="To date"
+              aria-label={tA11y("toDate")}
             />
             <Button size="sm" variant="light" onClick={() => setRange(6)}>
               {tc("sevenDays")}

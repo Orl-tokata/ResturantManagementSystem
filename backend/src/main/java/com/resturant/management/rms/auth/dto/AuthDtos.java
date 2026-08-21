@@ -27,25 +27,25 @@ public final class AuthDtos {
 
     @Schema(name = "LoginRequest")
     public record LoginRequest(
-            @NotBlank(message = "is required") String username,
-            @NotBlank(message = "is required") String password
+            @NotBlank(message = "{valid.required}") String username,
+            @NotBlank(message = "{valid.required}") String password
     ) {}
 
     @Schema(name = "RegisterRequest")
     public record RegisterRequest(
-            @NotBlank(message = "is required")
-            @Size(min = 3, max = 50, message = "must be 3–50 characters")
+            @NotBlank(message = "{valid.required}")
+            @Size(min = 3, max = 50, message = "{valid.username}")
             String username,
 
-            @NotBlank(message = "is required")
+            @NotBlank(message = "{valid.required}")
             @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
             String password,
 
-            @NotBlank(message = "is required")
+            @NotBlank(message = "{valid.required}")
             @Size(max = 100)
             String fullName,
 
-            @Email(message = "must be a valid email address")
+            @Email(message = "{valid.email}")
             String email,
 
             @Size(max = 30)
@@ -81,23 +81,23 @@ public final class AuthDtos {
     /** Self-service profile edit. Role and username are deliberately absent. */
     @Schema(name = "UpdateProfileRequest")
     public record UpdateProfileRequest(
-            @NotBlank(message = "is required") @Size(max = 100) String fullName,
-            @Email(message = "must be a valid email address") @Size(max = 120) String email,
+            @NotBlank(message = "{valid.required}") @Size(max = 100) String fullName,
+            @Email(message = "{valid.email}") @Size(max = 120) String email,
             @Size(max = 30) String phone
     ) {}
 
     @Schema(name = "ForgotPasswordRequest")
     public record ForgotPasswordRequest(
-            @NotBlank(message = "is required")
-            @Email(message = "must be a valid email address")
+            @NotBlank(message = "{valid.required}")
+            @Email(message = "{valid.email}")
             String email
     ) {}
 
     @Schema(name = "VerifyOtpRequest")
     public record VerifyOtpRequest(
-            @NotBlank(message = "is required") @Email String email,
-            @NotBlank(message = "is required")
-            @Pattern(regexp = "^\\d{6}$", message = "must be 6 digits")
+            @NotBlank(message = "{valid.required}") @Email String email,
+            @NotBlank(message = "{valid.required}")
+            @Pattern(regexp = "^\\d{6}$", message = "{valid.otp}")
             String code
     ) {}
 
@@ -107,16 +107,16 @@ public final class AuthDtos {
 
     @Schema(name = "ResetPasswordRequest")
     public record ResetPasswordRequest(
-            @NotBlank(message = "is required") String resetToken,
-            @NotBlank(message = "is required")
+            @NotBlank(message = "{valid.required}") String resetToken,
+            @NotBlank(message = "{valid.required}")
             @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
             String newPassword
     ) {}
 
     @Schema(name = "ChangePasswordRequest")
     public record ChangePasswordRequest(
-            @NotBlank(message = "is required") String currentPassword,
-            @NotBlank(message = "is required")
+            @NotBlank(message = "{valid.required}") String currentPassword,
+            @NotBlank(message = "{valid.required}")
             @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
             String newPassword
     ) {}

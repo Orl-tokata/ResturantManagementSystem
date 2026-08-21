@@ -45,7 +45,7 @@ public class SupplierService {
     @Transactional
     public SupplierResponse create(SupplierRequest request) {
         if (supplierRepository.existsBySupplierCode(request.supplierCode())) {
-            throw ConflictHelper.duplicate("Supplier", "code", request.supplierCode());
+            throw ConflictHelper.duplicate("entity.supplier", "field.code", request.supplierCode());
         }
         Supplier supplier = new Supplier();
         apply(supplier, request);
@@ -59,7 +59,7 @@ public class SupplierService {
         supplierRepository.findBySupplierCode(request.supplierCode())
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
-                    throw ConflictHelper.duplicate("Supplier", "code", request.supplierCode());
+                    throw ConflictHelper.duplicate("entity.supplier", "field.code", request.supplierCode());
                 });
 
         apply(supplier, request);
@@ -72,14 +72,14 @@ public class SupplierService {
 
         long orders = purchaseRepository.countBySupplierId(id);
         if (orders > 0) {
-            throw ConflictHelper.inUse("Supplier", supplier.getCompany(), orders, "purchase order(s)");
+            throw ConflictHelper.inUse(
+                    "entity.supplier", supplier.getCompany(), orders, "usedBy.purchaseOrders");
         }
         // A non-zero balance means money is still owed; removing the record would
         // lose that debt silently.
         if (supplier.getBalance() != null && supplier.getBalance().compareTo(BigDecimal.ZERO) != 0) {
             throw new BadRequestException(
-                    "Cannot delete '%s': %s is still outstanding. Settle the balance first."
-                            .formatted(supplier.getCompany(), supplier.getBalance()));
+                    "error.supplier.outstanding", supplier.getCompany(), supplier.getBalance());
         }
         supplierRepository.delete(supplier);
     }
@@ -88,7 +88,7 @@ public class SupplierService {
 
     private Supplier find(Long id) {
         return supplierRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Supplier", id));
+                .orElseThrow(() -> NotFoundException.of("entity.supplier", id));
     }
 
     private void apply(Supplier s, SupplierRequest r) {

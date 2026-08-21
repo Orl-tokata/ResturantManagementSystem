@@ -7,7 +7,7 @@ import { Printer, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, Button } from "@/components/ui";
 import { get } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 // formatKhr converts from USD at the current rate. A receipt must show the riel
 // figure the customer actually paid, which the server stored on the order — so
 // totalKhr is printed as-is rather than recomputed.
@@ -21,6 +21,7 @@ export default function ReceiptPage() {
   const tCh = useTranslations("cashierHome");
   const tPay = useTranslations("enum.paymentMethod");
   const tP = useTranslations("payment");
+  const apiError = useApiError();
 
   const { id } = useParams<{ id: string }>();
 
@@ -37,7 +38,7 @@ export default function ReceiptPage() {
   if (receipt.isError || !receipt.data) {
     return (
       <Alert tone="error">
-        {errorMessage(receipt.error, "Could not load the receipt")}{" "}
+        {apiError(receipt.error, "loadReceipt")}{" "}
         <Link href="/cashier/history" className="underline">
           {tH("title")}
         </Link>

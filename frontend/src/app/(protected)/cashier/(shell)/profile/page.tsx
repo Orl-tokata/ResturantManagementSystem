@@ -7,7 +7,7 @@ import { UserRound } from "lucide-react";
 import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
 import { Alert, Badge, Button, Card, Field, FieldRow, Input } from "@/components/ui";
 import { put } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { useAuth } from "@/lib/auth-context";
 import type { User } from "@/types/auth";
 
@@ -17,6 +17,7 @@ export default function CashierProfilePage() {
   const tc = useTranslations("common");
   const tA = useTranslations("auth");
   const tRole = useTranslations("enum.role");
+  const apiError = useApiError();
 
   const { user, status } = useAuth();
 
@@ -48,7 +49,7 @@ export default function CashierProfilePage() {
       setError(null);
     },
     onError: (e) => {
-      setError(errorMessage(e, "Could not save the profile"));
+      setError(apiError(e, "saveProfile"));
       setSaved(false);
     },
   });

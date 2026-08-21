@@ -9,7 +9,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { useAuth } from "@/lib/auth-context";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import type { Role } from "@/types/auth";
 
 /** Mirrors the backend's Bean Validation pattern so we fail fast, client-side. */
@@ -19,6 +19,7 @@ export default function SignupPage() {
   const t = useTranslations("auth");
   const tc = useTranslations("common");
   const tRole = useTranslations("enum.role");
+  const apiError = useApiError();
 
   const router = useRouter();
   const { register } = useAuth();
@@ -71,7 +72,7 @@ export default function SignupPage() {
       });
       router.replace("/login?registered=1");
     } catch (e) {
-      setError(errorMessage(e, "Could not create the account"));
+      setError(apiError(e, "createAccount"));
       setBusy(false);
     }
   }

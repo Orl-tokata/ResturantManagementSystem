@@ -54,7 +54,7 @@ public class OrderService {
     @Transactional
     public OrderResponse openOrReuse(OpenOrderRequest request, String username) {
         DiningTable table = tableRepository.findById(request.tableId())
-                .orElseThrow(() -> NotFoundException.of("Table", request.tableId()));
+                .orElseThrow(() -> NotFoundException.of("entity.table", request.tableId()));
 
         List<Order> open = orderRepository.findByTableIdAndStatus(table.getId(), OrderStatus.OPEN);
         if (!open.isEmpty()) {
@@ -106,7 +106,7 @@ public class OrderService {
 
         for (OrderItemRequest line : request.items()) {
             Product product = productRepository.findById(line.productId())
-                    .orElseThrow(() -> NotFoundException.of("Product", line.productId()));
+                    .orElseThrow(() -> NotFoundException.of("entity.product", line.productId()));
 
             OrderItem item = OrderItem.builder()
                     .product(product)
@@ -143,7 +143,7 @@ public class OrderService {
         Order order = findEditable(orderId);
 
         if (order.getItems().isEmpty()) {
-            throw new BadRequestException("Cannot take payment for an empty bill");
+            throw new BadRequestException("error.order.emptyBill");
         }
 
         if (request.discount() != null) {
@@ -158,11 +158,10 @@ public class OrderService {
         // card and QR settle the exact total.
         if (request.paymentMethod() == PaymentMethod.CASH) {
             if (tendered == null) {
-                throw new BadRequestException("Amount tendered is required for a cash payment");
+                throw new BadRequestException("error.order.tenderedRequired");
             }
             if (tendered.compareTo(total) < 0) {
-                throw new BadRequestException(
-                        "Amount tendered (%s) is less than the total (%s)".formatted(tendered, total));
+                throw new BadRequestException("error.order.tenderedShort", tendered, total);
             }
         } else {
             tendered = total;
@@ -288,7 +287,7 @@ public class OrderService {
         return orderRepository.findByTableIdAndStatus(tableId, OrderStatus.OPEN).stream()
                 .findFirst()
                 .map(this::toResponse)
-                .orElseThrow(() -> new NotFoundException("No open order at table " + tableId));
+                .orElseThrow(() -> new NotFoundException("error.order.noOpenOrder", tableId));
     }
 
     /* ===================================================================== */
@@ -297,15 +296,14 @@ public class OrderService {
 
     Order find(Long id) {
         return orderRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Order", id));
+                .orElseThrow(() -> NotFoundException.of("entity.order", id));
     }
 
     private Order findEditable(Long id) {
         Order order = find(id);
         if (order.getStatus() != OrderStatus.OPEN) {
             throw new BadRequestException(
-                    "Order %s is %s and can no longer be changed"
-                            .formatted(order.getInvoiceNo(), order.getStatus()));
+                    "error.order.notEditable", order.getInvoiceNo(), order.getStatus());
         }
         return order;
     }
@@ -340,7 +338,7 @@ public class OrderService {
 
         BigDecimal discount = order.getDiscount() == null ? BigDecimal.ZERO : order.getDiscount();
         if (discount.compareTo(subtotal) > 0) {
-            throw new BadRequestException("Discount cannot exceed the subtotal");
+            throw new BadRequestException("error.order.discountTooLarge");
         }
 
         BigDecimal taxable = subtotal.subtract(discount);

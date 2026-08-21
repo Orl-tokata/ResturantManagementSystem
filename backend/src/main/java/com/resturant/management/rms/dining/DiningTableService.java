@@ -41,7 +41,7 @@ public class DiningTableService {
     @Transactional
     public TableResponse create(TableRequest request) {
         if (tableRepository.existsByName(request.name())) {
-            throw ConflictHelper.duplicate("Table", "name", request.name());
+            throw ConflictHelper.duplicate("entity.table", "field.name", request.name());
         }
         DiningTable table = new DiningTable();
         apply(table, request);
@@ -57,7 +57,7 @@ public class DiningTableService {
         tableRepository.findByName(request.name())
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
-                    throw ConflictHelper.duplicate("Table", "name", request.name());
+                    throw ConflictHelper.duplicate("entity.table", "field.name", request.name());
                 });
 
         apply(table, request);
@@ -76,7 +76,7 @@ public class DiningTableService {
         DiningTable table = find(id);
         if (table.getStatus() == TableStatus.OCCUPIED) {
             throw new com.resturant.management.rms.common.exception.ConflictException(
-                    "Cannot delete table '%s' while it is occupied".formatted(table.getName()));
+                    "error.table.occupied", table.getName());
         }
         tableRepository.delete(table);
     }
@@ -85,7 +85,7 @@ public class DiningTableService {
 
     private DiningTable find(Long id) {
         return tableRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Table", id));
+                .orElseThrow(() -> NotFoundException.of("entity.table", id));
     }
 
     private void apply(DiningTable table, TableRequest r) {

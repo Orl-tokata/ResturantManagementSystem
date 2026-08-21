@@ -45,10 +45,10 @@ public class AuthService {
     @Transactional
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByUserId(request.username())) {
-            throw new ConflictException("Username already taken: " + request.username());
+            throw new ConflictException("error.auth.usernameTaken", request.username());
         }
         if (request.email() != null && userRepository.existsByEml(request.email())) {
-            throw new ConflictException("Email already registered: " + request.email());
+            throw new ConflictException("error.auth.emailRegistered", request.email());
         }
 
         UserInfm user = UserInfm.builder()
@@ -84,8 +84,9 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
         if (user.isLocked()) {
-            throw new LockedException(
-                    "Account locked after too many failed attempts. Contact an administrator.");
+            // The message is not used: the handler answers LockedException with
+            // error.auth.locked, resolved for the caller's locale.
+            throw new LockedException("locked");
         }
         if (!user.isEnabled()) {
             throw new DisabledException("Account is disabled");
@@ -120,15 +121,15 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
         if (refreshToken == null || !jwtService.isValid(refreshToken, false)) {
-            throw new BadRequestException("Refresh token is missing, invalid or expired");
+            throw new BadRequestException("error.auth.refreshMissing");
         }
 
         String username = jwtService.extractUsername(refreshToken);
         UserInfm user = userRepository.findByUserId(username)
-                .orElseThrow(() -> new BadRequestException("Refresh token no longer valid"));
+                .orElseThrow(() -> new BadRequestException("error.auth.refreshStale"));
 
         if (!user.isEnabled() || user.isLocked()) {
-            throw new BadRequestException("Account is no longer active");
+            throw new BadRequestException("error.auth.accountInactive");
         }
 
         String access = jwtService.generateAccessToken(user.getUserId(), user.getRole().name());
@@ -166,14 +167,14 @@ public class AuthService {
     @Transactional
     public VerifyOtpResponse verifyOtp(VerifyOtpRequest request) {
         UserInfm user = userRepository.findByEml(request.email())
-                .orElseThrow(() -> new BadRequestException("Invalid code"));
+                .orElseThrow(() -> new BadRequestException("error.auth.otpInvalid"));
 
         PasswordResetToken token = tokenRepository
                 .findFirstByUserAndOtpCodeAndUsedYnOrderByCreatedAtDesc(user, request.code(), "N")
-                .orElseThrow(() -> new BadRequestException("Invalid code"));
+                .orElseThrow(() -> new BadRequestException("error.auth.otpInvalid"));
 
         if (!token.isUsable()) {
-            throw new BadRequestException("Code has expired. Request a new one.");
+            throw new BadRequestException("error.auth.otpExpired");
         }
 
         // The OTP is spent here; the returned reset token carries the flow forward
@@ -188,10 +189,10 @@ public class AuthService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         PasswordResetToken token = tokenRepository.findByToken(request.resetToken())
-                .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
+                .orElseThrow(() -> new BadRequestException("error.auth.resetTokenInvalid"));
 
         if (!token.isUsable()) {
-            throw new BadRequestException("Invalid or expired reset token");
+            throw new BadRequestException("error.auth.resetTokenInvalid");
         }
 
         UserInfm user = token.getUser();
@@ -210,13 +211,13 @@ public class AuthService {
     @Transactional
     public void changePassword(String username, ChangePasswordRequest request) {
         UserInfm user = userRepository.findByUserId(username)
-                .orElseThrow(() -> new BadRequestException("User not found"));
+                .orElseThrow(() -> new BadRequestException("error.auth.userNotFound"));
 
         if (!passwordEncoder.matches(request.currentPassword(), user.getUserPwd())) {
-            throw new BadRequestException("Current password is incorrect");
+            throw new BadRequestException("error.auth.currentPasswordWrong");
         }
         if (passwordEncoder.matches(request.newPassword(), user.getUserPwd())) {
-            throw new BadRequestException("New password must differ from the current one");
+            throw new BadRequestException("error.auth.passwordUnchanged");
         }
 
         user.setUserPwd(passwordEncoder.encode(request.newPassword()));
@@ -238,14 +239,14 @@ public class AuthService {
     @Transactional
     public UserResponse updateProfile(String username, UpdateProfileRequest request) {
         UserInfm user = userRepository.findByUserId(username)
-                .orElseThrow(() -> new BadRequestException("User not found"));
+                .orElseThrow(() -> new BadRequestException("error.auth.userNotFound"));
 
         if (request.email() != null && !request.email().isBlank()
                 && !request.email().equalsIgnoreCase(user.getEml())) {
             userRepository.findByEml(request.email())
                     .filter(other -> !other.getId().equals(user.getId()))
                     .ifPresent(other -> {
-                        throw new ConflictException("Email already registered: " + request.email());
+                        throw new ConflictException("error.auth.emailRegistered", request.email());
                     });
         }
 
@@ -262,7 +263,7 @@ public class AuthService {
     public UserResponse currentUser(String username) {
         return userRepository.findByUserId(username)
                 .map(this::toResponse)
-                .orElseThrow(() -> new BadRequestException("User not found"));
+                .orElseThrow(() -> new BadRequestException("error.auth.userNotFound"));
     }
 
     private UserResponse toResponse(UserInfm u) {

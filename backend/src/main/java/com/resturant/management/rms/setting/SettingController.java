@@ -2,6 +2,7 @@ package com.resturant.management.rms.setting;
 
 import com.resturant.management.rms.common.ApiResponse;
 import com.resturant.management.rms.common.exception.BadRequestException;
+import com.resturant.management.rms.common.exception.LocalizedArg;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,8 +27,8 @@ public class SettingController {
      * left to the fallback in {@link SettingService}.
      */
     private static final Map<String, String> NUMERIC_KEYS = Map.of(
-            SettingService.VAT_RATE, "VAT rate",
-            SettingService.KHR_RATE, "Exchange rate");
+            SettingService.VAT_RATE, "setting.vatRate",
+            SettingService.KHR_RATE, "setting.khrRate");
 
     private final SettingService settingService;
 
@@ -44,7 +45,7 @@ public class SettingController {
     @Operation(summary = "Update settings (ADMIN)",
             description = "Partial update: only the keys sent are written, the rest are left alone.")
     public ApiResponse<Map<String, String>> update(
-            @NotEmpty(message = "must contain at least one setting")
+            @NotEmpty(message = "{valid.atLeastOneSetting}")
             @RequestBody Map<String, String> values) {
 
         validate(values);
@@ -53,22 +54,22 @@ public class SettingController {
     }
 
     private void validate(Map<String, String> values) {
-        NUMERIC_KEYS.forEach((key, label) -> {
+        NUMERIC_KEYS.forEach((key, labelKey) -> {
             String raw = values.get(key);
             if (raw == null) return;
             try {
                 BigDecimal value = new BigDecimal(raw.trim());
                 if (value.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new BadRequestException("%s cannot be negative".formatted(label));
+                    throw new BadRequestException("error.setting.negative", new LocalizedArg(labelKey));
                 }
                 if (key.equals(SettingService.VAT_RATE) && value.compareTo(BigDecimal.valueOf(100)) > 0) {
-                    throw new BadRequestException("VAT rate cannot exceed 100%");
+                    throw new BadRequestException("error.setting.vatTooHigh");
                 }
                 if (key.equals(SettingService.KHR_RATE) && value.compareTo(BigDecimal.ZERO) == 0) {
-                    throw new BadRequestException("Exchange rate must be greater than zero");
+                    throw new BadRequestException("error.setting.rateZero");
                 }
             } catch (NumberFormatException e) {
-                throw new BadRequestException("%s must be a number, got '%s'".formatted(label, raw));
+                throw new BadRequestException("error.setting.notNumber", new LocalizedArg(labelKey), raw);
             }
         });
     }

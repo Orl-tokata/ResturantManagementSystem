@@ -9,11 +9,12 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { useAuth } from "@/lib/auth-context";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { HOME_BY_ROLE } from "@/types/auth";
 
 function LoginForm() {
   const t = useTranslations("auth");
+  const apiError = useApiError();
 
   const router = useRouter();
   const params = useSearchParams();
@@ -40,7 +41,7 @@ function LoginForm() {
         : HOME_BY_ROLE[user.role];
       router.replace(target);
     } catch (e) {
-      setError(errorMessage(e, "Could not sign in"));
+      setError(apiError(e, "signIn"));
       setBusy(false);
     }
   }

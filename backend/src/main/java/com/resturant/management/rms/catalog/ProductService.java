@@ -56,12 +56,12 @@ public class ProductService {
 
     private Product find(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Product", id));
+                .orElseThrow(() -> NotFoundException.of("entity.product", id));
     }
 
     private void apply(Product product, ProductRequest r) {
         Category category = categoryRepository.findById(r.categoryId())
-                .orElseThrow(() -> NotFoundException.of("Category", r.categoryId()));
+                .orElseThrow(() -> NotFoundException.of("entity.category", r.categoryId()));
 
         product.setName(r.name());
         product.setNameEn(r.nameEn());

@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
 type Chrome = "admin" | "cashier" | "danger" | "success";
@@ -35,6 +36,7 @@ export function Modal({
   footer?: ReactNode;
   children: ReactNode;
 }) {
+  const t = useTranslations("common");
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const returnFocusTo = useRef<HTMLElement | null>(null);
@@ -112,7 +114,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("close")}
             className="grid h-7 w-7 shrink-0 place-items-center rounded hover:bg-white/20"
           >
             <X size={16} />

@@ -23,6 +23,7 @@ export function SearchBar({
   className?: string;
 }) {
   const t = useTranslations("common");
+  const tA11y = useTranslations("a11y");
   const label = placeholder ?? t("search");
   const [local, setLocal] = useState(value);
 
@@ -74,7 +75,7 @@ export function SearchBar({
       {local && (
         <button
           type="button"
-          aria-label="Clear search"
+          aria-label={tA11y("clearSearch")}
           onClick={clear}
           className="shrink-0 text-ink-500 hover:text-ink-900"
         >

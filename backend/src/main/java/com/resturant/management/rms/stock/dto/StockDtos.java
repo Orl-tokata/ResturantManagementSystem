@@ -12,11 +12,11 @@ public final class StockDtos {
     }
 
     public record StockItemRequest(
-            @NotBlank(message = "is required") @Size(max = 150) String name,
-            @NotBlank(message = "is required") @Size(max = 30) String unit,
-            @PositiveOrZero(message = "cannot be negative") BigDecimal qty,
-            @PositiveOrZero(message = "cannot be negative") BigDecimal minQty,
-            @PositiveOrZero(message = "cannot be negative") BigDecimal unitCost
+            @NotBlank(message = "{valid.required}") @Size(max = 150) String name,
+            @NotBlank(message = "{valid.required}") @Size(max = 30) String unit,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal qty,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal minQty,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal unitCost
     ) {}
 
     public record StockItemResponse(
@@ -37,9 +37,9 @@ public final class StockDtos {
      * negative number to an OUT movement.
      */
     public record AdjustRequest(
-            @NotNull(message = "is required") MovementType type,
-            @NotNull(message = "is required")
-            @Positive(message = "must be greater than zero")
+            @NotNull(message = "{valid.required}") MovementType type,
+            @NotNull(message = "{valid.required}")
+            @Positive(message = "{valid.positive}")
             BigDecimal qty,
             @Size(max = 500) String reason
     ) {}

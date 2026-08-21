@@ -21,7 +21,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import type { RecordStatus } from "@/types/master";
 import {
@@ -38,6 +38,8 @@ export default function SuppliersPage() {
   const tc = useTranslations("common");
   const tStatus = useTranslations("enum.recordStatus");
   const tType = useTranslations("enum.supplyType");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -86,7 +88,7 @@ export default function SuppliersPage() {
       await save.mutateAsync({ id: editingId ?? null, body: draft });
       setEditingId(undefined);
     } catch (e) {
-      setFormError(errorMessage(e, "Could not save the supplier"));
+      setFormError(apiError(e, "saveSupplier"));
     }
   }
 
@@ -95,7 +97,7 @@ export default function SuppliersPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(errorMessage(e, "Could not delete the supplier"));
+      setListError(apiError(e, "deleteSupplier"));
     } finally {
       setDeleting(null);
     }
@@ -146,14 +148,14 @@ export default function SuppliersPage() {
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={`Edit ${r.company}`}>
+          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={tA11y("edit", { name: r.company })}>
             ✏️
           </Button>
           <Button
             size="sm"
             variant="danger"
             onClick={() => setDeleting(r)}
-            aria-label={`Delete ${r.company}`}
+            aria-label={tA11y("delete", { name: r.company })}
           >
             🗑️
           </Button>
@@ -165,7 +167,7 @@ export default function SuppliersPage() {
   return (
     <>
       {listError && <Alert tone="error">{listError}</Alert>}
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar
         left={

@@ -1,7 +1,7 @@
 "use client";
 
 import { Languages } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { setLocale } from "@/app/actions/locale";
 import { LOCALES, LOCALE_LABEL, type Locale } from "@/i18n/config";
@@ -14,6 +14,7 @@ import { LOCALES, LOCALE_LABEL, type Locale } from "@/i18n/config";
  * write alone would not trigger.
  */
 export function LanguageSwitcher() {
+  const tA11y = useTranslations("a11y");
   const active = useLocale() as Locale;
   const [pending, startTransition] = useTransition();
 
@@ -21,7 +22,7 @@ export function LanguageSwitcher() {
     <div
       className="flex items-center gap-1 rounded bg-white/15 p-0.5"
       role="group"
-      aria-label="Language"
+      aria-label={tA11y("language")}
     >
       <Languages size={14} className="ml-1 shrink-0 opacity-80" aria-hidden />
       {LOCALES.map((code) => (

@@ -15,7 +15,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { get, put } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 
 type Settings = Record<string, string>;
 
@@ -31,6 +31,7 @@ const TOGGLES: Array<[string, string]> = [
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
+  const apiError = useApiError();
 
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Settings | null>(null);
@@ -59,7 +60,7 @@ export default function SettingsPage() {
       void qc.invalidateQueries({ queryKey: ["order"] });
     },
     onError: (e) => {
-      setError(errorMessage(e, t("saveFailed")));
+      setError(apiError(e, "saveSettings"));
       setSaved(null);
     },
   });
@@ -87,7 +88,7 @@ export default function SettingsPage() {
   }
 
   if (settings.isError) {
-    return <Alert tone="error">{errorMessage(settings.error)}</Alert>;
+    return <Alert tone="error">{apiError(settings.error)}</Alert>;
   }
 
   return (

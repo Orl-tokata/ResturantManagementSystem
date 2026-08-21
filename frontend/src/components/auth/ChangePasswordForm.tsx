@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Alert, Button, Field, FieldRow, Input } from "@/components/ui";
 import { post } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 
 /** Same regex the backend enforces, so the user sees the rule before a round trip. */
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -17,6 +17,7 @@ const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
 export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
   const t = useTranslations("auth");
   const tc = useTranslations("common");
+  const apiError = useApiError();
 
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -37,7 +38,7 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
       onDone?.();
     },
     onError: (e) => {
-      setError(errorMessage(e, "Could not change the password"));
+      setError(apiError(e, "changePassword"));
       setDone(false);
     },
   });

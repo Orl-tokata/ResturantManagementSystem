@@ -24,7 +24,7 @@ import {
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useQuery } from "@tanstack/react-query";
 import { get } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import {
   type DiningTable,
   type TableRequest,
@@ -41,6 +41,8 @@ export default function TablesPage() {
   const tc = useTranslations("common");
   const tZone = useTranslations("enum.zone");
   const tStatus = useTranslations("enum.tableStatus");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const [search, setSearch] = useState("");
   const [zone, setZone] = useState<TableZone | "">("");
@@ -90,7 +92,7 @@ export default function TablesPage() {
       await save.mutateAsync({ id: editingId ?? null, body: draft });
       setEditingId(undefined);
     } catch (e) {
-      setFormError(errorMessage(e, "Could not save the table"));
+      setFormError(apiError(e, "saveTable"));
     }
   }
 
@@ -99,7 +101,7 @@ export default function TablesPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(errorMessage(e, "Could not delete the table"));
+      setListError(apiError(e, "deleteTable"));
     } finally {
       setDeleting(null);
     }
@@ -121,14 +123,14 @@ export default function TablesPage() {
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={`Edit ${r.name}`}>
+          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={tA11y("edit", { name: r.name })}>
             ✏️
           </Button>
           <Button
             size="sm"
             variant="danger"
             onClick={() => setDeleting(r)}
-            aria-label={`Delete ${r.name}`}
+            aria-label={tA11y("delete", { name: r.name })}
           >
             🗑️
           </Button>
@@ -140,7 +142,7 @@ export default function TablesPage() {
   return (
     <>
       {listError && <Alert tone="error">{listError}</Alert>}
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>
         <StatTile tone={1} label={tStatus("FREE")} value={summary.data?.free ?? "—"} />

@@ -25,7 +25,7 @@ import {
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { get, post, type PageResponse } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import {
   type AdjustRequest,
@@ -44,6 +44,8 @@ export default function StockPage() {
   const t = useTranslations("stock");
   const tc = useTranslations("common");
   const tMv = useTranslations("enum.movementType");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const qc = useQueryClient();
 
@@ -84,7 +86,7 @@ export default function StockPage() {
       void qc.invalidateQueries({ queryKey: ["stock"] });
       setAdjusting(null);
     },
-    onError: (e) => setAdjustError(errorMessage(e, "Could not adjust the stock")),
+    onError: (e) => setAdjustError(apiError(e, "adjustStock")),
   });
 
   const rows = (list.data?.content ?? []).filter((r) => !onlyLow || r.lowStock);
@@ -115,7 +117,7 @@ export default function StockPage() {
       setEditingId(undefined);
       void qc.invalidateQueries({ queryKey: ["stock", "summary"] });
     } catch (e) {
-      setFormError(errorMessage(e, "Could not save the stock item"));
+      setFormError(apiError(e, "saveStockItem"));
     }
   }
 
@@ -124,7 +126,7 @@ export default function StockPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(errorMessage(e, "Could not delete the stock item"));
+      setListError(apiError(e, "deleteStockItem"));
     } finally {
       setDeleting(null);
     }
@@ -173,13 +175,13 @@ export default function StockPage() {
           >
             📦 {t("adjust")}
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => setHistoryFor(r)} aria-label="History">
+          <Button size="sm" variant="ghost" onClick={() => setHistoryFor(r)} aria-label={tA11y("history")}>
             🕘
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={`Edit ${r.name}`}>
+          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={tA11y("edit", { name: r.name })}>
             ✏️
           </Button>
-          <Button size="sm" variant="danger" onClick={() => setDeleting(r)} aria-label={`Delete ${r.name}`}>
+          <Button size="sm" variant="danger" onClick={() => setDeleting(r)} aria-label={tA11y("delete", { name: r.name })}>
             🗑️
           </Button>
         </div>
@@ -210,7 +212,7 @@ export default function StockPage() {
   return (
     <>
       {listError && <Alert tone="error">{listError}</Alert>}
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>
         <StatTile tone={1} label={t("totalItems")} value={summary.data?.totalItems ?? "—"} />
@@ -229,7 +231,7 @@ export default function StockPage() {
               className="w-auto"
               value={onlyLow ? "low" : "all"}
               onChange={(e) => setOnlyLow(e.target.value === "low")}
-              aria-label="Filter"
+              aria-label={tA11y("filter")}
             >
               <option value="all">{tc("all")}</option>
               <option value="low">{t("lowStockOnly")}</option>

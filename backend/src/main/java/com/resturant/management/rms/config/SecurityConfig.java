@@ -1,8 +1,10 @@
 package com.resturant.management.rms.config;
 
 import com.resturant.management.rms.common.ApiResponse;
+import com.resturant.management.rms.common.i18n.Messages;
 import com.resturant.management.rms.security.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +20,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.servlet.LocaleResolver;
+
+import java.util.Locale;
 
 @Configuration
 @EnableWebSecurity
@@ -48,6 +53,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CorsConfigurationSource corsConfigurationSource;
     private final ObjectMapper objectMapper;
+    private final Messages messages;
+    private final LocaleResolver localeResolver;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -64,11 +71,11 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) ->
-                                write(res, HttpServletResponse.SC_UNAUTHORIZED,
-                                        "Authentication required"))
+                                write(req, res, HttpServletResponse.SC_UNAUTHORIZED,
+                                        "error.auth.required"))
                         .accessDeniedHandler((req, res, e) ->
-                                write(res, HttpServletResponse.SC_FORBIDDEN,
-                                        "You do not have permission to perform this action"))
+                                write(req, res, HttpServletResponse.SC_FORBIDDEN,
+                                        "error.auth.forbidden"))
                 )
                 .headers(h -> h
                         // The H2 console renders inside a frame; only reachable on dev.
@@ -99,12 +106,25 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Errors raised by the security filters bypass @RestControllerAdvice, so shape them here too. */
-    private void write(HttpServletResponse response, int status, String message) throws java.io.IOException {
+    /**
+     * Errors raised by the security filters bypass @RestControllerAdvice, so
+     * shape them here too — including resolving the message.
+     *
+     * <p>The locale has to be resolved from the request by hand. These handlers
+     * run inside the filter chain, before DispatcherServlet populates
+     * LocaleContextHolder, so asking Messages for "the current locale" here
+     * would silently answer with the default on every 401. Reusing the same
+     * LocaleResolver bean keeps the supported-locale matching identical to the
+     * rest of the app.
+     */
+    private void write(HttpServletRequest request, HttpServletResponse response,
+                       int status, String messageKey) throws java.io.IOException {
+        Locale locale = localeResolver.resolveLocale(request);
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
-        objectMapper.writeValue(response.getOutputStream(), ApiResponse.error(status, message));
+        objectMapper.writeValue(response.getOutputStream(),
+                ApiResponse.error(status, messages.get(locale, messageKey)));
     }
 
     @Bean

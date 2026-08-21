@@ -14,17 +14,17 @@ public final class PurchaseDtos {
     }
 
     public record PurchaseItemRequest(
-            @NotNull(message = "is required") Long stockItemId,
-            @NotNull(message = "is required")
-            @Positive(message = "must be greater than zero") BigDecimal qty,
-            @NotNull(message = "is required")
-            @PositiveOrZero(message = "cannot be negative") BigDecimal unitCost
+            @NotNull(message = "{valid.required}") Long stockItemId,
+            @NotNull(message = "{valid.required}")
+            @Positive(message = "{valid.positive}") BigDecimal qty,
+            @NotNull(message = "{valid.required}")
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal unitCost
     ) {}
 
     public record PurchaseRequest(
-            @NotNull(message = "is required") Long supplierId,
-            @NotNull(message = "is required") LocalDate purchaseDate,
-            @Valid @NotEmpty(message = "must contain at least one line")
+            @NotNull(message = "{valid.required}") Long supplierId,
+            @NotNull(message = "{valid.required}") LocalDate purchaseDate,
+            @Valid @NotEmpty(message = "{valid.atLeastOneLine}")
             List<PurchaseItemRequest> items,
             @Size(max = 500) String note
     ) {}

@@ -68,7 +68,7 @@ public class PurchaseService {
     @Transactional
     public PurchaseResponse create(PurchaseRequest request) {
         Supplier supplier = supplierRepository.findById(request.supplierId())
-                .orElseThrow(() -> NotFoundException.of("Supplier", request.supplierId()));
+                .orElseThrow(() -> NotFoundException.of("entity.supplier", request.supplierId()));
 
         Purchase purchase = Purchase.builder()
                 .poNo(nextPoNo())
@@ -111,11 +111,10 @@ public class PurchaseService {
         Purchase purchase = find(id);
 
         if (purchase.getStatus() == PurchaseStatus.RECEIVED) {
-            throw new BadRequestException("%s has already been received".formatted(purchase.getPoNo()));
+            throw new BadRequestException("error.purchase.alreadyReceived", purchase.getPoNo());
         }
         if (purchase.getStatus() == PurchaseStatus.CANCELLED) {
-            throw new BadRequestException(
-                    "%s was cancelled and cannot be received".formatted(purchase.getPoNo()));
+            throw new BadRequestException("error.purchase.cancelled", purchase.getPoNo());
         }
 
         for (PurchaseItem item : purchase.getItems()) {
@@ -143,10 +142,7 @@ public class PurchaseService {
     public PurchaseResponse cancel(Long id) {
         Purchase purchase = find(id);
         if (purchase.getStatus() == PurchaseStatus.RECEIVED) {
-            throw new BadRequestException(
-                    ("%s has been received; cancelling it would leave the stock overstated. "
-                            + "Record a DAMAGED or OUT adjustment instead.")
-                            .formatted(purchase.getPoNo()));
+            throw new BadRequestException("error.purchase.receivedCancel", purchase.getPoNo());
         }
         purchase.setStatus(PurchaseStatus.CANCELLED);
         return toResponse(purchaseRepository.save(purchase));
@@ -156,9 +152,7 @@ public class PurchaseService {
     public void delete(Long id) {
         Purchase purchase = find(id);
         if (purchase.getStatus() == PurchaseStatus.RECEIVED) {
-            throw new BadRequestException(
-                    "Cannot delete %s: it has been received and is part of the stock history"
-                            .formatted(purchase.getPoNo()));
+            throw new BadRequestException("error.purchase.receivedDelete", purchase.getPoNo());
         }
         purchaseRepository.delete(purchase);
     }
@@ -167,7 +161,7 @@ public class PurchaseService {
 
     private Purchase find(Long id) {
         return purchaseRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Purchase", id));
+                .orElseThrow(() -> NotFoundException.of("entity.purchase", id));
     }
 
     private void recalculate(Purchase purchase) {

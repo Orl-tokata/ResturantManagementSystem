@@ -79,9 +79,7 @@ public class StockService {
         // Movements reference the item, so removing it would orphan the audit
         // trail. Purchases reference it too and would fail on the FK anyway.
         if (movementRepository.countByStockItemId(id) > 0) {
-            throw new BadRequestException(
-                    "Cannot delete '%s': it has stock movement history. Set its quantity to zero instead."
-                            .formatted(item.getName()));
+            throw new BadRequestException("error.stock.hasMovements", item.getName());
         }
         stockRepository.delete(item);
     }
@@ -105,8 +103,7 @@ public class StockService {
         BigDecimal after = current.add(delta);
         if (after.compareTo(BigDecimal.ZERO) < 0) {
             throw new BadRequestException(
-                    "Cannot remove %s from '%s': only %s in stock"
-                            .formatted(request.qty(), item.getName(), current));
+                    "error.stock.insufficient", request.qty(), item.getName(), current);
         }
 
         item.setQty(after);
@@ -150,7 +147,7 @@ public class StockService {
 
     public StockItem find(Long id) {
         return stockRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Stock item", id));
+                .orElseThrow(() -> NotFoundException.of("entity.stockItem", id));
     }
 
     private void apply(StockItem item, StockItemRequest r) {

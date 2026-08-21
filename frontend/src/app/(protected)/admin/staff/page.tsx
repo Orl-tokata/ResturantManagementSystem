@@ -21,7 +21,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import type { Role } from "@/types/auth";
 import {
@@ -54,6 +54,8 @@ export default function StaffPage() {
   const tShift = useTranslations("enum.shift");
   const tGender = useTranslations("enum.gender");
   const tSt = useTranslations("enum.staffStatus");
+  const tA11y = useTranslations("a11y");
+  const apiError = useApiError();
 
   const [search, setSearch] = useState("");
   const [role, setRole] = useState<Role | "">("");
@@ -112,7 +114,7 @@ export default function StaffPage() {
       await save.mutateAsync({ id: editingId ?? null, body: draft });
       setEditingId(undefined);
     } catch (e) {
-      setFormError(errorMessage(e, "Could not save the staff record"));
+      setFormError(apiError(e, "saveStaff"));
     }
   }
 
@@ -121,7 +123,7 @@ export default function StaffPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(errorMessage(e, "Could not delete the staff record"));
+      setListError(apiError(e, "deleteStaff"));
     } finally {
       setDeleting(null);
     }
@@ -176,14 +178,14 @@ export default function StaffPage() {
       align: "right",
       render: (r) => (
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={`Edit ${r.staffName}`}>
+          <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={tA11y("edit", { name: r.staffName })}>
             ✏️
           </Button>
           <Button
             size="sm"
             variant="danger"
             onClick={() => setDeleting(r)}
-            aria-label={`Delete ${r.staffName}`}
+            aria-label={tA11y("delete", { name: r.staffName })}
           >
             🗑️
           </Button>
@@ -195,7 +197,7 @@ export default function StaffPage() {
   return (
     <>
       {listError && <Alert tone="error">{listError}</Alert>}
-      {list.isError && <Alert tone="error">{errorMessage(list.error)}</Alert>}
+      {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar
         left={

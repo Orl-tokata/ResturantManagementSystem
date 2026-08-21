@@ -15,7 +15,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { get, type PageResponse } from "@/lib/api";
-import { errorMessage } from "@/lib/errors";
+import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import type { Order } from "@/types/order";
 import type { CashierSummary } from "@/types/report";
@@ -26,6 +26,7 @@ export default function CashierHomePage() {
   const tH = useTranslations("history");
   const tOs = useTranslations("enum.orderStatus");
   const tPos = useTranslations("pos");
+  const apiError = useApiError();
 
   const summary = useQuery({
     queryKey: ["dashboard", "cashier"],
@@ -74,7 +75,7 @@ export default function CashierHomePage() {
 
   return (
     <>
-      {summary.isError && <Alert tone="error">{errorMessage(summary.error)}</Alert>}
+      {summary.isError && <Alert tone="error">{apiError(summary.error)}</Alert>}
 
       <StatGrid>
         <StatTile tone={1} label={t("todaySales")} value={formatUsd(s?.todaySales ?? 0)} />
