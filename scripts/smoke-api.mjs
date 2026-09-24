@@ -102,6 +102,14 @@ async function main() {
   // Unique-ish suffix so codes and usernames do not collide across runs.
   const tag = Date.now().toString().slice(-6);
 
+  // Everything this script creates carries one of these markers, so
+  // scripts/clean-smoke-data.sql can find its leavings by pattern instead of
+  // guessing at ids or deleting whole tables. Changing them means changing
+  // that script too.
+  const USER = "smoke" + tag;        // users_infm.user_id  LIKE 'smoke%'
+  const CODE = "SMOKE-" + tag;       // supplier / staff codes LIKE 'SMOKE-%'
+  const NAME = "Smoke " + tag;       // table and stock-item names LIKE 'Smoke %'
+
   /* ---- auth ------------------------------------------------------------ */
   await call("current user", "GET", "/auth/me", { tok: adminTok });
   await call("update profile", "PUT", "/auth/me", {
@@ -112,11 +120,11 @@ async function main() {
   await call("refresh without cookie", "POST", "/auth/refresh", { expect: [400] });
   await call("register", "POST", "/auth/register", {
     body: {
-      username: "smoke" + tag, password: "Passw0rdX", fullName: "Smoke Test",
-      email: `smoke${tag}@rms.local`, role: "CASHIER",
+      username: USER, password: "Passw0rdX", fullName: "Smoke Test",
+      email: `${USER}@rms.local`, role: "CASHIER",
     },
   });
-  const tmpTok = await login("smoke" + tag, "Passw0rdX");
+  const tmpTok = await login(USER, "Passw0rdX");
   await call("change password", "POST", "/auth/change-password", {
     tok: tmpTok, body: { currentPassword: "Passw0rdX", newPassword: "Passw0rdY" },
   });
@@ -165,10 +173,10 @@ async function main() {
   await call("table summary", "GET", "/tables/summary", { tok: adminTok });
   await call("table by id", "GET", "/tables/1", { tok: adminTok });
   const tbl = await call("create table", "POST", "/tables", {
-    tok: adminTok, body: { name: "Smoke" + tag, seats: 2, zone: "INDOOR" },
+    tok: adminTok, body: { name: NAME, seats: 2, zone: "INDOOR" },
   });
   await call("update table", "PUT", `/tables/${tbl?.id}`, {
-    tok: adminTok, body: { name: "Smoke" + tag, seats: 4, zone: "OUTDOOR", status: "FREE" },
+    tok: adminTok, body: { name: NAME, seats: 4, zone: "OUTDOOR", status: "FREE" },
   });
   await call("set table status", "PATCH", `/tables/${tbl?.id}/status`, { tok: adminTok, body: { status: "RESERVED" } });
   await call("delete table", "DELETE", `/tables/${tbl?.id}`, { tok: adminTok, expect: [200, 204] });
@@ -178,11 +186,11 @@ async function main() {
   await call("staff by id", "GET", "/staff/1", { tok: adminTok });
   const staff = await call("create staff", "POST", "/staff", {
     tok: adminTok,
-    body: { staffCode: "SMK" + tag, staffName: "Smoke Staff", role: "CASHIER", shift: "MORNING", gender: "MALE", salary: 300 },
+    body: { staffCode: CODE, staffName: "Smoke Staff", role: "CASHIER", shift: "MORNING", gender: "MALE", salary: 300 },
   });
   await call("update staff", "PUT", `/staff/${staff?.id}`, {
     tok: adminTok,
-    body: { staffCode: "SMK" + tag, staffName: "Smoke Staff 2", role: "CASHIER", shift: "EVENING", gender: "MALE", salary: 350, status: "ACTIVE" },
+    body: { staffCode: CODE, staffName: "Smoke Staff 2", role: "CASHIER", shift: "EVENING", gender: "MALE", salary: 350, status: "ACTIVE" },
   });
   await call("delete staff", "DELETE", `/staff/${staff?.id}`, { tok: adminTok, expect: [200, 204] });
 
@@ -192,11 +200,11 @@ async function main() {
   await call("supplier by id", "GET", "/suppliers/1", { tok: adminTok });
   const sup = await call("create supplier", "POST", "/suppliers", {
     tok: adminTok,
-    body: { supplierCode: "SUP" + tag, company: "Smoke Supply", contactPerson: "A", phone: "012", supplyType: "OTHER" },
+    body: { supplierCode: CODE, company: "Smoke Supply", contactPerson: "A", phone: "012", supplyType: "OTHER" },
   });
   await call("update supplier", "PUT", `/suppliers/${sup?.id}`, {
     tok: adminTok,
-    body: { supplierCode: "SUP" + tag, company: "Smoke Supply 2", contactPerson: "B", phone: "013", supplyType: "MEAT", status: "ACTIVE" },
+    body: { supplierCode: CODE, company: "Smoke Supply 2", contactPerson: "B", phone: "013", supplyType: "MEAT", status: "ACTIVE" },
   });
   // Supplier 1 is owed money in the seed, so removing it must be refused.
   await call("supplier delete guard", "DELETE", "/suppliers/1", { tok: adminTok, expect: [400] });
@@ -208,10 +216,10 @@ async function main() {
   await call("stock item by id", "GET", "/stock/1", { tok: adminTok });
   await call("stock movements", "GET", "/stock/1/movements", { tok: adminTok });
   const item = await call("create stock item", "POST", "/stock", {
-    tok: adminTok, body: { name: "សម្ភារៈសាកល្បង", unit: "kg", qty: 5, minQty: 1, unitCost: 2 },
+    tok: adminTok, body: { name: NAME, unit: "kg", qty: 5, minQty: 1, unitCost: 2 },
   });
   await call("update stock item", "PUT", `/stock/${item?.id}`, {
-    tok: adminTok, body: { name: "សម្ភារៈសាកល្បង", unit: "kg", qty: 5, minQty: 2, unitCost: 2.5 },
+    tok: adminTok, body: { name: NAME, unit: "kg", qty: 5, minQty: 2, unitCost: 2.5 },
   });
   await call("adjust stock", "POST", `/stock/${item?.id}/adjust`, {
     tok: adminTok, body: { type: "IN", qty: 3, reason: "smoke test" },
@@ -241,21 +249,26 @@ async function main() {
   await call("cancel purchase", "POST", `/purchases/${po2?.id}/cancel`, { tok: adminTok });
   await call("delete purchase", "DELETE", `/purchases/${po2?.id}`, { tok: adminTok, expect: [200, 204] });
 
-  /* ---- orders: the whole POS lifecycle --------------------------------- */
-  await call("list orders", "GET", "/orders", { tok: cashierTok });
-  await call("order summary", "GET", "/orders/summary", { tok: cashierTok });
-  const order = await call("open a bill", "POST", "/orders", { tok: cashierTok, body: { tableId: 5 } });
-  await call("order by id", "GET", `/orders/${order?.id}`, { tok: cashierTok });
-  await call("open order for a table", "GET", "/orders/open?tableId=5", { tok: cashierTok });
+  /* ---- orders: the whole POS lifecycle ---------------------------------
+     Rung up by the account this script registered, not the seeded cashier.
+     An order records who took it, so that is what lets the cleanup script tell
+     a smoke sale from a real one; otherwise it would have to delete every
+     order and hope none of them mattered. */
+  const posTok = await login(USER, "Passw0rdY");
+  await call("list orders", "GET", "/orders", { tok: posTok });
+  await call("order summary", "GET", "/orders/summary", { tok: posTok });
+  const order = await call("open a bill", "POST", "/orders", { tok: posTok, body: { tableId: 5 } });
+  await call("order by id", "GET", `/orders/${order?.id}`, { tok: posTok });
+  await call("open order for a table", "GET", "/orders/open?tableId=5", { tok: posTok });
   await call("set order items", "PUT", `/orders/${order?.id}/items`, {
-    tok: cashierTok, body: { items: [{ productId: 1, qty: 2 }, { productId: 11, qty: 1 }] },
+    tok: posTok, body: { items: [{ productId: 1, qty: 2 }, { productId: 11, qty: 1 }] },
   });
   await call("take payment", "POST", `/orders/${order?.id}/pay`, {
-    tok: cashierTok, body: { paymentMethod: "CASH", amountTendered: 50 },
+    tok: posTok, body: { paymentMethod: "CASH", amountTendered: 50 },
   });
-  await call("fetch receipt", "GET", `/orders/${order?.id}/receipt`, { tok: cashierTok });
-  const order2 = await call("open a second bill", "POST", "/orders", { tok: cashierTok, body: { tableId: 6 } });
-  await call("cancel order", "POST", `/orders/${order2?.id}/cancel`, { tok: cashierTok });
+  await call("fetch receipt", "GET", `/orders/${order?.id}/receipt`, { tok: posTok });
+  const order2 = await call("open a second bill", "POST", "/orders", { tok: posTok, body: { tableId: 6 } });
+  await call("cancel order", "POST", `/orders/${order2?.id}/cancel`, { tok: posTok });
 
   /* ---- reports, dashboards, settings ----------------------------------- */
   const d = today();

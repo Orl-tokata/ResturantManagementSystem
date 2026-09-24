@@ -222,6 +222,24 @@ disposable database — it refuses a non-localhost URL unless
 Overridable with `SMOKE_BASE_URL`, `SMOKE_ADMIN_USER`, `SMOKE_ADMIN_PASS`,
 `SMOKE_CASHIER_USER`, `SMOKE_CASHIER_PASS`.
 
+#### Clearing up after it
+
+```bash
+psql -U rms -d rms -h localhost -f scripts/clean-smoke-data.sql
+```
+
+Against H2 the leftovers vanish on restart; against PostgreSQL they stay. This
+removes them and gives back the stock those smoke sales consumed. Safe to run
+when there is nothing to clean, and safe to run twice.
+
+It deletes only rows carrying the smoke test's markers — `user_id LIKE 'smoke%'`,
+codes `LIKE 'SMOKE-%'`, names `LIKE 'Smoke %'`, and orders rung up by one of
+those accounts. That last one is why the smoke test registers its own cashier
+and rings the sales up as them: a smoke order is otherwise indistinguishable
+from a real one, and the cleanup would have to delete every order and hope none
+of them mattered. Change a marker in `smoke-api.mjs` and this script has to
+change with it.
+
 Password policy for register / reset / change: at least 8 characters, one
 uppercase letter, one number. Five failed logins lock the account.
 
