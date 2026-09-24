@@ -107,6 +107,38 @@ app:
     # Prefix for the generated 10-character UserInfm.bizKey.
     default-biz-key: ${BIZ_KEY_PREFIX:RMS}
 
+    # Caps on the endpoints reachable without a token. Account lockout stops
+    # brute force against one account; these stop the attacks it cannot see —
+    # credential stuffing across many accounts, locking a known user out on
+    # purpose, and guessing a six-digit OTP.
+    #
+    # Counted per caller in memory, so per instance: behind a load balancer
+    # each instance allows the full limit.
+    rate-limit:
+      enabled: ${RATE_LIMIT_ENABLED:true}
+
+      # X-Forwarded-For is caller supplied. Trusting it with nothing upstream
+      # rewriting it means an attacker sends a new value per request and is
+      # never limited, so it stays off until there really is a proxy in front.
+      trust-forwarded-for: ${RATE_LIMIT_TRUST_XFF:false}
+
+      # Generous next to real use — a cashier signing in mistypes twice, not
+      # ten times a minute — and far below what guessing needs.
+      login:
+        limit: 10
+        window: 1m
+      forgot-password:
+        limit: 5
+        window: 10m
+      # Tightest of the four: a six-digit code is a million guesses, which is
+      # minutes of traffic if nothing throttles it.
+      verify-otp:
+        limit: 10
+        window: 10m
+      register:
+        limit: 5
+        window: 1h
+
   currency:
     base: USD
     khr-rate: 4100

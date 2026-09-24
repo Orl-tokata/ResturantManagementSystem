@@ -3,6 +3,8 @@ package com.resturant.management.rms.config;
 import com.resturant.management.rms.common.ApiResponse;
 import com.resturant.management.rms.common.i18n.Messages;
 import com.resturant.management.rms.security.JwtAuthenticationFilter;
+import com.resturant.management.rms.security.RateLimitFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -51,6 +53,7 @@ public class SecurityConfig {
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final CorsConfigurationSource corsConfigurationSource;
     private final ObjectMapper objectMapper;
     private final Messages messages;
@@ -101,6 +104,12 @@ public class SecurityConfig {
                                 .maxAgeInSeconds(31536000))
                         .permissionsPolicyHeader(p ->
                                 p.policy("camera=(), microphone=(), geolocation=()")))
+                // Anchored to the front of the chain rather than to the JWT
+                // filter: addFilterBefore needs a filter whose order Spring
+                // Security knows, and a custom one has none. Being first is
+                // what matters anyway — the point is to refuse a flood before
+                // it costs a BCrypt comparison, the expensive part of a login.
+                .addFilterBefore(rateLimitFilter, SecurityContextHolderFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

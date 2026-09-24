@@ -44,6 +44,14 @@ app:
       # Throwaway value so the context starts. Never used outside `dev`.
       secret-key: ZGV2LW9ubHktc2VjcmV0LW5vdC1mb3ItYW55LXJlYWwtZW52aXJvbm1lbnQtMDAwMQ==
 
+    # Off for local work, and for the test suite, which runs on this profile.
+    # Every test signs in from 127.0.0.1, so one shared allowance would make a
+    # test class pass or fail depending on how many ran before it — a failure
+    # that says nothing about the code. Production defaults to on; to try it
+    # here, run with RATE_LIMIT_ENABLED=true.
+    rate-limit:
+      enabled: ${RATE_LIMIT_ENABLED:false}
+
 logging:
   level:
     org.flywaydb: INFO

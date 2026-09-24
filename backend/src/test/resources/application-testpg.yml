@@ -25,6 +25,10 @@ app:
     jwt:
       secret-key: dGVzdC1vbmx5LXNlY3JldC1ub3QtdXNlZC1vdXRzaWRlLXRlc3RzLTAwMDAwMQ==
 
+    # Same reason as the dev profile: this runs the same suite, from one address.
+    rate-limit:
+      enabled: false
+
 logging:
   level:
     org.testcontainers: INFO
