@@ -20,8 +20,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
            SELECT p FROM Product p
            WHERE (:q IS NULL
-                  OR LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%'))
-                  OR LOWER(p.nameEn) LIKE LOWER(CONCAT('%', :q, '%')))
+                  OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%'))
+                  OR LOWER(p.nameEn) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%')))
              AND (:categoryId IS NULL OR p.category.id = :categoryId)
            """)
     Page<Product> search(@Param("q") String q,

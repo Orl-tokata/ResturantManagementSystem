@@ -23,8 +23,8 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
     @Query("""
            SELECT p FROM Purchase p
            WHERE (:q IS NULL
-                  OR LOWER(p.poNo) LIKE LOWER(CONCAT('%', :q, '%'))
-                  OR LOWER(p.supplier.company) LIKE LOWER(CONCAT('%', :q, '%')))
+                  OR LOWER(p.poNo) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%'))
+                  OR LOWER(p.supplier.company) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%')))
              AND (:status IS NULL OR p.status = :status)
            ORDER BY p.purchaseDate DESC
            """)

@@ -23,7 +23,7 @@ public interface DiningTableRepository extends JpaRepository<DiningTable, Long> 
 
     @Query("""
            SELECT t FROM DiningTable t
-           WHERE (:q IS NULL OR LOWER(t.name) LIKE LOWER(CONCAT('%', :q, '%')))
+           WHERE (:q IS NULL OR LOWER(t.name) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%')))
              AND (:zone IS NULL OR t.zone = :zone)
            ORDER BY t.name ASC
            """)

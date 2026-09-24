@@ -26,9 +26,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("""
            SELECT o FROM Order o
            WHERE (:status IS NULL OR o.status = :status)
-             AND (:from IS NULL OR o.regDtm >= :from)
-             AND (:to   IS NULL OR o.regDtm <= :to)
-             AND (:q IS NULL OR LOWER(o.invoiceNo) LIKE LOWER(CONCAT('%', :q, '%')))
+             AND (CAST(:from AS LocalDateTime) IS NULL OR o.regDtm >= :from)
+             AND (CAST(:to   AS LocalDateTime) IS NULL OR o.regDtm <= :to)
+             AND (:q IS NULL OR LOWER(o.invoiceNo) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%')))
            ORDER BY o.regDtm DESC
            """)
     Page<Order> search(@Param("q") String q,

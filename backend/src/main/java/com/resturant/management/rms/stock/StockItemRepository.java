@@ -26,7 +26,7 @@ public interface StockItemRepository extends JpaRepository<StockItem, Long> {
 
     @Query("""
            SELECT s FROM StockItem s
-           WHERE :q IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :q, '%'))
+           WHERE :q IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%'))
            """)
     Page<StockItem> search(@Param("q") String q, Pageable pageable);
 }

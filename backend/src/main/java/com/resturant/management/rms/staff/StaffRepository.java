@@ -22,9 +22,9 @@ public interface StaffRepository extends JpaRepository<Staff, Long> {
     @Query("""
            SELECT s FROM Staff s
            WHERE (:q IS NULL
-                  OR LOWER(s.staffName) LIKE LOWER(CONCAT('%', :q, '%'))
-                  OR LOWER(s.staffCode) LIKE LOWER(CONCAT('%', :q, '%'))
-                  OR s.phone LIKE CONCAT('%', :q, '%'))
+                  OR LOWER(s.staffName) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%'))
+                  OR LOWER(s.staffCode) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%'))
+                  OR s.phone LIKE CONCAT('%', CAST(:q AS String), '%'))
              AND (:role IS NULL OR s.role = :role)
            """)
     Page<Staff> search(@Param("q") String q, @Param("role") Role role, Pageable pageable);
