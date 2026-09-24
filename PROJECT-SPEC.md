@@ -701,13 +701,20 @@ build order — and one known gap, recorded there.
   adjustments. Revisit with a `product_ingredient` table and a movement-on-sale
   step if that stops being good enough.
 
-### Known gap
+- **Rate limiting.** Done. Account lockout only ever sees one account, which
+  misses credential stuffing across many and lets anyone lock out a username
+  they know; a cap per caller covers both, and is the only thing that covers
+  guessing a six-digit OTP. Token bucket, in memory, at the front of the
+  security chain so a flood is refused before it costs a password hash:
+  login 10/min, forgot-password 5/10min, verify-otp 10/10min, register 5/hour.
+  `X-Forwarded-For` is ignored unless `trust-forwarded-for` is set, because
+  honouring a caller-supplied header with no proxy in front means no limit at
+  all. Off on the dev profile, which the suite runs on; `RATE_LIMIT_ENABLED=true`
+  turns it on locally.
 
-- **Login rate limiting.** Account lockout after five failed attempts covers
-  brute force against one account. It does not cover credential stuffing across
-  many accounts from one source, and an attacker can lock a known username out
-  on purpose. A per-IP limit on `/api/auth/login` and `/api/auth/forgot-password`
-  is the missing piece.
+  In memory means per instance: a second instance behind a load balancer would
+  allow the limit again, and `RateLimiter.tryConsume` is where a shared counter
+  would go.
 
 ### Still open
 
