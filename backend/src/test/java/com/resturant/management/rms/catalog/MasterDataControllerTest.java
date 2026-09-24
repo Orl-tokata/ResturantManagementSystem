@@ -51,11 +51,11 @@ class MasterDataControllerTest {
 	void listsSeedData() throws Exception {
 		mvc.perform(get("/api/categories").header("Authorization", "Bearer " + adminToken))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.totalElements").value(8));
+				.andExpect(jsonPath("$.data.totalElements").value(9));
 
 		mvc.perform(get("/api/products").header("Authorization", "Bearer " + adminToken))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.totalElements").value(16));
+				.andExpect(jsonPath("$.data.totalElements").value(18));
 
 		mvc.perform(get("/api/tables").header("Authorization", "Bearer " + adminToken))
 				.andExpect(status().isOk())
@@ -80,7 +80,7 @@ class MasterDataControllerTest {
 	void activeCategoriesOnly() throws Exception {
 		mvc.perform(get("/api/categories/active").header("Authorization", "Bearer " + adminToken))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.length()").value(7));        // 8 seeded, 1 INACTIVE
+				.andExpect(jsonPath("$.data.length()").value(8));        // 9 seeded, 1 INACTIVE
 	}
 
 	@Test

@@ -20,9 +20,10 @@ INSERT INTO category (id, name, name_en, icon, sort_order, status, reg_id, reg_d
     (5, 'សាច់អាំង',   'Grilled', '🍗', 5, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
     (6, 'សាល័ត',     'Salad',   '🥗', 6, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
     (7, 'ភេសជ្ជៈ',   'Drink',   '🥤', 7, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
-    (8, 'បង្អែម',    'Dessert', '🍰', 8, 'INACTIVE', 'system', CURRENT_TIMESTAMP);
+    (8, 'បង្អែម',    'Dessert', '🍰', 8, 'INACTIVE', 'system', CURRENT_TIMESTAMP),
+    (9, 'កាហ្វេ',     'Coffee',  '☕', 9, 'ACTIVE',   'system', CURRENT_TIMESTAMP);
 
-ALTER TABLE category ALTER COLUMN id RESTART WITH 9;
+ALTER TABLE category ALTER COLUMN id RESTART WITH 10;
 
 -- ===========================================================================
 -- Products
@@ -44,9 +45,11 @@ INSERT INTO product (id, name, name_en, category_id, price, cost, stock_qty, ima
     (13, 'ទឹកកក',             'Ice',                  7, 0.25, 0.05, 99, '🧊', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (14, 'ទឹកកកឯម',          'Ice cream',            8, 2.50, 1.00, 30, '🍧', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (15, 'នំខេក',             'Cake',                 8, 2.75, 1.10, 22, '🍰', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
-    (16, 'ផ្លែឈើចម្រុះ',       'Mixed fruit',          8, 3.25, 1.40, 18, '🍉', 'ACTIVE', 'system', CURRENT_TIMESTAMP);
+    (16, 'ផ្លែឈើចម្រុះ',       'Mixed fruit',          8, 3.25, 1.40, 18, '🍉', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (17, 'កាហ្វេក្ដៅ',         'Hot coffee',           9, 1.75, 0.70, 40, '☕', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (18, 'កាហ្វេទឹកដោះគោ',     'Milk coffee',          9, 2.25, 0.95, 32, '☕', 'ACTIVE', 'system', CURRENT_TIMESTAMP);
 
-ALTER TABLE product ALTER COLUMN id RESTART WITH 17;
+ALTER TABLE product ALTER COLUMN id RESTART WITH 19;
 
 -- ===========================================================================
 -- Dining tables

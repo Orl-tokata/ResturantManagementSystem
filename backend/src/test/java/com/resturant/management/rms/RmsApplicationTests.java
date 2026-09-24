@@ -46,8 +46,8 @@ class RmsApplicationTests {
 	@Test
 	@DisplayName("V3 seed data is present")
 	void seedDataLoaded() {
-		assertThat(categories.count()).isEqualTo(8);
-		assertThat(products.count()).isEqualTo(16);
+		assertThat(categories.count()).isEqualTo(9);
+		assertThat(products.count()).isEqualTo(18);
 		assertThat(tables.count()).isEqualTo(12);
 		assertThat(staff.count()).isEqualTo(7);
 		assertThat(suppliers.count()).isEqualTo(5);
@@ -72,7 +72,7 @@ class RmsApplicationTests {
 	void customQueriesRun() {
 		assertThat(products.search("បាយ", null, PageRequest.of(0, 10))).isNotEmpty();
 		assertThat(products.search(null, 7L, PageRequest.of(0, 10))).isNotEmpty();   // drinks
-		assertThat(categories.search(null, PageRequest.of(0, 10)).getTotalElements()).isEqualTo(8);
+		assertThat(categories.search(null, PageRequest.of(0, 10)).getTotalElements()).isEqualTo(9);
 		assertThat(suppliers.search("Angkor", PageRequest.of(0, 10))).hasSize(1);
 		assertThat(staff.search(null, Role.CASHIER, PageRequest.of(0, 10))).hasSize(2);
 	}
