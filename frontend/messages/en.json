@@ -389,7 +389,9 @@
     "noPaidInvoices": "No paid invoices in this range",
     "categoryNote": "Line totals before VAT, and only for dishes still in the catalog — a deleted product keeps its receipt but drops out of this breakdown.",
     "invoiceCount": "{count} invoices",
-    "noDataInRange": "No data in this range"
+    "noDataInRange": "No data in this range",
+    "revenueByHour": "Sales by hour",
+    "hourNote": "The hour payment was taken, summed over the selected range. Useful for rostering and prep."
   },
   "settings": {
     "title": "System settings",

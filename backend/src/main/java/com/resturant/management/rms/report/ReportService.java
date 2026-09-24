@@ -95,8 +95,8 @@ public class ReportService {
                 : revenue.divide(BigDecimal.valueOf(invoices), SCALE, RoundingMode.HALF_UP);
 
         return new SalesReport(start, end, revenue, cost, profit, margin, invoices, average,
-                dailySeries(start, end), categoryBreakdown(start, end),
-                bestSellers(start, end, 10));
+                dailySeries(start, end), hourlySeries(start, end),
+                categoryBreakdown(start, end), bestSellers(start, end, 10));
     }
 
     @Transactional(readOnly = true)
@@ -192,6 +192,39 @@ public class ReportService {
             series.add(new DailyPoint(d,
                     scale(totals.getOrDefault(d, BigDecimal.ZERO)),
                     counts.getOrDefault(d, 0L)));
+        }
+        return series;
+    }
+
+    /**
+     * Takings by hour of the day, every hour present.
+     *
+     * <p>Answers the one question the daily series cannot: when the rush is.
+     * A restaurant rosters and preps against that, so an empty hour is as
+     * informative as a busy one — hence all twenty-four rows rather than only
+     * those with sales, which would let a quiet afternoon disappear from the
+     * chart instead of showing as a trough.
+     *
+     * <p>Bucketed in code from the same query the daily series uses. Hour
+     * extraction is spelled differently in PostgreSQL and H2, and the test
+     * suite runs on H2 while production is PostgreSQL — doing it here keeps one
+     * code path and no dialect surprises.
+     */
+    private List<HourlyPoint> hourlySeries(LocalDate from, LocalDate to) {
+        Map<Integer, BigDecimal> totals = new HashMap<>();
+        Map<Integer, Long> counts = new HashMap<>();
+
+        for (Object[] row : orderRepository.findPaidTotals(startOf(from), endOf(to))) {
+            int hour = ((LocalDateTime) row[0]).getHour();
+            totals.merge(hour, (BigDecimal) row[1], BigDecimal::add);
+            counts.merge(hour, 1L, Long::sum);
+        }
+
+        List<HourlyPoint> series = new ArrayList<>();
+        for (int h = 0; h < 24; h++) {
+            series.add(new HourlyPoint(h,
+                    scale(totals.getOrDefault(h, BigDecimal.ZERO)),
+                    counts.getOrDefault(h, 0L)));
         }
         return series;
     }

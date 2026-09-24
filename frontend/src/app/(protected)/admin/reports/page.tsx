@@ -32,6 +32,14 @@ function iso(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/**
+  * 0–23 as a clock label. Only even hours are labelled: twenty-four ticks
+  * collide on a chart this wide, and the hover tooltip still names every bar.
+  */
+function hourLabel(hour: number): string {
+  return hour % 2 === 0 ? String(hour).padStart(2, "0") : "";
+}
+
 export default function ReportsPage() {
   const t = useTranslations("reports");
   const tc = useTranslations("common");
@@ -216,6 +224,25 @@ export default function ReportsPage() {
               <b className="text-ink-900">{formatUsd(r?.averageSale ?? 0)}</b> · {t("margin")}{" "}
               <b className="text-ink-900">{r?.marginPercent ?? 0}%</b>
             </p>
+          </>
+        )}
+      </Card>
+
+      <Card title={t("revenueByHour")} className="mb-4">
+        {report.isLoading ? (
+          <p className="py-16 text-center text-sm text-ink-500">{tc("loading")}</p>
+        ) : (
+          <>
+            <BarChart
+              points={(r?.hourly ?? []).map((p) => ({
+                label: hourLabel(p.hour),
+                value: p.total,
+                detail: `${p.orders} ${t("invoices")}`,
+              }))}
+              formatValue={formatUsd}
+              height={200}
+            />
+            <p className="mt-3 text-xs text-ink-500">{t("hourNote")}</p>
           </>
         )}
       </Card>

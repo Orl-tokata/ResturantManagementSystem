@@ -34,6 +34,13 @@ public final class ReportDtos {
 
     public record DailyPoint(LocalDate date, BigDecimal total, long orders) {}
 
+    /**
+     * Takings in one hour of the day, summed across the whole range.
+     *
+     * @param hour 0–23, local time, the hour the payment was taken
+     */
+    public record HourlyPoint(int hour, BigDecimal total, long orders) {}
+
     public record BestSeller(String productName, BigDecimal qty, BigDecimal revenue) {}
 
     public record LowStockRow(Long id, String name, String unit, BigDecimal qty, BigDecimal minQty) {}
@@ -57,6 +64,7 @@ public final class ReportDtos {
             long invoiceCount,
             BigDecimal averageSale,
             List<DailyPoint> daily,
+            List<HourlyPoint> hourly,
             List<CategoryRevenue> byCategory,
             List<BestSeller> bestSellers
     ) {}

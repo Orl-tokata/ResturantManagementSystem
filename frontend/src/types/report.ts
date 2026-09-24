@@ -1,3 +1,11 @@
+/** Takings in one hour of the day, summed across the report's range. */
+export interface HourlyPoint {
+  /** 0–23, local time. */
+  hour: number;
+  total: number;
+  orders: number;
+}
+
 export interface DailyPoint {
   date: string;
   total: number;
@@ -57,6 +65,7 @@ export interface SalesReport {
   invoiceCount: number;
   averageSale: number;
   daily: DailyPoint[];
+  hourly: HourlyPoint[];
   byCategory: CategoryRevenue[];
   bestSellers: BestSeller[];
 }

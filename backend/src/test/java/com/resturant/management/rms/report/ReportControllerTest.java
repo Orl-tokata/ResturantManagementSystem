@@ -168,6 +168,34 @@ class ReportControllerTest {
 	}
 
 	@Test
+	@DisplayName("hourly series covers all 24 hours and puts the sale in the right one")
+	void hourlyBreakdown() throws Exception {
+		sell(1);
+
+		JsonNode hourly = data(mvc.perform(
+				get("/api/reports/sales?from=%s&to=%s".formatted(today, today))
+						.header("Authorization", admin)).andReturn()).path("hourly");
+
+		// Every hour is present, including the empty ones: a quiet afternoon is
+		// a trough on the chart, not a missing bar.
+		assertThat(hourly.size()).isEqualTo(24);
+		for (int h = 0; h < 24; h++) {
+			assertThat(hourly.get(h).path("hour").asInt()).isEqualTo(h);
+		}
+
+		// The sale just made lands in the current hour and nowhere else.
+		int now = java.time.LocalTime.now().getHour();
+		assertThat(hourly.get(now).path("orders").asLong()).isEqualTo(1);
+		assertThat(hourly.get(now).path("total").asDouble()).isEqualTo(9.90);
+
+		double elsewhere = 0;
+		for (int h = 0; h < 24; h++) {
+			if (h != now) elsewhere += hourly.get(h).path("total").asDouble();
+		}
+		assertThat(elsewhere).as("no revenue leaked into another hour").isEqualTo(0.0);
+	}
+
+	@Test
 	@DisplayName("category breakdown attributes revenue and a percentage")
 	void categoryBreakdown() throws Exception {
 		sell(1);
