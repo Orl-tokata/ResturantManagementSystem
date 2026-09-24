@@ -12,7 +12,10 @@ backend/bin/
 backend/out/
 *.class
 *.jar
-!gradle/wrapper/gradle-wrapper.jar
+# The negation has to match the real path. Anchored at the root it never did,
+# so *.jar above swallowed the wrapper and a fresh clone could not build at
+# all — which is what the first CI run found.
+!**/gradle/wrapper/gradle-wrapper.jar
 *.log
 
 # ---- node / next ----------------------------------------------------------

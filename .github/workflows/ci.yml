@@ -111,6 +111,14 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # app/layout.tsx is typed with LayoutProps<"/">, which Next generates into
+      # .next/types. That directory is build output and is not committed, so a
+      # fresh checkout has no route types and tsc fails on a name it cannot see.
+      # typegen writes just those types without paying for a full build.
+      - name: Generate route types
+        working-directory: frontend
+        run: npx next typegen
+
       - name: Typecheck
         working-directory: frontend
         run: npx tsc --noEmit
