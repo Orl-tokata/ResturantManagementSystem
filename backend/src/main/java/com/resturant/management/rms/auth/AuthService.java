@@ -2,6 +2,7 @@ package com.resturant.management.rms.auth;
 
 import com.resturant.management.rms.auth.dto.AuthDtos.*;
 import com.resturant.management.rms.common.exception.BadRequestException;
+import com.resturant.management.rms.common.exception.UnauthorizedException;
 import com.resturant.management.rms.common.exception.ConflictException;
 import com.resturant.management.rms.user.Role;
 import com.resturant.management.rms.user.UserInfm;
@@ -121,15 +122,15 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
         if (refreshToken == null || !jwtService.isValid(refreshToken, false)) {
-            throw new BadRequestException("error.auth.refreshMissing");
+            throw new UnauthorizedException("error.auth.refreshMissing");
         }
 
         String username = jwtService.extractUsername(refreshToken);
         UserInfm user = userRepository.findByUserId(username)
-                .orElseThrow(() -> new BadRequestException("error.auth.refreshStale"));
+                .orElseThrow(() -> new UnauthorizedException("error.auth.refreshStale"));
 
         if (!user.isEnabled() || user.isLocked()) {
-            throw new BadRequestException("error.auth.accountInactive");
+            throw new UnauthorizedException("error.auth.accountInactive");
         }
 
         String access = jwtService.generateAccessToken(user.getUserId(), user.getRole().name());

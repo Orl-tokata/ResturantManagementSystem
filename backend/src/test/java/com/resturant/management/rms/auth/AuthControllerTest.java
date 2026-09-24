@@ -148,10 +148,10 @@ class AuthControllerTest {
 	/* ---- Refresh --------------------------------------------------------- */
 
 	@Test
-	@DisplayName("refresh without the cookie is a 400, not a 500")
+	@DisplayName("refresh without the cookie is a 401, not a 400 or a 500")
 	void refreshWithoutCookie() throws Exception {
 		mvc.perform(post("/api/auth/refresh"))
-				.andExpect(status().isBadRequest());
+				.andExpect(status().isUnauthorized());
 	}
 
 	/* ---- Registration ---------------------------------------------------- */

@@ -30,6 +30,22 @@ public class AuthController {
      * call — only refresh and logout need it.
      */
     private static final String REFRESH_COOKIE = "rms_refresh";
+
+    /**
+     * Companion to the refresh cookie, readable by JavaScript, carrying no
+     * secret — only the fact that a refresh cookie was issued and has not
+     * expired yet.
+     *
+     * <p>Exists so the app can tell "signed out" from "signed in, token stale"
+     * before it asks. The refresh cookie itself is httpOnly, so the browser
+     * cannot see it, and without this hint every cold load fired a refresh that
+     * was certain to fail and logged an error in the console for anyone who
+     * had simply never signed in.
+     *
+     * <p>It is a hint and nothing more: forging it gets an attacker a rejected
+     * refresh, because the httpOnly cookie is still the only credential.
+     */
+    private static final String SESSION_HINT_COOKIE = "rms_session";
     private static final String COOKIE_PATH = "/api/auth";
 
     private final AuthService authService;
@@ -55,6 +71,7 @@ public class AuthController {
                                                            HttpServletResponse response) {
         AuthService.LoginResult result = authService.login(request);
         response.addHeader(HttpHeaders.SET_COOKIE, buildRefreshCookie(result.refreshToken()).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, sessionHintCookie(true).toString());
         return ResponseEntity.ok(ApiResponse.ok("Login successful", result.body()));
     }
 
@@ -69,6 +86,7 @@ public class AuthController {
     @Operation(summary = "Log out", description = "Clears the refresh cookie.")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE, expiredRefreshCookie().toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, sessionHintCookie(false).toString());
         return ResponseEntity.ok(ApiResponse.ok("Logged out", null));
     }
 
@@ -138,6 +156,20 @@ public class AuthController {
                 .sameSite("Lax")
                 .path(COOKIE_PATH)
                 .maxAge(Duration.ofSeconds(jwtService.getRefreshExpirationSeconds()))
+                .build();
+    }
+
+    /**
+     * Path "/" rather than the refresh cookie's narrower path, because the app
+     * reads it on every page, not only when calling the auth endpoints.
+     */
+    private ResponseCookie sessionHintCookie(boolean active) {
+        return ResponseCookie.from(SESSION_HINT_COOKIE, active ? "1" : "")
+                .httpOnly(false)
+                .secure(secureCookie)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(active ? Duration.ofSeconds(jwtService.getRefreshExpirationSeconds()) : Duration.ZERO)
                 .build();
     }
 

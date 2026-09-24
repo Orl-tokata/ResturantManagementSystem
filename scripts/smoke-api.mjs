@@ -117,7 +117,8 @@ async function main() {
     body: { fullName: "Administrator", email: "admin@rms.local", phone: "012000111" },
   });
   // No cookie is sent here, so a refusal is the correct answer.
-  await call("refresh without cookie", "POST", "/auth/refresh", { expect: [400] });
+  // 401, not 400: an absent session is not a malformed request.
+  await call("refresh without cookie", "POST", "/auth/refresh", { expect: [401] });
   await call("register", "POST", "/auth/register", {
     body: {
       username: USER, password: "Passw0rdX", fullName: "Smoke Test",

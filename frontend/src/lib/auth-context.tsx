@@ -32,6 +32,20 @@ const AuthContext = createContext<AuthContextValue | null>(null);
  * On mount we attempt a silent refresh so a page reload does not log the
  * user out.
  */
+/**
+ * Whether the backend says a refresh cookie exists.
+ *
+ * <p>A hint, never a credential: it carries no secret and forging it buys
+ * nothing but a rejected refresh, since the httpOnly cookie is still the only
+ * thing the server trusts.
+ */
+function hasSessionHint(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((c) => c.trim().startsWith("rms_session=1"));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<Status>("loading");
@@ -40,6 +54,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     (async () => {
+      // Nothing to restore, so do not ask. The refresh cookie is httpOnly and
+      // therefore invisible here; the backend sets this readable companion
+      // beside it purely so this check is possible. Without it, every visit
+      // from someone who had never signed in fired a refresh that was certain
+      // to fail, and the browser logged the failure in the console — which
+      // reads as a broken app to anyone who opens devtools.
+      if (!hasSessionHint()) {
+        setAccessToken(null);
+        setUser(null);
+        setStatus("unauthenticated");
+        return;
+      }
+
       try {
         const data = await post<AuthResponse>("/auth/refresh");
         if (cancelled) return;
@@ -48,7 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setStatus("authenticated");
       } catch {
         if (cancelled) return;
-        // No cookie, or it expired — a normal first visit.
+        // The hint was there but the cookie was already gone or rejected —
+        // the session expired between visits, which is ordinary.
         setAccessToken(null);
         setUser(null);
         setStatus("unauthenticated");
