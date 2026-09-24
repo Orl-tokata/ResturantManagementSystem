@@ -637,9 +637,13 @@ Each milestone should end in a runnable state.
 | 11 | ✅ **Supply chain** | suppliers, purchases, stock, adjustments, 97 tests |
 | 12 | ✅ **Reports** | dashboards, charts, sales report, CSV export, 109 tests |
 | 13 | ✅ **Settings** | app settings, self-service profile, change password, 122 tests |
-| 14 | ✅ **Hardening** | error surface, security headers, 138 tests, Testcontainers wiring |
+| 14 | ✅ **Hardening** | error surface, security headers, Testcontainers wiring |
+| 15 | ✅ **i18n** | next-intl, km/en switcher, localized API errors — 153 tests |
 
 Milestones 1–5 are sequential. 7–13 are independent once 6 lands.
+
+All fifteen are done. What is left is in §12, which is decisions rather than
+build order — and one known gap, recorded there.
 
 ---
 
@@ -661,27 +665,60 @@ Milestones 1–5 are sequential. 7–13 are independent once 6 lands.
 - Money formatted through one helper (`formatUsd`, `formatKhr`) — never inline.
 
 **Both**
-- Bilingual labels `ខ្មែរ · English`, as in the prototype.
+- Text comes from the message catalogues, never from a literal in a component:
+  `frontend/messages/{km,en}.json` and `backend/.../messages/messages_{km,en}.properties`.
+  The prototype's `ខ្មែរ · English` labels were a placeholder for this and are gone.
+- A key is a string, so nothing checks it at compile time. Both sides have a
+  guard instead: `MessageBundleTest` on the backend, and the audit script on
+  the frontend that resolves every `t()` and `apiError()` call back to a key.
 - Currency: USD primary, KHR secondary at a configurable rate (default 4100).
 
 ---
 
-## 12. Open questions
+## 12. Decisions and what is left
 
-0. **Recipe / bill of materials.** Selling a dish should consume ingredients, but
-   nothing links `Product` to `StockItem`. Until a `product_ingredient` table
-   exists, paying decrements the dish's own `stockQty` and writes no
-   `StockMovement`. Decide before milestone 11 whether ingredient-level stock is
-   in scope; if it is, that table and a movement-on-sale step are needed.
+### Settled
 
+- **Reuse or rewrite the NIEI-Y4 backend.** Rewritten as a fresh module with the
+  conventions carried over: the `ApiResponse` envelope, the `USERS_INFM` column
+  names (`user_id`, `user_pwd`, `reg_id`/`reg_dtm`), `UserInfm.bizKey` as a
+  10-character NOT NULL UNIQUE column, and the `Role` enum. That reference repo
+  stopped at its 2025-10-13 commit and everything in it now has a counterpart
+  here, so it is a historical reference, not a source to sync from. Its two
+  utilities were deliberately not carried over: `GenerateKey` printed a JWT
+  secret from a `main()`, which this app replaces with a required `JWT_SECRET`
+  and a fail-fast check at startup, and `DateTimeUtil`'s formatters belong on
+  the frontend, where the locale is known.
 
-1. **Khmer copy** — prototype text is placeholder. Needs the Figma section node
-   IDs (`Ctrl+L` on the *Form Cashier* / *Form Admin* section) to extract real strings.
-2. **Reuse or rewrite the NIEI-Y4 backend?** This spec assumes a fresh module
-   with code carried over. Migrating the existing one in place is also viable —
-   decide before milestone 1.
-3. **i18n** — hardcoded bilingual strings (as prototyped), or `next-intl` with a
-   language switcher?
-4. **Printing** — browser print (as prototyped) or a thermal ESC/POS printer?
-   The latter changes the receipt implementation substantially.
-5. **Multi-tenancy** — `UserInfm.bizKey` suggests tenant scoping. Is that in scope?
+- **i18n.** next-intl with a km/en switcher, not the prototype's hardcoded
+  `ខ្មែរ · English` labels. The API localizes its own errors from
+  `Accept-Language`, because a message the server refuses with cannot be
+  translated on the client.
+
+- **Recipe / bill of materials.** Out of scope, decided by shipping milestone 11
+  without it. Paying decrements the dish's own `stockQty` and writes no
+  `StockMovement`, so ingredient stock is tracked only by explicit purchases and
+  adjustments. Revisit with a `product_ingredient` table and a movement-on-sale
+  step if that stops being good enough.
+
+### Known gap
+
+- **Login rate limiting.** Account lockout after five failed attempts covers
+  brute force against one account. It does not cover credential stuffing across
+  many accounts from one source, and an attacker can lock a known username out
+  on purpose. A per-IP limit on `/api/auth/login` and `/api/auth/forgot-password`
+  is the missing piece.
+
+### Still open
+
+1. **Khmer copy.** Every Khmer string in both catalogues is written to be
+   replaced. It needs the real text from the Figma file — a frame node id, or a
+   selection in the desktop app. Now a two-file edit:
+   `frontend/messages/km.json` and `backend/.../messages_km.properties`.
+2. **Printing.** Browser print today, as prototyped. A thermal ESC/POS printer
+   would change the receipt implementation substantially.
+3. **Multi-tenancy.** `bizKey` exists on every user and is generated per
+   account, but nothing scopes a query by it — one restaurant per deployment.
+   Real tenanting means a tenant table, `bizKey` on every business row, and a
+   filter applied to every query; it is much easier to add before there is data
+   than after.
