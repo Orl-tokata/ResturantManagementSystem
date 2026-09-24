@@ -1,0 +1,141 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# A second push to the same branch makes the first run irrelevant, so stop it
+# rather than paying for both and reading the older answer.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend — tests and a live smoke run
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Not a secret in any meaningful sense: it signs tokens for a throwaway
+      # H2 database that exists for the length of this job. It is generated
+      # rather than hardcoded because the app refuses to start without one, and
+      # a committed default is exactly the mistake that check exists to catch.
+      - name: Generate a JWT secret for this run
+        run: echo "JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')" >> "$GITHUB_ENV"
+
+      - name: Run the test suite
+        working-directory: backend
+        run: ./gradlew test --no-daemon
+
+      - name: Build the application
+        working-directory: backend
+        run: ./gradlew bootJar --no-daemon
+
+      # The smoke test needs the assembled application actually serving, which
+      # is the whole point of it — the suite above already covers everything
+      # that can be checked without a server.
+      # build/libs holds two jars — the executable one and the -plain.jar
+      # that the plain `jar` task leaves behind. A glob would hand java both
+      # and it would treat the second as a program argument.
+      - name: Start the backend
+        working-directory: backend
+        run: |
+          JAR=$(ls build/libs/*.jar | grep -v -- "-plain\.jar$" | head -1)
+          echo "starting $JAR"
+          java -jar "$JAR" --spring.profiles.active=dev > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for it to answer
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8081/api/health > /dev/null 2>&1; then
+              echo "up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not start within 60s"
+          exit 1
+
+      - name: Smoke-test every endpoint
+        run: node scripts/smoke-api.mjs
+
+      # `if: always()` so a failing smoke run still shows why. Without it the
+      # log is discarded exactly when it is needed.
+      - name: Backend log
+        if: always()
+        run: tail -n 100 backend/backend.log || true
+
+      - name: Stop the backend
+        if: always()
+        run: kill "$(cat backend/backend.pid)" 2>/dev/null || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/build/reports/tests/test
+          retention-days: 7
+
+  frontend:
+    name: Frontend — types, lint and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # `npm ci` rather than `npm install`: it installs exactly the lockfile and
+      # fails if package.json has drifted from it, which is the behaviour worth
+      # having on CI.
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  i18n:
+    name: Message catalogues agree
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # A message key is a string, so nothing else here would notice a key
+      # added to one language and forgotten in the other until it reached a
+      # screen. The backend half of this is covered by MessageBundleTest.
+      - name: Compare km and en
+        run: node scripts/check-messages.mjs
