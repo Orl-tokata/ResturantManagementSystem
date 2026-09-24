@@ -718,10 +718,24 @@ build order — and one known gap, recorded there.
 
 ### Still open
 
-1. **Khmer copy.** Every Khmer string in both catalogues is written to be
-   replaced. It needs the real text from the Figma file — a frame node id, or a
-   selection in the desktop app. Now a two-file edit:
-   `frontend/messages/km.json` and `backend/.../messages_km.properties`.
+1. **Khmer copy.** Mostly answered, and the answer was that there is very
+   little of it. The Figma file holds 64 distinct Khmer strings against 460
+   Latin ones — an English-first design with a Khmer login and auth flow and a
+   partly Khmer POS screen. Strip the sample dish names and font specimens and
+   about 37 strings are real UI copy, all of which are now in the catalogue;
+   eight already matched. The remaining ~450 Khmer strings have no Figma source
+   and are ours, so they are the thing to have a Khmer speaker review.
+
+   Read the file with a `use_figma` script rather than `get_metadata`: the page
+   metadata is 221KB and will not cross the MCP transport, while a script
+   returns only what it selects.
+
+   Two things in the design were deliberately not adopted — it spells invoice
+   វិក័យប័ត្រ once where the catalogue uses the standard វិក្កយបត្រ in 39 places,
+   and its forgot-password screen shows the password after a name is typed,
+   which is neither the built flow nor free of typos (លេងសម្ងាត់ should be
+   លេខសម្ងាត់). The file has Latin typos too — Cagegory, Veriry, Passowrd,
+   Criscital — so it is a source for wording, not for spelling.
 2. **Printing.** Browser print today, as prototyped. A thermal ESC/POS printer
    would change the receipt implementation substantially.
 3. **Multi-tenancy.** `bizKey` exists on every user and is generated per
