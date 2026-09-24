@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { post, setAccessToken } from "@/lib/api";
 import type { AuthResponse, RegisterPayload, User } from "@/types/auth";
 
@@ -49,6 +50,7 @@ function hasSessionHint(): boolean {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<Status>("loading");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let cancelled = false;
@@ -88,13 +90,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
-    const data = await post<AuthResponse>("/auth/login", { username, password });
-    setAccessToken(data.accessToken);
-    setUser(data.user);
-    setStatus("authenticated");
-    return data.user;
-  }, []);
+  const login = useCallback(
+    async (username: string, password: string) => {
+      const data = await post<AuthResponse>("/auth/login", { username, password });
+      // Nothing cached under the previous user may be shown to this one. A
+      // till is shared: a cashier signing in after a manager was reading the
+      // staff list would otherwise see those rows sitting there until each
+      // query happened to refetch.
+      queryClient.clear();
+      setAccessToken(data.accessToken);
+      setUser(data.user);
+      setStatus("authenticated");
+      return data.user;
+    },
+    [queryClient],
+  );
 
   const register = useCallback(async (payload: RegisterPayload) => {
     await post("/auth/register", payload);
@@ -105,11 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await post("/auth/logout");
     } finally {
       // Clear locally even if the network call fails — the user asked to leave.
+      // The cache goes too: signing out should leave nothing of this user on
+      // the machine for whoever sits down next.
+      queryClient.clear();
       setAccessToken(null);
       setUser(null);
       setStatus("unauthenticated");
     }
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo(
     () => ({ user, status, login, register, logout }),

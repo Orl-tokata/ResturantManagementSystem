@@ -35,10 +35,13 @@ function LoginForm() {
       const user = await login(username.trim(), password);
       // Honour ?next= only when it is a local path — an absolute URL here
       // would turn the login screen into an open redirect.
+      // Honour ?next= only when it is a local path the signed-in user may
+      // actually open. Without the second half, a cashier bounced off an admin
+      // URL is sent straight back to it the moment they sign in.
       const next = params.get("next");
-      const target = next?.startsWith("/") && !next.startsWith("//")
-        ? next
-        : HOME_BY_ROLE[user.role];
+      const local = next !== null && next.startsWith("/") && !next.startsWith("//");
+      const permitted = local && (!next.startsWith("/admin") || user.role === "ADMIN");
+      const target = permitted && next ? next : HOME_BY_ROLE[user.role];
       router.replace(target);
     } catch (e) {
       setError(apiError(e, "signIn"));
