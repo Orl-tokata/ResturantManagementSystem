@@ -222,6 +222,27 @@ disposable database — it refuses a non-localhost URL unless
 Overridable with `SMOKE_BASE_URL`, `SMOKE_ADMIN_USER`, `SMOKE_ADMIN_PASS`,
 `SMOKE_CASHIER_USER`, `SMOKE_CASHIER_PASS`.
 
+#### Sample trading history
+
+```bash
+psql -U rms -d rms -h localhost -f scripts/generate-demo-sales.sql   # add
+psql -U rms -d rms -h localhost -f scripts/clean-demo-sales.sql      # remove
+```
+
+Fourteen days of plausible sales, so the reports have a shape to read: a lunch
+peak around noon, a heavier dinner peak in the evening, quiet mid-afternoons
+and busier weekends. Without it the charts are technically correct and tell you
+nothing, which makes them hard to judge.
+
+Totals are computed the way `OrderService.recalculate` does, so the numbers
+match what the application would produce for the same basket. Stock is
+deliberately left alone — two weeks of invented sales would drive the seeded
+quantities negative and make the low-stock panel nonsense.
+
+Every row carries `reg_id = 'demo-sales'`, which is how the cleanup finds them
+and why a real sale can never be caught by it. Re-running the generator
+replaces the previous batch rather than stacking another fortnight on top.
+
 #### Clearing up after it
 
 ```bash
