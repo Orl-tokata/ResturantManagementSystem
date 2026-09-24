@@ -3,7 +3,7 @@ spring:
     name: rms-backend
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/rms}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/restaurant_management_system}
     username: ${DB_USERNAME:rms}
     password: ${DB_PASSWORD:}
     hikari:

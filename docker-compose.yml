@@ -11,7 +11,7 @@ services:
     container_name: rms-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: rms
+      POSTGRES_DB: restaurant_management_system
       POSTGRES_USER: rms
       POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in a .env file next to this compose file}
     ports:
