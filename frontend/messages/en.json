@@ -210,7 +210,9 @@
     "alreadyPaid": "This bill is already paid",
     "alreadyCancelled": "This bill was cancelled",
     "viewReceipt": "View receipt",
-    "items": "items"
+    "items": "items",
+    "noItems": "This bill has no items",
+    "enterTendered": "Enter the amount received"
   },
   "receipt": {
     "title": "Receipt",

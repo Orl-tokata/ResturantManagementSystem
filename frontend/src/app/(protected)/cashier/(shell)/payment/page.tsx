@@ -74,6 +74,22 @@ function PaymentScreen() {
     order.data.items.length > 0 &&
     (method !== "CASH" || (tendered !== "" && change >= 0));
 
+  // Reads off the same conditions as canPay, in the order a cashier would hit
+  // them, so the explanation and the disabled state can never disagree.
+  const whyNotPayable = !order.data
+    ? null
+    : order.data.status === "PAID"
+      ? t("alreadyPaid")
+      : order.data.status === "CANCELLED"
+        ? t("alreadyCancelled")
+        : order.data.items.length === 0
+          ? t("noItems")
+          : method === "CASH" && tendered === ""
+            ? t("enterTendered")
+            : method === "CASH" && change < 0
+              ? t("shortfall")
+              : null;
+
   const columns: Column<OrderItem>[] = [
     { key: "name", header: tc("name"), render: (r) => r.productName },
     { key: "qty", header: tc("qty"), numeric: true, render: (r) => r.qty },
@@ -234,6 +250,11 @@ function PaymentScreen() {
           )}
 
           <div className="mt-4 space-y-2">
+            {!canPay && whyNotPayable && (
+              <p className="rounded border border-ink-200 bg-ink-50 px-3 py-2 text-center text-xs text-ink-700">
+                {whyNotPayable}
+              </p>
+            )}
             <Button
               variant="admin"
               block
@@ -242,7 +263,7 @@ function PaymentScreen() {
               loading={payment.isPending}
               onClick={() => payment.mutate()}
             >
-              ✔ {t("confirm")} payment
+              ✔ {t("confirm")}
             </Button>
             <Button
               variant="ghost"
