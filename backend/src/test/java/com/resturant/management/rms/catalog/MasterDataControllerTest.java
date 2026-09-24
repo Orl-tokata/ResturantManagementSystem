@@ -69,7 +69,8 @@ class MasterDataControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.totalElements").value(4));   // drinks
 
-		mvc.perform(get("/api/products?search=Angkor").header("Authorization", "Bearer " + adminToken))
+		// "Lime" matches exactly one seeded product, by its English name.
+		mvc.perform(get("/api/products?search=Lime").header("Authorization", "Bearer " + adminToken))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.totalElements").value(1));
 	}

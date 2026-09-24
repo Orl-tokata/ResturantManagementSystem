@@ -170,7 +170,7 @@ class OrderControllerTest {
 						.content("""
 								{"items":[{"productId":5,"qty":3}]}"""))
 				.andExpect(jsonPath("$.data.items.length()").value(1))
-				.andExpect(jsonPath("$.data.items[0].productName").value("មាន់អាំងឃ្មុំ"))
+				.andExpect(jsonPath("$.data.items[0].productName").value("សាច់មាន់"))
 				.andExpect(jsonPath("$.data.subtotal").value(22.50));
 	}
 
@@ -184,7 +184,7 @@ class OrderControllerTest {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"items":[{"productId":2,"qty":2,"note":"មិនដាក់ស្ករ"}]}"""))
-				.andExpect(jsonPath("$.data.items[0].productName").value("គុយទាវសាច់គោ"))
+				.andExpect(jsonPath("$.data.items[0].productName").value("មីឆា"))
 				.andExpect(jsonPath("$.data.items[0].unitPrice").value(3.50))
 				.andExpect(jsonPath("$.data.items[0].lineTotal").value(7.00))
 				.andExpect(jsonPath("$.data.items[0].note").value("មិនដាក់ស្ករ"));

@@ -15,10 +15,10 @@
 INSERT INTO category (id, name, name_en, icon, sort_order, status, reg_id, reg_dtm) VALUES
     (1, 'បាយ',      'Rice',    '🍚', 1, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
     (2, 'មី',        'Noodle',  '🍜', 2, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
-    (3, 'ស៊ុប',      'Soup',    '🍲', 3, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
+    (3, 'សម្លរ',      'Soup',    '🍲', 3, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
     (4, 'ឆា',        'Fried',   '🍳', 4, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
-    (5, 'អាំង',      'Grill',   '🍗', 5, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
-    (6, 'សាឡាដ',    'Salad',   '🥗', 6, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
+    (5, 'សាច់អាំង',   'Grilled', '🍗', 5, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
+    (6, 'សាល័ត',     'Salad',   '🥗', 6, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
     (7, 'ភេសជ្ជៈ',   'Drink',   '🥤', 7, 'ACTIVE',   'system', CURRENT_TIMESTAMP),
     (8, 'បង្អែម',    'Dessert', '🍰', 8, 'INACTIVE', 'system', CURRENT_TIMESTAMP);
 
@@ -29,18 +29,18 @@ ALTER TABLE category ALTER COLUMN id RESTART WITH 9;
 -- ===========================================================================
 
 INSERT INTO product (id, name, name_en, category_id, price, cost, stock_qty, image_url, status, reg_id, reg_dtm) VALUES
-    (1,  'បាយឆាគ្រឿងសមុទ្រ', 'Seafood fried rice',   1, 4.50, 2.10, 42, '🍚', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
-    (2,  'គុយទាវសាច់គោ',      'Beef noodle soup',     2, 3.50, 1.60, 38, '🍜', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
-    (3,  'សម្លម្ជូរយួន',       'Sour soup',            3, 5.00, 2.40, 25, '🍲', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
-    (4,  'ញាំត្រកួន',          'Morning glory salad',  6, 3.00, 1.20, 19, '🥗', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
-    (5,  'មាន់អាំងឃ្មុំ',       'Honey grilled chicken',5, 7.50, 3.60, 14, '🍗', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (1,  'បាយឆា',            'Fried rice',           1, 4.50, 2.10, 42, '🍚', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (2,  'មីឆា',              'Fried noodle',         2, 3.50, 1.60, 38, '🍜', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (3,  'សម្លរប្រហើរ',        'Samlor prohor',        3, 5.00, 2.40, 25, '🍲', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (4,  'ស្ងោស្ពៃ',           'Boiled greens',        6, 3.00, 1.20, 19, '🥗', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (5,  'សាច់មាន់',           'Grilled chicken',      5, 7.50, 3.60, 14, '🍗', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (6,  'ត្រីចៀនជូរអែម',      'Sweet and sour fish',  4, 8.00, 3.90, 11, '🐟', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (7,  'បង្គាឆាម្ទេស',       'Chilli fried prawn',   4, 9.00, 4.50,  8, '🍤', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (8,  'សាច់គោលោកឡាក់',   'Lok lak beef',         4, 6.50, 3.10, 21, '🥩', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (9,  'ពងទាចៀន',          'Fried egg',            4, 2.00, 0.70, 60, '🍳', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
-    (10, 'បៀរអង្គរ',          'Angkor beer',          7, 1.50, 0.58,  4, '🍺', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (10, 'តែក្រូចឆ្មា',         'Lime tea',             7, 1.50, 0.58,  4, '🍵', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (11, 'កូកាកូឡា',          'Coca-Cola',            7, 1.00, 0.42, 56, '🥤', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
-    (12, 'ទឹកសុទ្ធ',           'Drinking water',       7, 0.50, 0.18,  6, '💧', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
+    (12, 'តែជ្រក់',            'Steeped tea',          7, 0.50, 0.18,  6, '🍵', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (13, 'ទឹកកក',             'Ice',                  7, 0.25, 0.05, 99, '🧊', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (14, 'ទឹកកកឯម',          'Ice cream',            8, 2.50, 1.00, 30, '🍧', 'ACTIVE', 'system', CURRENT_TIMESTAMP),
     (15, 'នំខេក',             'Cake',                 8, 2.75, 1.10, 22, '🍰', 'ACTIVE', 'system', CURRENT_TIMESTAMP),

@@ -108,7 +108,7 @@ class ReportControllerTest {
 		assertThat(d.path("paidInvoices").asLong()).isEqualTo(2);
 		assertThat(d.path("lowStockCount").asLong()).isEqualTo(5);
 		assertThat(d.path("bestSellers").get(0).path("productName").asText())
-				.isEqualTo("បាយឆាគ្រឿងសមុទ្រ");
+				.isEqualTo("បាយឆា");
 		assertThat(d.path("lowStock").size()).isEqualTo(5);
 	}
 
