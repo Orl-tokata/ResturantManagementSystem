@@ -76,6 +76,7 @@ export default function PurchasePage() {
   const [viewing, setViewing] = useState<Purchase | null>(null);
   const [confirmReceive, setConfirmReceive] = useState<Purchase | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<Purchase | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Purchase | null>(null);
 
   const list = useList<Purchase>("purchases", {
     search,
@@ -250,7 +251,7 @@ export default function PurchasePage() {
             <Button
               size="sm"
               variant="danger"
-              onClick={() => removeOrder.mutate(r.id)}
+              onClick={() => setConfirmDelete(r)}
               aria-label={tA11y("delete", { name: r.poNo })}
             >
               <Trash2 size={13} />
@@ -539,6 +540,18 @@ export default function PurchasePage() {
           confirmReceive?.total ?? 0,
         )} on the supplier's payable. It cannot be undone.`}
         confirmLabel={t("yesReceive")}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        busy={removeOrder.isPending}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) removeOrder.mutate(confirmDelete.id);
+          setConfirmDelete(null);
+        }}
+        message={tc("confirmDeleteMessage", { name: confirmDelete?.poNo ?? "" })}
+        detail={t("deleteDetail")}
       />
 
       <ConfirmDialog

@@ -338,7 +338,8 @@
     "noItemsYet": "No items yet",
     "errSupplier": "Choose a supplier",
     "errItems": "Add at least one item",
-    "errQty": "Every quantity must be greater than zero"
+    "errQty": "Every quantity must be greater than zero",
+    "deleteDetail": "Only a pending or cancelled order can be deleted. A received one is part of the stock history."
   },
   "stock": {
     "title": "Stock management",
