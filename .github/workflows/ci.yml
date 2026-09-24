@@ -92,7 +92,7 @@ jobs:
           retention-days: 7
 
   frontend:
-    name: Frontend — types, lint and build
+    name: Frontend — types, lint, tests and build
     runs-on: ubuntu-latest
 
     steps:
@@ -118,6 +118,14 @@ jobs:
       - name: Lint
         working-directory: frontend
         run: npm run lint
+
+      # The browser half of the app. Session handling and route guards are the
+      # part of it no server-side test can reach: the backend correctly answers
+      # one user and correctly refuses the next, and the bug these cover was
+      # entirely in what the browser held on to in between.
+      - name: Test
+        working-directory: frontend
+        run: npm test
 
       - name: Build
         working-directory: frontend

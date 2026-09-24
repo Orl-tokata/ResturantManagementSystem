@@ -96,6 +96,8 @@ Component gallery at `/admin/ui-kit`.
 - `npm run build` passes; `tsc --noEmit` reports 0 errors; **28 routes** build,
   all return 200 and an unknown route 404s
 - `npm run lint` — **0 errors, 0 warnings**
+- `npm test` — **15 frontend tests**, covering what survives a user switch
+  in the browser (see *Frontend tests* below)
 - CORS preflight from `http://localhost:3000` returns
   `Access-Control-Allow-Credentials: true`, and the refresh cookie is accepted
   cross-origin (`HttpOnly; SameSite=Lax; Path=/api/auth`)
@@ -266,6 +268,39 @@ uppercase letter, one number. Five failed logins lock the account.
 
 Password reset emails only send when `MAIL_USERNAME` / `MAIL_PASSWORD` are set;
 otherwise the OTP is written to the application log so the flow stays testable.
+
+### Frontend tests
+
+```bash
+cd frontend
+npm test          # once
+npm run test:watch
+```
+
+Vitest and Testing Library, no Next runtime — these render components straight
+from source. They deliberately cover only what a server-side test cannot reach,
+which in practice means what the browser keeps between two people using the same
+till:
+
+| File | What it holds in place |
+|---|---|
+| `src/lib/auth-context.test.tsx` | The React Query cache is emptied on login and on logout, including when the logout request fails |
+| `src/components/auth/RequireAuth.test.tsx` | The guard renders nothing while loading, nothing once signed out, and refuses a signed-in user without the role |
+| `src/app/(protected)/admin/layout.test.tsx` | The admin section is wrapped in that guard **with a role named** |
+| `src/lib/landing.test.ts` | `?next=` is honoured only for a local path the signed-in user may actually open |
+
+Everything else about authorisation is the backend's to enforce and is tested
+there and in `scripts/smoke-api.mjs`. The gap these fill is narrow and real: the
+server answered the manager correctly and refused the cashier correctly, and the
+cashier still saw the manager's staff list, because it was already in memory.
+
+**On the runner version.** `vitest` is pinned to 3.x, which carries a moderate
+dev-only advisory ([GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9),
+path traversal through the browser-mode mocker — not reachable from `vitest run`).
+The fixed release is 4.1.11, and npm 10.8.1 cannot install it: resolving vitest 4's
+optional `@vitest/browser-playwright` peer crashes arborist with
+`Cannot read properties of null (reading 'edgesOut')`. npm 11 resolves it.
+Worth revisiting whenever the toolchain moves.
 
 ### Default accounts
 
