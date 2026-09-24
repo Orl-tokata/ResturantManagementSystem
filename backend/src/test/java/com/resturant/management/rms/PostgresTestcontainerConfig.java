@@ -33,7 +33,7 @@ public class PostgresTestcontainerConfig {
     @SuppressWarnings("resource")   // Testcontainers closes it on JVM shutdown
     PostgreSQLContainer<?> postgresContainer() {
         return new PostgreSQLContainer<>("postgres:16-alpine")
-                .withDatabaseName("restaurant_management_system")
+                .withDatabaseName("rms")
                 .withUsername("rms")
                 .withPassword("test-only");
     }
