@@ -190,6 +190,38 @@ curl -X POST http://localhost:8081/api/auth/login -H "Content-Type: application/
 
 Or click **Authorize** in Swagger UI and paste the returned `accessToken`.
 
+### Smoke-testing every endpoint
+
+```bash
+node scripts/smoke-api.mjs            # one line per call
+node scripts/smoke-api.mjs --quiet    # only failures and the tally
+```
+
+Signs in, walks all 72 endpoints against a **running** backend, and prints what
+each one answered. Exits `0` when everything matched, `1` on any mismatch, `2`
+if it refused to run — so it can gate a deploy.
+
+It covers the refusals as well as the successes: a cashier reaching an admin
+route, a request with no token, and the delete guards on a category that still
+has products, a stock item with movement history, and a supplier who is still
+owed money. Those are the paths most likely to rot silently.
+
+This does not replace `./gradlew test`. Those 166 tests reach branches this
+cannot, roll back after themselves, and need no server. What this adds is the
+one thing they cannot give: proof that the assembled, running application
+answers correctly over real HTTP, through the security filter chain, against a
+real database. Two bugs in this project's history lived exactly there — every
+test green, the deployed answer still wrong.
+
+⚠️ **It writes.** It creates categories, products, tables, staff, suppliers,
+stock, purchase orders, a user and paid orders. Most are cleaned up; a received
+purchase order and a paid order deliberately cannot be. Point it at a
+disposable database — it refuses a non-localhost URL unless
+`SMOKE_ALLOW_REMOTE=1`.
+
+Overridable with `SMOKE_BASE_URL`, `SMOKE_ADMIN_USER`, `SMOKE_ADMIN_PASS`,
+`SMOKE_CASHIER_USER`, `SMOKE_CASHIER_PASS`.
+
 Password policy for register / reset / change: at least 8 characters, one
 uppercase letter, one number. Five failed logins lock the account.
 
