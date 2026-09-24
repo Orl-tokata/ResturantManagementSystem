@@ -41,6 +41,20 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const returnFocusTo = useRef<HTMLElement | null>(null);
 
+  /*
+   * Focus and scroll lock, keyed on `open` alone.
+   *
+   * These used to share an effect with the key handler below, which depends on
+   * `onClose`. Every caller passes an inline arrow — onClose={() => setEditing(null)}
+   * — so `onClose` is a new function on every render, and every keystroke in a
+   * dialog field therefore re-ran the whole effect: the cleanup returned focus
+   * to whatever opened the dialog, then the effect moved it to the panel. Either
+   * way it left the input, and typing a name meant clicking back after each
+   * character.
+   *
+   * Splitting them is the fix. Re-binding a keydown listener on every render is
+   * harmless; moving focus on every render is not.
+   */
   useEffect(() => {
     if (!open) return;
 
@@ -52,6 +66,16 @@ export function Modal({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      returnFocusTo.current?.focus?.();
+    };
+  }, [open]);
+
+  // Escape to close, Tab kept inside. Free to re-bind whenever onClose changes.
+  useEffect(() => {
+    if (!open) return;
+
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.stopPropagation();
@@ -59,7 +83,6 @@ export function Modal({
         return;
       }
 
-      // Keep Tab inside the dialog.
       if (event.key !== "Tab" || !panelRef.current) return;
       const focusable = panelRef.current.querySelectorAll<HTMLElement>(
         'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -79,11 +102,7 @@ export function Modal({
     }
 
     document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      returnFocusTo.current?.focus?.();
-    };
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
