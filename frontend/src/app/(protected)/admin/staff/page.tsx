@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
   Alert,
@@ -22,9 +23,10 @@ import {
   type Column,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
+import { post } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
-import type { Role } from "@/types/auth";
+import type { AccountRequest, Role } from "@/types/auth";
 import {
   type Gender,
   type Shift,
@@ -38,6 +40,13 @@ const EMPTY: StaffRequest = {
   staffName: "",
   role: "CASHIER",
   status: "ACTIVE",
+};
+
+const EMPTY_ACCOUNT: AccountRequest = {
+  username: "",
+  password: "",
+  fullName: "",
+  role: "CASHIER",
 };
 
 const SIZE = 20;
@@ -68,6 +77,16 @@ export default function StaffPage() {
   const [deleting, setDeleting] = useState<Staff | null>(null);
   const [listError, setListError] = useState<string | null>(null);
 
+  /* The login account, which is a different thing from the staff row beside
+     it. A staff record is the employment: code, shift, salary. An account is
+     the ability to sign in. The two are separate tables and nothing yet joins
+     them, so this creates an account *using* someone's details rather than
+     one that belongs to their row. */
+  const [accountFor, setAccountFor] = useState<Staff | null>(null);
+  const [account, setAccount] = useState<AccountRequest>(EMPTY_ACCOUNT);
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [accountMade, setAccountMade] = useState<string | null>(null);
+
   const list = useList<Staff>("staff", {
     search,
     role: role === "" ? undefined : role,
@@ -76,6 +95,12 @@ export default function StaffPage() {
   });
   const save = useSave<Staff, StaffRequest>("staff");
   const remove = useRemove("staff");
+
+  // Not useSave: this is not a CRUD resource with a list to invalidate, and
+  // the accounts it creates are not what this screen is showing.
+  const createAccount = useMutation({
+    mutationFn: (body: AccountRequest) => post<{ username: string }>("/auth/register", body),
+  });
 
   function openNew() {
     setEditingId(null);
@@ -134,6 +159,53 @@ export default function StaffPage() {
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
+  function openAccount(row: Staff) {
+    // Everything the staff row already knows is carried across, so the admin
+    // types a username and a password and nothing else. The role defaults to
+    // the one they were hired into rather than to the least privileged, which
+    // would only be overridden by hand every time.
+    setAccountFor(row);
+    setAccount({
+      username: "",
+      password: "",
+      fullName: row.staffName,
+      email: row.email ?? undefined,
+      phone: row.phone ?? undefined,
+      role: row.role,
+    });
+    setAccountError(null);
+    setAccountMade(null);
+  }
+
+  function setAcc<K extends keyof AccountRequest>(key: K, value: AccountRequest[K]) {
+    setAccount((a) => ({ ...a, [key]: value }));
+  }
+
+  async function submitAccount() {
+    if (account.username.trim().length < 3) {
+      setAccountError(t("errUsername"));
+      return;
+    }
+    // Mirrors the server's rule so the admin is told before a round trip; the
+    // server enforces it regardless.
+    if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(account.password)) {
+      setAccountError(t("errPassword"));
+      return;
+    }
+    try {
+      await createAccount.mutateAsync({
+        ...account,
+        username: account.username.trim(),
+        email: account.email?.trim() || undefined,
+        phone: account.phone?.trim() || undefined,
+      });
+      setAccountMade(account.username.trim());
+      setAccountFor(null);
+    } catch (e) {
+      setAccountError(apiError(e, "createAccount"));
+    }
+  }
+
   const columns: Column<Staff>[] = [
     { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
     { key: "code", header: tc("code"), render: (r) => r.staffCode },
@@ -184,6 +256,15 @@ export default function StaffPage() {
           </Button>
           <Button
             size="sm"
+            variant="ghost"
+            onClick={() => openAccount(r)}
+            aria-label={t("createLoginFor", { name: r.staffName })}
+            title={t("createLogin")}
+          >
+            🔑
+          </Button>
+          <Button
+            size="sm"
             variant="danger"
             onClick={() => setDeleting(r)}
             aria-label={tA11y("delete", { name: r.staffName })}
@@ -198,6 +279,7 @@ export default function StaffPage() {
   return (
     <ListPage>
       {listError && <Alert tone="error">{listError}</Alert>}
+      {accountMade && <Alert tone="success">{t("accountCreated", { username: accountMade })}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar
@@ -403,6 +485,87 @@ export default function StaffPage() {
             onChange={(e) => set("address", e.target.value || undefined)}
           />
         </Field>
+      </Modal>
+
+      <Modal
+        open={accountFor !== null}
+        onClose={() => setAccountFor(null)}
+        title={t("createLoginFor", { name: accountFor?.staffName ?? "" })}
+        footer={
+          <>
+            <Button variant="light" onClick={() => setAccountFor(null)}>
+              {tc("close")}
+            </Button>
+            <Button variant="admin" onClick={submitAccount} loading={createAccount.isPending}>
+              {t("createLogin")}
+            </Button>
+          </>
+        }
+      >
+        {accountError && <Alert tone="error">{accountError}</Alert>}
+        <Alert tone="info">{t("accountHelp")}</Alert>
+
+        <FieldRow>
+          <Field label={t("username")} htmlFor="a-user" required>
+            <Input
+              id="a-user"
+              value={account.username}
+              onChange={(e) => setAcc("username", e.target.value)}
+              autoComplete="off"
+              placeholder="sokdara"
+            />
+          </Field>
+          <Field label={t("password")} htmlFor="a-pass" required>
+            <Input
+              id="a-pass"
+              type="password"
+              value={account.password}
+              onChange={(e) => setAcc("password", e.target.value)}
+              autoComplete="new-password"
+            />
+          </Field>
+        </FieldRow>
+
+        <FieldRow>
+          <Field label={tc("name")} htmlFor="a-name" required>
+            <Input
+              id="a-name"
+              value={account.fullName}
+              onChange={(e) => setAcc("fullName", e.target.value)}
+            />
+          </Field>
+          <Field label={t("role")} htmlFor="a-role" required>
+            <Select
+              id="a-role"
+              value={account.role}
+              onChange={(e) => setAcc("role", e.target.value as Role)}
+            >
+              {(["ADMIN","CASHIER","WAITER","CHEF"] as Role[]).map((r) => (
+                <option key={r} value={r}>
+                  {tRole(r)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </FieldRow>
+
+        <FieldRow>
+          <Field label={tc("email")} htmlFor="a-email">
+            <Input
+              id="a-email"
+              type="email"
+              value={account.email ?? ""}
+              onChange={(e) => setAcc("email", e.target.value || undefined)}
+            />
+          </Field>
+          <Field label={tc("phone")} htmlFor="a-phone">
+            <Input
+              id="a-phone"
+              value={account.phone ?? ""}
+              onChange={(e) => setAcc("phone", e.target.value || undefined)}
+            />
+          </Field>
+        </FieldRow>
       </Modal>
 
       <ConfirmDialog

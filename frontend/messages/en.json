@@ -290,7 +290,15 @@
     "noStaff": "No staff found",
     "errCode": "Staff code is required",
     "errName": "Staff name is required",
-    "role": "Role"
+    "role": "Role",
+    "createLogin": "Create login",
+    "createLoginFor": "Create a login for {name}",
+    "username": "Username",
+    "password": "Password",
+    "accountHelp": "This creates a sign-in account. The role decides what they can open — only give Admin to someone who should manage staff, products and settings.",
+    "accountCreated": "Login created for {username}.",
+    "errUsername": "The username needs at least 3 characters.",
+    "errPassword": "The password needs at least 8 characters, one capital letter and one number."
   },
   "suppliers": {
     "title": "Supplier list",
@@ -531,7 +539,8 @@
     "paymentRejected": "Payment was not accepted",
     "loadReceipt": "Could not load the receipt",
     "exportReport": "Could not export the report",
-    "saveSettings": "Could not save the settings"
+    "saveSettings": "Could not save the settings",
+    "createAccount": "Could not create the login"
   },
   "a11y": {
     "edit": "Edit {name}",
