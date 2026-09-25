@@ -95,6 +95,11 @@ springdoc:
 # Application settings
 # ---------------------------------------------------------------------------
 app:
+  mail:
+    # The name an inbox shows instead of the raw sending address. Set it to the
+    # restaurant so a reset code does not look like mail from a stranger.
+    from-name: ${MAIL_FROM_NAME:Restaurant Management System}
+
   cors:
     # Next.js dev server. Comma-separated for multiple origins.
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

@@ -1,0 +1,24 @@
+{{appName}}
+
+  PASSWORD RESET CODE:  {{code}}
+
+
+ENGLISH
+-------
+Enter this code to set a new password. It expires in {{minutes}} minutes.
+
+If you did not ask to reset your password, you can ignore this email —
+nothing has changed on your account.
+
+
+ភាសាខ្មែរ
+-------
+សូមបញ្ចូលលេខកូដនេះ ដើម្បីកំណត់ពាក្យសម្ងាត់ថ្មី។
+វានឹងផុតកំណត់ក្នុងរយៈពេល {{minutes}} នាទី។
+
+ប្រសិនបើអ្នកមិនបានស្នើសុំកំណត់ពាក្យសម្ងាត់ឡើងវិញទេ សូមមិនអើពើនឹងអ៊ីមែលនេះ —
+គណនីរបស់អ្នកមិនមានការផ្លាស់ប្តូរអ្វីឡើយ។
+
+--
+Sent automatically by {{appName}}. Please do not reply to this message.
+ផ្ញើដោយស្វ័យប្រវត្តិ។ សូមកុំឆ្លើយតបមកអ៊ីមែលនេះ។

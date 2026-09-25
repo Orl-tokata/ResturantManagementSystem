@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{appName}}</title>
+  </head>
+  <!--
+    Laid out with tables and inline styles on purpose. Mail clients are not
+    browsers: Outlook renders with Word, Gmail strips <style> blocks, and none
+    of them can be relied on for flexbox or external CSS. Anything that has to
+    survive the trip is written inline, on a table.
+
+    The code appears once. It is the same six digits whichever language you
+    read, and printing it twice invites someone to wonder which one to type.
+    The wording below it is what is bilingual, English first and Khmer second,
+    each labelled so a reader can skip straight to theirs.
+
+    Khmer needs a font the device actually has. Noto Sans Khmer and Khmer OS
+    cover Android, Windows and Khmer-configured machines; the rest fall back
+    through the stack rather than rendering boxes.
+  -->
+  <body style="margin:0; padding:0; background-color:#f1f3f5;">
+    <!-- Preheader: the grey line shown beside the subject in most inboxes.
+         Without it, clients pull the first visible text, which here is a bare
+         number and reads like spam. -->
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
+      {{code}} — expires in {{minutes}} minutes · ផុតកំណត់ក្នុង {{minutes}} នាទី
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="background-color:#f1f3f5; padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                 style="max-width:540px; background-color:#ffffff; border-radius:14px;
+                        overflow:hidden; box-shadow:0 1px 3px rgba(16,24,40,0.08);
+                        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,
+                                    'Noto Sans Khmer','Khmer OS','Leelawadee UI',Arial,sans-serif;">
+
+            <!-- who this is from -->
+            <tr>
+              <td style="background-color:#1f5b53; padding:20px 28px;">
+                <span style="font-size:20px; vertical-align:middle;">&#127869;</span>
+                <span style="color:#ffffff; font-size:16px; font-weight:700;
+                             vertical-align:middle; padding-left:8px;">{{appName}}</span>
+              </td>
+            </tr>
+
+            <!-- the thing they opened the email for -->
+            <tr>
+              <td align="center" style="padding:32px 28px 8px 28px;">
+                <div style="font-size:12px; font-weight:600; letter-spacing:1.5px;
+                            text-transform:uppercase; color:#6b7280; padding-bottom:14px;">
+                  Password reset code
+                </div>
+                <div style="display:inline-block; background-color:#f0f7f5;
+                            border:1px solid #cfe3df; border-radius:10px;
+                            padding:16px 28px; font-family:'SFMono-Regular',Consolas,
+                            'Liberation Mono',Menlo,monospace; font-size:32px;
+                            font-weight:700; letter-spacing:10px; text-indent:10px;
+                            color:#12403a;">{{code}}</div>
+              </td>
+            </tr>
+
+            <!-- English -->
+            <tr>
+              <td style="padding:24px 28px 0 28px;">
+                <div style="font-size:11px; font-weight:700; letter-spacing:1.2px;
+                            color:#1f5b53; padding-bottom:6px;">ENGLISH</div>
+                <p style="margin:0 0 8px 0; font-size:15px; line-height:22px; color:#1f2937;">
+                  Enter this code to set a new password. It expires in
+                  <strong>{{minutes}} minutes</strong>.
+                </p>
+                <p style="margin:0; font-size:13px; line-height:20px; color:#6b7280;">
+                  If you did not ask to reset your password, you can ignore this
+                  email — nothing has changed on your account.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:20px 28px 0 28px;">
+                <div style="border-top:1px solid #e5e7eb; font-size:0; line-height:0;">&nbsp;</div>
+              </td>
+            </tr>
+
+            <!-- Khmer -->
+            <tr>
+              <td style="padding:20px 28px 28px 28px;">
+                <div style="font-size:11px; font-weight:700; letter-spacing:1.2px;
+                            color:#1f5b53; padding-bottom:6px;">ភាសាខ្មែរ</div>
+                <p style="margin:0 0 8px 0; font-size:15px; line-height:26px; color:#1f2937;">
+                  សូមបញ្ចូលលេខកូដនេះ ដើម្បីកំណត់ពាក្យសម្ងាត់ថ្មី។
+                  វានឹងផុតកំណត់ក្នុងរយៈពេល <strong>{{minutes}} នាទី</strong>។
+                </p>
+                <p style="margin:0; font-size:13px; line-height:24px; color:#6b7280;">
+                  ប្រសិនបើអ្នកមិនបានស្នើសុំកំណត់ពាក្យសម្ងាត់ឡើងវិញទេ
+                  សូមមិនអើពើនឹងអ៊ីមែលនេះ — គណនីរបស់អ្នកមិនមានការផ្លាស់ប្តូរអ្វីឡើយ។
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="background-color:#f8fafb; padding:16px 28px; border-top:1px solid #eef1f3;">
+                <p style="margin:0; font-size:12px; line-height:18px; color:#9099a4;">
+                  Sent automatically by {{appName}}. Please do not reply to this message.<br />
+                  ផ្ញើដោយស្វ័យប្រវត្តិ។ សូមកុំឆ្លើយតបមកអ៊ីមែលនេះ។
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
