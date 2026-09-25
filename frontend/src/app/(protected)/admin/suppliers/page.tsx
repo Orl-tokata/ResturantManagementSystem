@@ -6,6 +6,7 @@ import {
   Alert,
   Badge,
   Button,
+  type Column,
   ConfirmDialog,
   DataTable,
   Field,
@@ -19,7 +20,7 @@ import {
   Textarea,
   toneForRecordStatus,
   Toolbar,
-  type Column,
+  useToast,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useApiError } from "@/lib/use-api-error";
@@ -41,6 +42,7 @@ export default function SuppliersPage() {
   const tType = useTranslations("enum.supplyType");
   const tA11y = useTranslations("a11y");
   const apiError = useApiError();
+  const toast = useToast();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -49,7 +51,6 @@ export default function SuppliersPage() {
   const [draft, setDraft] = useState<SupplierRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Supplier | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
 
   const list = useList<Supplier>("suppliers", { search, page, size: SIZE });
   const save = useSave<Supplier, SupplierRequest>("suppliers");
@@ -98,7 +99,7 @@ export default function SuppliersPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(apiError(e, "deleteSupplier"));
+      toast.error(apiError(e, "deleteSupplier"));
     } finally {
       setDeleting(null);
     }
@@ -167,7 +168,6 @@ export default function SuppliersPage() {
 
   return (
     <ListPage>
-      {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar

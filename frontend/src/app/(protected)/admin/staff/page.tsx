@@ -6,7 +6,9 @@ import { useTranslations } from "next-intl";
 import {
   Alert,
   Badge,
+  type BadgeTone,
   Button,
+  type Column,
   ConfirmDialog,
   DataTable,
   Field,
@@ -19,8 +21,7 @@ import {
   Select,
   Textarea,
   Toolbar,
-  type BadgeTone,
-  type Column,
+  useToast,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { post } from "@/lib/api";
@@ -66,6 +67,7 @@ export default function StaffPage() {
   const tSt = useTranslations("enum.staffStatus");
   const tA11y = useTranslations("a11y");
   const apiError = useApiError();
+  const toast = useToast();
 
   const [search, setSearch] = useState("");
   const [role, setRole] = useState<Role | "">("");
@@ -75,7 +77,6 @@ export default function StaffPage() {
   const [draft, setDraft] = useState<StaffRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Staff | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
 
   /* The login account, which is a different thing from the staff row beside
      it. A staff record is the employment: code, shift, salary. An account is
@@ -85,7 +86,6 @@ export default function StaffPage() {
   const [accountFor, setAccountFor] = useState<Staff | null>(null);
   const [account, setAccount] = useState<AccountRequest>(EMPTY_ACCOUNT);
   const [accountError, setAccountError] = useState<string | null>(null);
-  const [accountMade, setAccountMade] = useState<string | null>(null);
 
   const list = useList<Staff>("staff", {
     search,
@@ -149,7 +149,7 @@ export default function StaffPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(apiError(e, "deleteStaff"));
+      toast.error(apiError(e, "deleteStaff"));
     } finally {
       setDeleting(null);
     }
@@ -174,7 +174,6 @@ export default function StaffPage() {
       role: row.role,
     });
     setAccountError(null);
-    setAccountMade(null);
   }
 
   function setAcc<K extends keyof AccountRequest>(key: K, value: AccountRequest[K]) {
@@ -199,7 +198,7 @@ export default function StaffPage() {
         email: account.email?.trim() || undefined,
         phone: account.phone?.trim() || undefined,
       });
-      setAccountMade(account.username.trim());
+      toast.success(t("accountCreated", { username: account.username.trim() }));
       setAccountFor(null);
     } catch (e) {
       setAccountError(apiError(e, "createAccount"));
@@ -278,8 +277,6 @@ export default function StaffPage() {
 
   return (
     <ListPage>
-      {listError && <Alert tone="error">{listError}</Alert>}
-      {accountMade && <Alert tone="success">{t("accountCreated", { username: accountMade })}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar

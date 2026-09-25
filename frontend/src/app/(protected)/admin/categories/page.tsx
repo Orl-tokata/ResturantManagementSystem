@@ -6,6 +6,7 @@ import {
   Alert,
   Badge,
   Button,
+  type Column,
   ConfirmDialog,
   DataTable,
   Field,
@@ -18,7 +19,7 @@ import {
   Select,
   toneForRecordStatus,
   Toolbar,
-  type Column,
+  useToast,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useApiError } from "@/lib/use-api-error";
@@ -44,6 +45,7 @@ export default function CategoriesPage() {
   const tStatus = useTranslations("enum.recordStatus");
   const tA11y = useTranslations("a11y");
   const apiError = useApiError();
+  const toast = useToast();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -53,7 +55,6 @@ export default function CategoriesPage() {
   const [draft, setDraft] = useState<CategoryRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Category | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
 
   const list = useList<Category>("categories", { search, page, size: SIZE });
   const save = useSave<Category, CategoryRequest>("categories");
@@ -95,7 +96,7 @@ export default function CategoriesPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(apiError(e, "deleteCategory"));
+      toast.error(apiError(e, "deleteCategory"));
     } finally {
       setDeleting(null);
     }
@@ -159,7 +160,6 @@ export default function CategoriesPage() {
 
   return (
     <ListPage>
-      {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar

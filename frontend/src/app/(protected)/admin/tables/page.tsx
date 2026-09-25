@@ -6,6 +6,7 @@ import {
   Alert,
   Badge,
   Button,
+  type Column,
   ConfirmDialog,
   DataTable,
   Field,
@@ -20,7 +21,7 @@ import {
   StatTile,
   toneForTableStatus,
   Toolbar,
-  type Column,
+  useToast,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useQuery } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ export default function TablesPage() {
   const tStatus = useTranslations("enum.tableStatus");
   const tA11y = useTranslations("a11y");
   const apiError = useApiError();
+  const toast = useToast();
 
   const [search, setSearch] = useState("");
   const [zone, setZone] = useState<TableZone | "">("");
@@ -53,7 +55,6 @@ export default function TablesPage() {
   const [draft, setDraft] = useState<TableRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<DiningTable | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
 
   const list = useList<DiningTable>("tables", {
     search,
@@ -102,7 +103,7 @@ export default function TablesPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(apiError(e, "deleteTable"));
+      toast.error(apiError(e, "deleteTable"));
     } finally {
       setDeleting(null);
     }
@@ -142,7 +143,6 @@ export default function TablesPage() {
 
   return (
     <ListPage>
-      {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>

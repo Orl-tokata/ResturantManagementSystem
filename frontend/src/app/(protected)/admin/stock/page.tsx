@@ -7,6 +7,7 @@ import {
   Alert,
   Badge,
   Button,
+  type Column,
   ConfirmDialog,
   DataTable,
   Field,
@@ -22,7 +23,7 @@ import {
   StatTile,
   Textarea,
   Toolbar,
-  type Column,
+  useToast,
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { get, post, type PageResponse } from "@/lib/api";
@@ -47,6 +48,7 @@ export default function StockPage() {
   const tMv = useTranslations("enum.movementType");
   const tA11y = useTranslations("a11y");
   const apiError = useApiError();
+  const toast = useToast();
 
   const qc = useQueryClient();
 
@@ -64,7 +66,6 @@ export default function StockPage() {
 
   const [historyFor, setHistoryFor] = useState<StockItem | null>(null);
   const [deleting, setDeleting] = useState<StockItem | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
 
   const list = useList<StockItem>("stock", { search, page, size: SIZE });
   const save = useSave<StockItem, StockItemRequest>("stock");
@@ -127,7 +128,7 @@ export default function StockPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(apiError(e, "deleteStockItem"));
+      toast.error(apiError(e, "deleteStockItem"));
     } finally {
       setDeleting(null);
     }
@@ -212,7 +213,6 @@ export default function StockPage() {
 
   return (
     <ListPage>
-      {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>

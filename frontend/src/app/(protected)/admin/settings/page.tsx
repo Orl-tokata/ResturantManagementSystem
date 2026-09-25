@@ -13,6 +13,7 @@ import {
   Input,
   Select,
   Textarea,
+  useToast,
 } from "@/components/ui";
 import { get, put } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
@@ -32,10 +33,10 @@ export default function SettingsPage() {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
   const apiError = useApiError();
+  const toast = useToast();
 
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Settings | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const settings = useQuery({
@@ -54,20 +55,18 @@ export default function SettingsPage() {
     mutationFn: (patch: Settings) => put<Settings>("/settings", patch),
     onSuccess: (fresh) => {
       qc.setQueryData(["settings"], fresh);
-      setSaved(t("saved"));
+      toast.success(t("saved"));
       setError(null);
       // Totals shown anywhere depend on the VAT and riel rate.
       void qc.invalidateQueries({ queryKey: ["order"] });
     },
     onError: (e) => {
       setError(apiError(e, "saveSettings"));
-      setSaved(null);
     },
   });
 
   function set(key: string, value: string) {
     setDraft((d) => ({ ...(d ?? {}), [key]: value }));
-    setSaved(null);
   }
 
   function v(key: string) {
@@ -94,7 +93,6 @@ export default function SettingsPage() {
   return (
     <>
       {error && <Alert tone="error">{error}</Alert>}
-      {saved && <Alert tone="success">{saved}</Alert>}
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         {/* ---- restaurant identity ---- */}

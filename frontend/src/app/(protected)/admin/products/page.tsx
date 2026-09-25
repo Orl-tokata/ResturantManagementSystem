@@ -6,6 +6,7 @@ import {
   Alert,
   Badge,
   Button,
+  type Column,
   ConfirmDialog,
   DataTable,
   Field,
@@ -18,7 +19,7 @@ import {
   Select,
   Textarea,
   Toolbar,
-  type Column,
+  useToast,
 } from "@/components/ui";
 import { useAll, useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useApiError } from "@/lib/use-api-error";
@@ -51,6 +52,7 @@ export default function ProductsPage() {
   const tStatus = useTranslations("enum.recordStatus");
   const tA11y = useTranslations("a11y");
   const apiError = useApiError();
+  const toast = useToast();
   const locale = useLocale();
 
   const [search, setSearch] = useState("");
@@ -61,7 +63,6 @@ export default function ProductsPage() {
   const [draft, setDraft] = useState<ProductRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
 
   const categories = useAll<Category>("categories");
   const list = useList<Product>("products", {
@@ -121,7 +122,7 @@ export default function ProductsPage() {
     try {
       await remove.mutateAsync(deleting.id);
     } catch (e) {
-      setListError(apiError(e, "deleteProduct"));
+      toast.error(apiError(e, "deleteProduct"));
     } finally {
       setDeleting(null);
     }
@@ -189,7 +190,6 @@ export default function ProductsPage() {
 
   return (
     <ListPage>
-      {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <Toolbar

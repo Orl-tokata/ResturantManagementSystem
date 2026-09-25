@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { UserRound } from "lucide-react";
 import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
-import { Alert, Badge, Button, Card, Field, FieldRow, Input } from "@/components/ui";
+import { Alert, Badge, Button, Card, Field, FieldRow, Input, useToast } from "@/components/ui";
 import { put } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import { useAuth } from "@/lib/auth-context";
@@ -18,11 +18,11 @@ export default function CashierProfilePage() {
   const tA = useTranslations("auth");
   const tRole = useTranslations("enum.role");
   const apiError = useApiError();
+  const toast = useToast();
 
   const { user, status } = useAuth();
 
   const [draft, setDraft] = useState({ fullName: "", email: "", phone: "" });
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Seed from the session once it has loaded, adjusting during render rather
@@ -45,18 +45,16 @@ export default function CashierProfilePage() {
         phone: draft.phone || undefined,
       }),
     onSuccess: () => {
-      setSaved(true);
+      toast.success(t("saved"));
       setError(null);
     },
     onError: (e) => {
       setError(apiError(e, "saveProfile"));
-      setSaved(false);
     },
   });
 
   function set<K extends keyof typeof draft>(key: K, value: string) {
     setDraft((d) => ({ ...d, [key]: value }));
-    setSaved(false);
   }
 
   function submit() {
@@ -109,7 +107,6 @@ export default function CashierProfilePage() {
       <div className="space-y-4">
         <Card title={t("general")}>
           {error && <Alert tone="error">{error}</Alert>}
-          {saved && <Alert tone="success">{t("saved")}</Alert>}
 
           <Field label={tA("fullName")} htmlFor="p-name" required>
             <Input

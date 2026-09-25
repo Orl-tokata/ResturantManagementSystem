@@ -7,7 +7,9 @@ import { Trash2 } from "lucide-react";
 import {
   Alert,
   Badge,
+  type BadgeTone,
   Button,
+  type Column,
   ConfirmDialog,
   DataTable,
   Field,
@@ -22,8 +24,7 @@ import {
   StatTile,
   Textarea,
   Toolbar,
-  type BadgeTone,
-  type Column,
+  useToast,
 } from "@/components/ui";
 import { useList } from "@/hooks/useCrud";
 import { del, get, post, type PageResponse } from "@/lib/api";
@@ -57,13 +58,13 @@ export default function PurchasePage() {
   const tSt = useTranslations("enum.purchaseStatus");
   const tA11y = useTranslations("a11y");
   const apiError = useApiError();
+  const toast = useToast();
 
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PurchaseStatus | "">("");
   const [page, setPage] = useState(0);
-  const [listError, setListError] = useState<string | null>(null);
 
   const [creating, setCreating] = useState(false);
   const [supplierId, setSupplierId] = useState<number | "">("");
@@ -134,7 +135,7 @@ export default function PurchasePage() {
       setConfirmReceive(null);
     },
     onError: (e) => {
-      setListError(apiError(e, "receiveGoods"));
+      toast.error(apiError(e, "receiveGoods"));
       setConfirmReceive(null);
     },
   });
@@ -146,7 +147,7 @@ export default function PurchasePage() {
       setConfirmCancel(null);
     },
     onError: (e) => {
-      setListError(apiError(e, "cancelPurchase"));
+      toast.error(apiError(e, "cancelPurchase"));
       setConfirmCancel(null);
     },
   });
@@ -154,7 +155,7 @@ export default function PurchasePage() {
   const removeOrder = useMutation({
     mutationFn: (id: number) => del<void>(`/purchases/${id}`),
     onSuccess: invalidate,
-    onError: (e) => setListError(apiError(e, "deletePurchase")),
+    onError: (e) => toast.error(apiError(e, "deletePurchase")),
   });
 
   /* ---- draft lines ---- */
@@ -264,7 +265,6 @@ export default function PurchasePage() {
 
   return (
     <ListPage>
-      {listError && <Alert tone="error">{listError}</Alert>}
       {list.isError && <Alert tone="error">{apiError(list.error)}</Alert>}
 
       <StatGrid>
