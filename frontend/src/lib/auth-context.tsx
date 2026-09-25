@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { post, setAccessToken } from "@/lib/api";
-import type { AuthResponse, RegisterPayload, User } from "@/types/auth";
+import type { AuthResponse, User } from "@/types/auth";
 
 type Status = "loading" | "authenticated" | "unauthenticated";
 
@@ -19,7 +19,6 @@ interface AuthContextValue {
   user: User | null;
   status: Status;
   login: (username: string, password: string) => Promise<User>;
-  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -106,10 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [queryClient],
   );
 
-  const register = useCallback(async (payload: RegisterPayload) => {
-    await post("/auth/register", payload);
-  }, []);
-
   const logout = useCallback(async () => {
     try {
       await post("/auth/logout");
@@ -125,8 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ user, status, login, register, logout }),
-    [user, status, login, register, logout],
+    () => ({ user, status, login, logout }),
+    [user, status, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

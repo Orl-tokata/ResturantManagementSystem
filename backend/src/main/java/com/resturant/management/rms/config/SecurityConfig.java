@@ -39,7 +39,6 @@ public class SecurityConfig {
      */
     private static final String[] PUBLIC_PATHS = {
             "/api/auth/login",
-            "/api/auth/register",
             "/api/auth/refresh",
             "/api/auth/logout",
             "/api/auth/forgot-password",

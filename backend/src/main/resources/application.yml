@@ -1,4 +1,14 @@
 spring:
+  # Secrets come from the environment. This pulls in backend/.env when it is
+  # there, so a developer sets MAIL_PASSWORD once in a gitignored file instead
+  # of exporting it into every shell — and CI, which has no such file, is
+  # unaffected because the import is optional.
+  #
+  # Read as a properties file: KEY=value, one per line, no quotes and no
+  # "export". A real environment variable of the same name still wins.
+  config:
+    import: optional:file:./.env[.properties]
+
   application:
     name: rms-backend
 

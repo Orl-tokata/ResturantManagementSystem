@@ -119,11 +119,22 @@ async function main() {
   // No cookie is sent here, so a refusal is the correct answer.
   // 401, not 400: an absent session is not a malformed request.
   await call("refresh without cookie", "POST", "/auth/refresh", { expect: [401] });
-  await call("register", "POST", "/auth/register", {
-    body: {
-      username: USER, password: "Passw0rdX", fullName: "Smoke Test",
-      email: `${USER}@rms.local`, role: "CASHIER",
-    },
+  // Creating a login is an administrator's act. It was once a public endpoint
+  // that also honoured whatever role the caller asked for, which meant anyone
+  // who could reach the port could make themselves an admin — so the refusals
+  // below matter more than the success and are checked first.
+  const newAccount = {
+    username: USER, password: "Passw0rdX", fullName: "Smoke Test",
+    email: `${USER}@rms.local`, role: "CASHIER",
+  };
+  await call("create an account with no token", "POST", "/auth/register", {
+    body: { ...newAccount, username: USER + "x", role: "ADMIN" }, expect: [401],
+  });
+  await call("create an account as a cashier", "POST", "/auth/register", {
+    tok: cashierTok, body: { ...newAccount, username: USER + "x", role: "ADMIN" }, expect: [403],
+  });
+  await call("create an account as an admin", "POST", "/auth/register", {
+    tok: adminTok, body: newAccount,
   });
   const tmpTok = await login(USER, "Passw0rdX");
   await call("change password", "POST", "/auth/change-password", {

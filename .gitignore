@@ -1,7 +1,16 @@
 # ---- secrets --------------------------------------------------------------
+# Anything matching these holds a real credential. The patterns are deliberately
+# wider than the files that exist today: a secret that is added later should be
+# ignored before anyone thinks to update this list, not after.
 .env
-.env.local
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
 *.local.yml
+application-local.yml
+application-secret.yml
 backend/src/main/resources/application-local.yml
 !backend/src/main/resources/application-local.yml.example
 

@@ -27,6 +27,9 @@ class AuthControllerTest {
 	private static final String ADMIN = """
 			{"username":"admin","password":"ChangeMe123!"}""";
 
+	private static final String CASHIER = """
+			{"username":"cashier","password":"ChangeMe123!"}""";
+
 	@Autowired MockMvc mvc;
 	@Autowired ObjectMapper json;
 
@@ -154,30 +157,71 @@ class AuthControllerTest {
 				.andExpect(status().isUnauthorized());
 	}
 
-	/* ---- Registration ---------------------------------------------------- */
+	/* ---- Account creation -------------------------------------------------
+	   Creating a login was public and took the role straight from the request
+	   body, so an unauthenticated POST carrying "role":"ADMIN" minted an
+	   administrator. Authorisation is only as strong as the weakest way to
+	   obtain a role, and that was the weakest way imaginable. These are the
+	   tests that would have caught it. */
 
 	@Test
-	@DisplayName("register creates a user and rejects a duplicate username with 409")
-	void registerThenConflict() throws Exception {
+	@DisplayName("creating an account is refused when nobody is signed in, and creates nothing")
+	void registerRequiresAuthentication() throws Exception {
+		mvc.perform(post("/api/auth/register")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"username":"stranger","password":"Passw0rdX","fullName":"Stranger",
+								 "role":"ADMIN"}"""))
+				.andExpect(status().isUnauthorized());
+
+		// A refusal that still wrote the row would be no refusal at all.
+		mvc.perform(post("/api/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"username":"stranger","password":"Passw0rdX"}"""))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@DisplayName("a cashier cannot create an account, least of all an admin one")
+	void registerRefusesNonAdmin() throws Exception {
+		mvc.perform(post("/api/auth/register")
+						.header("Authorization", "Bearer " + login(CASHIER))
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"username":"promoted","password":"Passw0rdX","fullName":"Promoted",
+								 "role":"ADMIN"}"""))
+				.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@DisplayName("an admin creates an account with the role they chose, and a duplicate is 409")
+	void adminCreatesAccountThenConflict() throws Exception {
 		String body = """
 				{"username":"waiter1","password":"Passw0rdX","fullName":"Kim Srey Neat",
 				 "email":"waiter1@rms.local","phone":"016 555 777","role":"WAITER"}""";
+		String token = login();
 
+		// The role comes from the request here, and that is correct: choosing it
+		// is the point of the call when the caller already holds the authority.
 		mvc.perform(post("/api/auth/register")
+						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON).content(body))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.data.username").value("waiter1"))
 				.andExpect(jsonPath("$.data.role").value("WAITER"));
 
 		mvc.perform(post("/api/auth/register")
+						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON).content(body))
 				.andExpect(status().isConflict());
 	}
 
 	@Test
-	@DisplayName("register enforces the password policy")
+	@DisplayName("the password policy still applies to an account an admin creates")
 	void registerWeakPassword() throws Exception {
 		mvc.perform(post("/api/auth/register")
+						.header("Authorization", "Bearer " + login())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"username":"weakuser","password":"alllowercase","fullName":"Weak"}"""))
@@ -227,8 +271,12 @@ class AuthControllerTest {
 	/* ---- Helper ------------------------------------------------------------ */
 
 	private String login() throws Exception {
+		return login(ADMIN);
+	}
+
+	private String login(String credentials) throws Exception {
 		MvcResult result = mvc.perform(post("/api/auth/login")
-						.contentType(MediaType.APPLICATION_JSON).content(ADMIN))
+						.contentType(MediaType.APPLICATION_JSON).content(credentials))
 				.andExpect(status().isOk())
 				.andReturn();
 		JsonNode node = json.readTree(result.getResponse().getContentAsString());

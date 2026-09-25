@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -57,8 +58,23 @@ public class AuthController {
 
     /* ===================================================================== */
 
+    /**
+     * Creates a login account. Administrators only.
+     *
+     * <p>This was public, and it read the role straight off the request body, so
+     * an unauthenticated POST with {@code "role":"ADMIN"} minted an administrator
+     * — the whole of the authorisation model, bypassed by anyone who could reach
+     * the port. A role is authority, and authority is granted by someone who
+     * already holds it; it is never chosen by the person receiving it.
+     *
+     * <p>The role is still taken from the request, which is correct now that only
+     * an administrator can get here: assigning it is the point of the call.
+     */
     @PostMapping("/register")
-    @Operation(summary = "Create an account")
+    @Operation(summary = "Create a login account for a member of staff",
+            description = "Administrators only. The role given here is the role the account gets.")
+    @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(authService.register(request)));

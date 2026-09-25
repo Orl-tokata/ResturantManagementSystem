@@ -45,14 +45,6 @@ function LoginForm() {
       icon="🍽️"
       title={t("loginTitle")}
       subtitle={t("loginSubtitle")}
-      footer={
-        <>
-          {t("noAccount")}{" "}
-          <Link href="/signup" className="text-teal-100 underline">
-            {t("createAccount")}
-          </Link>
-        </>
-      }
     >
       {reason === "expired" && (
         <Alert tone="info">

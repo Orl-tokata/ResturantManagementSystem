@@ -23,15 +23,6 @@ export interface VerifyOtpResponse {
   expiresAt: string;
 }
 
-export interface RegisterPayload {
-  username: string;
-  password: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  role?: Role;
-}
-
 /** Where each role lands after signing in. */
 export const HOME_BY_ROLE: Record<Role, string> = {
   ADMIN: "/admin",

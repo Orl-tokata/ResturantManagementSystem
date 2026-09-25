@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +45,18 @@ public class AuthService {
     /* Registration                                                          */
     /* ===================================================================== */
 
+    /**
+     * Who is creating this account.
+     *
+     * <p>Stored on the row so the grant is attributable. It used to read
+     * "self-register", which was accurate while anyone could create their own
+     * account and is exactly the arrangement that had to go.
+     */
+    private String actingAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.isAuthenticated() ? auth.getName() : "system";
+    }
+
     @Transactional
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByUserId(request.username())) {
@@ -63,7 +77,7 @@ public class AuthService {
                 .lockYn("N")
                 .loginFailedCnt(0)
                 .actYn("Y")
-                .regId("self-register")
+                .regId(actingAdmin())
                 .regDtm(LocalDateTime.now())
                 .build();
 

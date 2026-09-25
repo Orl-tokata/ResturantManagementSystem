@@ -302,6 +302,40 @@ optional `@vitest/browser-playwright` peer crashes arborist with
 `Cannot read properties of null (reading 'edgesOut')`. npm 11 resolves it.
 Worth revisiting whenever the toolchain moves.
 
+### Secrets and mail
+
+Secrets are read from `backend/.env`, which is gitignored. Copy the template and
+fill it in:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+`application.yml` imports it with `spring.config.import: optional:file:./.env[.properties]`.
+The import is optional, so CI — which has no such file — is unaffected, and a real
+environment variable of the same name overrides the file, so production can keep
+using its own secret store.
+
+| Variable | Without it |
+|---|---|
+| `DB_PASSWORD` | the application cannot start |
+| `JWT_SECRET` | the application refuses to start rather than sign with a default |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | the password-reset code is written to the log instead of emailed |
+
+**Gmail will not accept your account password.** Turn on 2-Step Verification, create
+an App Password at <https://myaccount.google.com/apppasswords>, and use those 16
+letters with the spaces removed. It can send mail as you until revoked, so it is a
+credential like any other — it belongs in `.env` and nowhere else.
+
+Without mail configured the reset flow still works end to end; the code appears in
+the application log:
+
+```
+MAIL NOT CONFIGURED - password reset code not sent by email.
+  to   : someone@example.com
+  code : 266719
+```
+
 ### Default accounts
 
 Created at first startup by `config/DataInitializer`, only if no user exists:
