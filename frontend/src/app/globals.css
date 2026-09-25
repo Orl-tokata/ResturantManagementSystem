@@ -195,13 +195,13 @@ body {
   }
 }
 
-/* Toasts slide up from where they appear. Wrapped in motion-safe at the call
+/* Toasts drop in from above, matching where they sit. Wrapped in motion-safe at the call
    site, so anyone who has asked for reduced motion simply gets the finished
    state with no movement at all. */
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;

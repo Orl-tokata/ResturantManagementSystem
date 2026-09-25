@@ -125,7 +125,13 @@ function ToastStack({
        */
       aria-live="polite"
       aria-atomic="false"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4 sm:inset-x-auto sm:right-0 sm:items-end"
+      /*
+       * Top right, below the 52px app header. Sitting flush with the top
+       * would cover the language switcher and the settings link, and an error
+       * toast stays for eight seconds — long enough to be in the way. On a
+       * phone it spans the width instead, where a corner card would be cramped.
+       */
+      className="pointer-events-none fixed inset-x-0 top-13 z-50 flex flex-col items-center gap-2 p-4 sm:inset-x-auto sm:right-0 sm:items-end"
     >
       {toasts.map((t) => (
         <ToastRow key={t.id} toast={t} onDismiss={onDismiss} />
