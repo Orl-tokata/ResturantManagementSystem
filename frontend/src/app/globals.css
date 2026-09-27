@@ -226,13 +226,34 @@ body {
   }
 
   .receipt-slip {
-    /* The slip is the page now, so it takes the whole width and loses the
-       card framing it wears on screen. */
-    width: 100% !important;
-    max-width: none !important;
+    /*
+     * A physical width, not a percentage.
+     *
+     * This was width:100%, which trusts @page to have made the page 80mm wide.
+     * When the destination is Save as PDF, or the printer has A4 loaded, or the
+     * driver simply ignores @page size, the page is 210mm and the slip
+     * obediently stretched across all of it — labels stranded on the left,
+     * amounts hard against the right edge, which is what the print preview
+     * showed.
+     *
+     * 72mm is an 80mm roll less the 4mm margins either side. Stated outright,
+     * it prints as a slip whether the paper underneath is a roll or A4.
+     */
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
+  }
+
+  /* Nothing but the slip goes on the paper. The shell is hidden by print:hidden
+     on its own elements, but a stray margin on an ancestor still shifts the
+     slip off centre. */
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
   }
 
   /* Thermal printers render grey as a dither pattern that reads as smudge at
