@@ -3,6 +3,8 @@ package com.resturant.management.rms.order;
 import com.resturant.management.rms.common.ApiResponse;
 import com.resturant.management.rms.common.PageResponse;
 import com.resturant.management.rms.order.dto.OrderDtos.HistorySummary;
+import com.resturant.management.rms.order.dto.OrderDtos.KhqrResponse;
+import com.resturant.management.rms.order.dto.OrderDtos.KhqrStatusResponse;
 import com.resturant.management.rms.order.dto.OrderDtos.OpenOrderRequest;
 import com.resturant.management.rms.order.dto.OrderDtos.OrderResponse;
 import com.resturant.management.rms.order.dto.OrderDtos.PayRequest;
@@ -97,6 +99,32 @@ public class OrderController {
     public ApiResponse<OrderResponse> pay(@PathVariable Long id,
                                           @Valid @RequestBody PayRequest request) {
         return ApiResponse.ok("Payment accepted", orderService.pay(id, request));
+    }
+
+    /* ---- KHQR ---------------------------------------------------------- */
+
+    @PostMapping("/{id}/khqr")
+    @Operation(summary = "Show a KHQR code for a bill",
+            description = "Parks the order in AWAITING_PAYMENT and returns the payload to draw. "
+                        + "Calling it again while a code is live returns the same one, so a "
+                        + "refreshed till cannot orphan a customer who already scanned.")
+    public ApiResponse<KhqrResponse> khqr(@PathVariable Long id) {
+        return ApiResponse.ok(orderService.startKhqrPayment(id));
+    }
+
+    @GetMapping("/{id}/khqr")
+    @Operation(summary = "Ask the bank whether it was paid",
+            description = "Returns PAID, NOT_PAID, UNKNOWN, UNVERIFIABLE or EXPIRED. Only PAID "
+                        + "changes the order; an unreachable bank leaves it untouched.")
+    public ApiResponse<KhqrStatusResponse> khqrStatus(@PathVariable Long id) {
+        return ApiResponse.ok(orderService.checkKhqrPayment(id));
+    }
+
+    @DeleteMapping("/{id}/khqr")
+    @Operation(summary = "Give up on an outstanding code",
+            description = "Returns the bill to OPEN so it can be settled another way.")
+    public ApiResponse<OrderResponse> abandonKhqr(@PathVariable Long id) {
+        return ApiResponse.ok("Payment abandoned", orderService.abandonKhqrPayment(id));
     }
 
     @GetMapping("/{id}/receipt")

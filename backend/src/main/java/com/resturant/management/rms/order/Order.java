@@ -90,6 +90,28 @@ public class Order extends BaseAuditEntity {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    /* ---- KHQR ----------------------------------------------------------
+       Set while a code is outstanding and kept afterwards, because a KHQR
+       line in a sales report is only reconcilable against a bank statement
+       if the payer and the bank's reference survive. */
+
+    /** How Bakong identifies the transaction this code would produce. */
+    @Column(name = "khqr_md5", length = 32)
+    private String khqrMd5;
+
+    /** Kept so a refreshed till redraws the same code rather than a new one. */
+    @Column(name = "khqr_payload", length = 1024)
+    private String khqrPayload;
+
+    @Column(name = "khqr_expires_at")
+    private LocalDateTime khqrExpiresAt;
+
+    @Column(name = "khqr_payer", length = 120)
+    private String khqrPayer;
+
+    @Column(name = "khqr_reference", length = 120)
+    private String khqrReference;
+
     /* ---- Helpers that keep both sides of the association in sync --------- */
 
     public void addItem(OrderItem item) {

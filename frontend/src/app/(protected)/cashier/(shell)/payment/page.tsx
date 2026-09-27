@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Alert, Button, Card, DataTable, Field, Input, type Column } from "@/components/ui";
 import { get, post } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
+import { KhqrPanel } from "@/components/pos/KhqrPanel";
 import { formatKhr, formatUsd } from "@/lib/format";
 import {
   PAYMENT_ICON,
@@ -249,6 +250,29 @@ function PaymentScreen() {
             </>
           )}
 
+          {/*
+            * KHQR takes over the whole settle area rather than sitting beside
+            * it. There is no "confirm" for a scan-to-pay bill — the money
+            * either arrived or it did not, and a button that let a cashier
+            * assert otherwise would put back exactly the trust-based step this
+            * replaces.
+            */}
+          {method === "KHQR" && order.data?.status !== "PAID" ? (
+            <div className="mt-4">
+              <KhqrPanel
+                orderId={orderId}
+                onPaid={() => router.replace(`/cashier/receipt/${orderId}`)}
+              />
+              <Button
+                variant="ghost"
+                block
+                className="mt-2"
+                onClick={() => router.push(`/cashier/order?tableId=${order.data?.tableId ?? ""}`)}
+              >
+                {t("backToOrder")}
+              </Button>
+            </div>
+          ) : (
           <div className="mt-4 space-y-2">
             {!canPay && whyNotPayable && (
               <p className="rounded border border-ink-200 bg-ink-50 px-3 py-2 text-center text-xs text-ink-700">
@@ -273,6 +297,7 @@ function PaymentScreen() {
               {t("backToOrder")}
             </Button>
           </div>
+          )}
         </Card>
       </div>
     </div>

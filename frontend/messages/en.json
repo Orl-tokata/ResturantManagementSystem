@@ -206,7 +206,15 @@
     "viewReceipt": "View receipt",
     "items": "items",
     "noItems": "This bill has no items",
-    "enterTendered": "Enter the amount received"
+    "enterTendered": "Enter the amount received",
+    "showKhqr": "Show KHQR code",
+    "khqrScan": "Scan with any Bakong or ABA app",
+    "khqrWaiting": "Waiting for payment…",
+    "khqrExpired": "This code has expired. Abandon it and try again.",
+    "khqrAbandon": "Cancel and pay another way",
+    "khqrAlt": "KHQR payment code for {amount}",
+    "khqrDrawFailed": "Could not draw the code",
+    "khqrUnverified": "This code is real and can be scanned, but no Bakong token is set, so the till cannot confirm the money arrived. Check the merchant app before handing over the bill."
   },
   "receipt": {
     "title": "Receipt",
@@ -540,7 +548,8 @@
     "loadReceipt": "Could not load the receipt",
     "exportReport": "Could not export the report",
     "saveSettings": "Could not save the settings",
-    "createAccount": "Could not create the login"
+    "createAccount": "Could not create the login",
+    "khqrFailed": "Could not start the KHQR payment"
   },
   "a11y": {
     "edit": "Edit {name}",

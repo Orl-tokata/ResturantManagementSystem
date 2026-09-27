@@ -62,6 +62,10 @@ dependencies {
 	// --- test --------------------------------------------------------------
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	// A stand-in for Bakong, so the client can be tested against real HTTP
+	// responses — including the ones that matter most, where the bank is
+	// unreachable or answers with nonsense.
+	testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	// Real PostgreSQL for the `postgres` test task — needs a Docker daemon.

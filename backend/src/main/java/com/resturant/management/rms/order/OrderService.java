@@ -8,6 +8,11 @@ import com.resturant.management.rms.common.exception.NotFoundException;
 import com.resturant.management.rms.dining.DiningTable;
 import com.resturant.management.rms.dining.DiningTableRepository;
 import com.resturant.management.rms.dining.TableStatus;
+import com.resturant.management.rms.khqr.BakongClient;
+import com.resturant.management.rms.khqr.Khqr;
+import com.resturant.management.rms.khqr.KhqrGenerator;
+import com.resturant.management.rms.khqr.KhqrMerchant;
+import com.resturant.management.rms.khqr.KhqrProperties;
 import com.resturant.management.rms.order.dto.OrderDtos.*;
 import com.resturant.management.rms.setting.SettingService;
 import com.resturant.management.rms.user.UserInfm;
@@ -39,6 +44,9 @@ public class OrderService {
     private final DiningTableRepository tableRepository;
     private final UserRepository userRepository;
     private final SettingService settings;
+    private final KhqrGenerator khqrGenerator;
+    private final BakongClient bakong;
+    private final KhqrProperties khqrProperties;
 
     /* ===================================================================== */
     /* Opening a bill                                                        */
@@ -292,6 +300,168 @@ public class OrderService {
 
     /* ===================================================================== */
     /* Internals                                                             */
+    /* ===================================================================== */
+    /* KHQR                                                                  */
+    /* ===================================================================== */
+
+    /**
+     * Produces the code for a bill and parks the order until it is paid.
+     *
+     * <p>The order moves to AWAITING_PAYMENT rather than PAID. That is the
+     * point of the whole integration: a code on a screen is a request for
+     * money, and the only thing that turns it into a payment is the bank
+     * saying so.
+     *
+     * <p>Re-entrant on purpose. A till that is refreshed, or a cashier who
+     * navigates away and back, must be shown the same code — generating a new
+     * one would change the md5 and orphan a customer who had already scanned
+     * the old one, leaving a real payment that this order can never match.
+     */
+    @Transactional
+    public KhqrResponse startKhqrPayment(Long orderId) {
+        if (!khqrProperties.canGenerate()) {
+            throw new BadRequestException("error.order.khqrUnavailable");
+        }
+
+        Order order = find(orderId);
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new BadRequestException("error.order.alreadyPaid", order.getInvoiceNo());
+        }
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new BadRequestException("error.order.notEditable",
+                    order.getInvoiceNo(), order.getStatus());
+        }
+        if (order.getItems().isEmpty()) {
+            throw new BadRequestException("error.order.emptyBill");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        boolean live = order.getKhqrMd5() != null
+                && order.getKhqrExpiresAt() != null
+                && order.getKhqrExpiresAt().isAfter(now);
+
+        if (live) {
+            return new KhqrResponse(order.getKhqrPayload(), order.getTotal().toPlainString(),
+                    settings.getString("currency.base", "USD"),
+                    order.getKhqrExpiresAt(), khqrProperties.canVerify());
+        }
+
+        // The amount is fixed at this moment, so the bill must stop moving.
+        recalculate(order);
+
+        String currency = settings.getString("currency.base", "USD");
+        BigDecimal amount = "KHR".equalsIgnoreCase(currency)
+                ? order.getTotalKhr()
+                : order.getTotal();
+
+        Khqr qr = khqrGenerator.generate(merchant(), amount, currency, order.getInvoiceNo());
+
+        order.setKhqrMd5(qr.md5());
+        order.setKhqrPayload(qr.payload());
+        order.setKhqrExpiresAt(now.plus(khqrProperties.expiry()));
+        order.setPaymentMethod(PaymentMethod.KHQR);
+        order.setStatus(OrderStatus.AWAITING_PAYMENT);
+        orderRepository.save(order);
+
+        log.info("KHQR shown for {} — {} {} (md5 {})",
+                order.getInvoiceNo(), qr.amount(), qr.currency(), qr.md5());
+
+        return new KhqrResponse(qr.payload(), qr.amount(), qr.currency(),
+                order.getKhqrExpiresAt(), khqrProperties.canVerify());
+    }
+
+    /**
+     * Asks Bakong whether the outstanding code was paid, and closes the bill if
+     * it was.
+     *
+     * <p>Only PAID changes anything. An unreachable bank or an empty answer
+     * leaves the order exactly where it is — reporting "not paid" on a network
+     * error would be a guess, and reporting "paid" would be a gift.
+     */
+    @Transactional
+    public KhqrStatusResponse checkKhqrPayment(Long orderId) {
+        Order order = find(orderId);
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            return new KhqrStatusResponse("PAID", null, toResponse(order));
+        }
+        if (order.getKhqrMd5() == null) {
+            throw new BadRequestException("error.order.noKhqr", order.getInvoiceNo());
+        }
+
+        BakongClient.PaymentStatus status = bakong.check(order.getKhqrMd5());
+
+        if (status.state() == BakongClient.PaymentStatus.State.PAID) {
+            settleKhqr(order, status.payer(), status.reference());
+            return new KhqrStatusResponse("PAID", null, toResponse(order));
+        }
+
+        // Expiry is only reported once the bank has been asked and said no. A
+        // customer who paid on the last second should not lose the payment to a
+        // clock.
+        if (order.getKhqrExpiresAt() != null
+                && order.getKhqrExpiresAt().isBefore(LocalDateTime.now())
+                && status.state() == BakongClient.PaymentStatus.State.NOT_PAID) {
+            return new KhqrStatusResponse("EXPIRED", status.detail(), toResponse(order));
+        }
+
+        return new KhqrStatusResponse(status.state().name(), status.detail(), toResponse(order));
+    }
+
+    /**
+     * Gives up on an outstanding code and returns the bill to the floor, so it
+     * can be settled in cash instead.
+     */
+    @Transactional
+    public OrderResponse abandonKhqrPayment(Long orderId) {
+        Order order = find(orderId);
+        if (order.getStatus() != OrderStatus.AWAITING_PAYMENT) {
+            throw new BadRequestException("error.order.notAwaiting", order.getInvoiceNo());
+        }
+
+        order.setKhqrMd5(null);
+        order.setKhqrPayload(null);
+        order.setKhqrExpiresAt(null);
+        order.setPaymentMethod(null);
+        order.setStatus(OrderStatus.OPEN);
+        return toResponse(orderRepository.save(order));
+    }
+
+    /** Closes a bill that Bakong has confirmed. */
+    private void settleKhqr(Order order, String payer, String reference) {
+        order.setPaymentMethod(PaymentMethod.KHQR);
+        // Nothing was handed over and nothing is owed back; recording the total
+        // as tendered keeps the arithmetic consistent with a cash sale.
+        order.setAmountTendered(order.getTotal());
+        order.setChangeAmount(BigDecimal.ZERO);
+        order.setStatus(OrderStatus.PAID);
+        order.setPaidAt(LocalDateTime.now());
+        order.setKhqrPayer(payer);
+        order.setKhqrReference(reference);
+        order.setKhqrExpiresAt(null);
+
+        decrementStock(order);
+        freeTable(order);
+        orderRepository.save(order);
+
+        log.info("KHQR settled for {} — {} paid by {} (ref {})",
+                order.getInvoiceNo(), order.getTotal(), payer, reference);
+    }
+
+    private KhqrMerchant merchant() {
+        String name = khqrProperties.merchantName() != null && !khqrProperties.merchantName().isBlank()
+                ? khqrProperties.merchantName()
+                : settings.getString("restaurant.nameEn", "Restaurant");
+
+        return new KhqrMerchant(
+                khqrProperties.accountId(),
+                name,
+                khqrProperties.city(),
+                khqrProperties.acquiringBank(),
+                khqrProperties.storeLabel(),
+                khqrProperties.terminalLabel());
+    }
+
     /* ===================================================================== */
 
     Order find(Long id) {

@@ -11,6 +11,34 @@ import java.util.List;
 
 public final class OrderDtos {
 
+    /**
+     * A code to put on the screen.
+     *
+     * @param payload   what the QR encodes; the client draws this, no image is
+     *                  sent over the wire
+     * @param expiresAt when the till stops offering it
+     * @param verifiable whether settlement can be confirmed automatically. False
+     *                  means no Bakong token is configured, so a human has to
+     *                  decide the money arrived — and the screen must say so
+     *                  rather than implying the bank agreed.
+     */
+    public record KhqrResponse(
+            String payload,
+            String amount,
+            String currency,
+            java.time.LocalDateTime expiresAt,
+            boolean verifiable) {}
+
+    /**
+     * What came back from asking the bank.
+     *
+     * @param state PAID, NOT_PAID, UNKNOWN or UNVERIFIABLE
+     */
+    public record KhqrStatusResponse(
+            String state,
+            String detail,
+            OrderResponse order) {}
+
     private OrderDtos() {
     }
 

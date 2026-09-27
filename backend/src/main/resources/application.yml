@@ -95,6 +95,29 @@ springdoc:
 # Application settings
 # ---------------------------------------------------------------------------
 app:
+  khqr:
+    # Bakong scan-to-pay. Off until there is an account to pay into.
+    #
+    # account-id decides whose account the money lands in — a code built with
+    # the wrong one is perfectly valid and pays somebody else.
+    #
+    # api-token is what lets the till ask Bakong whether a payment arrived.
+    # Without it a code can still be shown and scanned, but nothing can confirm
+    # settlement, so an order will not move to PAID on its own and the screen
+    # says as much rather than implying the bank agreed.
+    enabled: ${KHQR_ENABLED:false}
+    account-id: ${KHQR_ACCOUNT_ID:}
+    merchant-name: ${KHQR_MERCHANT_NAME:}
+    city: ${KHQR_CITY:Phnom Penh}
+    acquiring-bank: ${KHQR_ACQUIRING_BANK:}
+    store-label: ${KHQR_STORE_LABEL:}
+    terminal-label: ${KHQR_TERMINAL_LABEL:POS-01}
+    api-base-url: ${KHQR_API_URL:https://api-bakong.nbc.gov.kh}
+    api-token: ${KHQR_API_TOKEN:}
+    # A code held open blocks the bill from being settled any other way.
+    expiry: ${KHQR_EXPIRY:5m}
+    request-timeout: ${KHQR_TIMEOUT:8s}
+
   mail:
     # The name an inbox shows instead of the raw sending address. Set it to the
     # restaurant so a reset code does not look like mail from a stranger.
