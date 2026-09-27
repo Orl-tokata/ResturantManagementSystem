@@ -40,6 +40,13 @@ jobs:
         working-directory: backend
         run: ./gradlew test --no-daemon
 
+      # Actions logs need a sign-in to read, even on a public repository, so
+      # a red suite otherwise reports nothing but an exit code. Annotations
+      # are visible to anyone looking at the run.
+      - name: Name the failing tests
+        if: failure()
+        run: node scripts/report-test-failures.mjs backend/build/test-results/test
+
       - name: Build the application
         working-directory: backend
         run: ./gradlew bootJar --no-daemon
@@ -116,11 +123,21 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      # For the failure reporter below. Runners ship a node, but an
+      # explicit version keeps this job reproducible like the others.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
       # No JWT secret step: application-testpg.yml carries a fixed test-only
       # key, because the suite has to run identically from any checkout.
       - name: Run the suite against PostgreSQL
         working-directory: backend
         run: ./gradlew postgresTest --no-daemon
+
+      - name: Name the failing tests
+        if: failure()
+        run: node scripts/report-test-failures.mjs backend/build/test-results/postgresTest
 
       - name: Upload test reports
         if: always()

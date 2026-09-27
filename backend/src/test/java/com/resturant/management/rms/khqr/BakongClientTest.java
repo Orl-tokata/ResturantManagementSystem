@@ -86,12 +86,19 @@ class BakongClientTest {
 
     @Test
     @DisplayName("an unreachable bank is UNKNOWN, never NOT_PAID")
-    void networkFailureIsNotAnAnswer() throws IOException {
+    void networkFailureIsNotAnAnswer() {
         // The bank is simply not there. Nothing can be concluded about the
         // money, so nothing about the order may change.
-        bakong.shutdown();
+        //
+        // Pointed at a port nothing serves rather than shutting the mock down:
+        // shutting it down here left @AfterEach closing an already-closed
+        // server, which is a race that passes locally and does not always pass
+        // on a busier machine.
+        KhqrProperties unreachable = new KhqrProperties(
+                true, "shop@aclb", "Shop", "Phnom Penh", null, null, "POS-01",
+                "http://127.0.0.1:1", "token", Duration.ofMinutes(5), Duration.ofSeconds(2));
 
-        var status = clientWith("token").check("whatever");
+        var status = new BakongClient(unreachable, RestClient.builder()).check("whatever");
 
         assertThat(status.state()).isEqualTo(State.UNKNOWN);
     }
