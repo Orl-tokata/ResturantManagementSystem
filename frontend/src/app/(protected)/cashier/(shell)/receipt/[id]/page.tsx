@@ -76,13 +76,33 @@ export default function ReceiptPage() {
         </div>
       )}
 
-      {/* 80mm thermal-paper proportions, monospaced like a real till slip. */}
-      <div className="mx-auto w-85 max-w-full border border-ink-300 bg-white px-5 py-6 font-mono text-xs leading-relaxed shadow-md print:border-0 print:shadow-none">
+      {/*
+        * 80mm thermal-paper proportions.
+        *
+        * Not font-mono. The slip used to set the whole receipt in the monospace
+        * stack — ui-monospace, Menlo, Consolas and the rest — none of which
+        * carries a single Khmer glyph. The browser silently substituted some
+        * other installed font for every Khmer run: not the monospace, and not
+        * the app's own face either. Measured on this machine the same Khmer
+        * string came out 129.64px in the mono stack against 102.15px in the
+        * real face, and "កកកក" and "ណណណណ" rendered at different widths while
+        * "iiii" and "WWWW" matched — a monospace font that is not monospacing
+        * Khmer is a font that has no Khmer in it.
+        *
+        * On this machine that substitute happened to exist. On a till with a
+        * different font set, or driving a printer, it need not. A receipt is
+        * the one artefact a customer takes away, so it is the worst place to
+        * find out.
+        *
+        * Money still needs to line up, so the amounts use tabular figures
+        * (font-num) while the words use the Khmer face.
+        */}
+      <div className="receipt-slip mx-auto w-85 max-w-full border border-ink-300 bg-white px-5 py-6 text-xs leading-relaxed shadow-md print:border-0 print:shadow-none">
         <div className="text-center">
           <div className="text-[15px] font-bold">{restaurantName}</div>
           <div>{restaurantNameEn}</div>
           {address && <div className="mt-1">{address}</div>}
-          {phone && <div>Tel: {phone}</div>}
+          {phone && <div>{tc("phone")}: {phone}</div>}
         </div>
 
         <Dashes />
@@ -103,12 +123,14 @@ export default function ReceiptPage() {
               <tr key={item.id ?? i}>
                 <td className="py-0.5 align-top">
                   <div className="font-bold">{item.productName}</div>
-                  <div className="pl-2 text-ink-500">
+                  <div className="pl-2 font-[family-name:var(--font-num)] tabular-nums text-ink-500">
                     {item.qty} × {formatUsd(item.unitPrice)}
                   </div>
                   {item.note && <div className="pl-2 italic text-ink-500">— {item.note}</div>}
                 </td>
-                <td className="py-0.5 text-right align-top">{formatUsd(item.lineTotal)}</td>
+                <td className="py-0.5 text-right align-top font-[family-name:var(--font-num)] tabular-nums">
+                  {formatUsd(item.lineTotal)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -123,7 +145,9 @@ export default function ReceiptPage() {
         <Row label={`${tc("vat")} ${order.vatRate}%`} value={formatUsd(order.vatAmount)} />
         <div className="flex justify-between text-[15px] font-bold">
           <span>{t("totalCaps")}</span>
-          <span>{formatUsd(order.total)}</span>
+          <span className="font-[family-name:var(--font-num)] tabular-nums">
+            {formatUsd(order.total)}
+          </span>
         </div>
         <Row label={tc("khr")} value={`${order.totalKhr.toLocaleString()} ៛`} />
 
@@ -143,19 +167,35 @@ export default function ReceiptPage() {
         <div className="text-center">
           <div>{t("thanks")}</div>
           <div>{t("comeAgain")}</div>
-          <div className="mt-2 tracking-[2px]">||||| |||| || ||||| |||</div>
-          <div>{order.invoiceNo}</div>
+          {/*
+            * The invoice number, not a picture of a barcode. What stood here
+            * was a run of pipe characters that looked like one and encoded
+            * nothing — a scanner reads it as the text "||||| |||| || ||||| |||"
+            * or, more often, refuses it. Printing the number plainly is honest
+            * and is what anyone reconciling by hand actually needs. A real
+            * Code128 belongs here if a scanner is ever put on the counter.
+            */}
+          <div className="mt-2 font-[family-name:var(--font-num)] tracking-[2px]">
+            {order.invoiceNo}
+          </div>
         </div>
       </div>
     </>
   );
 }
 
+/**
+ * A label and its value.
+ *
+ * <p>The value carries the tabular face so figures in successive rows line up
+ * on the decimal point, which is the only thing the monospace was buying on a
+ * slip that is otherwise mostly words.
+ */
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3">
       <span>{label}</span>
-      <span className="text-right">{value}</span>
+      <span className="text-right font-[family-name:var(--font-num)] tabular-nums">{value}</span>
     </div>
   );
 }

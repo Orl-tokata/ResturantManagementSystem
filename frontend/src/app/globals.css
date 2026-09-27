@@ -208,3 +208,45 @@ body {
     transform: translateY(0);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Printing a receipt.
+
+   A till slip is the one thing here that leaves the building on paper, and
+   until now it inherited the screen's page setup: A4 with browser margins, a
+   card shadow, and whatever font the browser chose for Khmer.
+   --------------------------------------------------------------------------- */
+@media print {
+  /* 80mm thermal roll. The height is left to the content — a receipt is as
+     long as its items, and fixing it would either clip a long bill or feed
+     blank paper after a short one. */
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+
+  .receipt-slip {
+    /* The slip is the page now, so it takes the whole width and loses the
+       card framing it wears on screen. */
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Thermal printers render grey as a dither pattern that reads as smudge at
+     this size. Everything goes black. */
+  .receipt-slip * {
+    color: #000 !important;
+  }
+
+  /* Browsers drop backgrounds and borders when printing unless told not to;
+     the dashed rules between sections are structure, not decoration. */
+  .receipt-slip .border-dashed,
+  .receipt-slip .border-t {
+    border-color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
