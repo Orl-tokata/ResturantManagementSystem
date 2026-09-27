@@ -2,6 +2,8 @@ package com.resturant.management.rms.khqr;
 
 import org.springframework.stereotype.Component;
 
+import java.security.SecureRandom;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -55,6 +57,7 @@ public class KhqrGenerator {
 
     /** Inside tag 62. */
     private static final String SUB_BILL_NUMBER = "01";
+    private static final String SUB_REFERENCE_LABEL = "05";
     private static final String SUB_STORE_LABEL = "03";
     private static final String SUB_TERMINAL_LABEL = "07";
 
@@ -71,6 +74,9 @@ public class KhqrGenerator {
 
     /** ISO 18245: "Eating places and restaurants". */
     private static final String MCC_RESTAURANT = "5812";
+
+    /** Tells apart two codes built in the same millisecond. */
+    private static final SecureRandom NONCE = new SecureRandom();
 
     /**
      * @param amount   what to charge, in {@code currency}
@@ -90,8 +96,20 @@ public class KhqrGenerator {
                         + tlv(SUB_MERCHANT_NAME, trim(merchant.name(), 25))
                         + tlv(SUB_ACQUIRING_BANK, merchant.acquiringBank());
 
+        /*
+         * A nonce, so that no two codes are ever byte-identical.
+         *
+         * Uniqueness used to rest on the millisecond timestamp in tag 99, and
+         * two codes built inside the same millisecond came out the same — which
+         * means the same md5, and Bakong identifies a transaction by md5. One
+         * customer's payment would then satisfy two bills. A clock is not an
+         * identifier; this is.
+         */
+        String nonce = "%08x".formatted(NONCE.nextInt());
+
         String additionalData =
                 tlv(SUB_BILL_NUMBER, trim(billNo, 25))
+                        + tlv(SUB_REFERENCE_LABEL, nonce)
                         + tlv(SUB_STORE_LABEL, trim(merchant.storeLabel(), 25))
                         + tlv(SUB_TERMINAL_LABEL, trim(merchant.terminalLabel(), 25));
 

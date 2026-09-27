@@ -122,14 +122,19 @@ class KhqrGeneratorTest {
     @Test
     @DisplayName("each code is distinct, so two identical bills are not one payment")
     void eachCodeIsUnique() {
-        // Same amount, same bill number, generated twice: the timestamp differs,
-        // so the md5 does too. Without that, a second customer paying the same
-        // total would look to Bakong like the first customer's transaction.
-        Khqr a = generator.generate(merchant, new BigDecimal("5.00"), "USD", "INV-5");
-        Khqr b = generator.generate(merchant, new BigDecimal("5.00"), "USD", "INV-5");
+        // Same amount, same bill number, generated twice. This used to lean on
+        // the millisecond timestamp, and inside one millisecond the two codes
+        // were byte-identical — so one payment would satisfy both. A nonce in
+        // the reference label makes them differ regardless of the clock.
+        // A thousand in a tight loop, so most land in the same millisecond —
+        // which is exactly the case that used to collide.
+        var seen = new java.util.HashSet<String>();
+        for (int i = 0; i < 1000; i++) {
+            seen.add(generator.generate(merchant, new BigDecimal("5.00"), "USD", "INV-5").md5());
+        }
 
-        assertThat(a.md5()).isNotEqualTo(b.md5());
-        assertThat(a.md5()).matches("[0-9a-f]{32}");
+        assertThat(seen).hasSize(1000);
+        assertThat(seen.iterator().next()).matches("[0-9a-f]{32}");
     }
 
     @Test
