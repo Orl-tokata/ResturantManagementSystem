@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -99,6 +100,14 @@ public class OrderController {
     public ApiResponse<OrderResponse> pay(@PathVariable Long id,
                                           @Valid @RequestBody PayRequest request) {
         return ApiResponse.ok("Payment accepted", orderService.pay(id, request));
+    }
+
+    @GetMapping("/payment-methods")
+    @Operation(summary = "Which payment methods this till offers",
+            description = "KHQR is absent unless a Bakong account is configured. A literal "
+                        + "path, so it cannot be mistaken for /orders/{id}.")
+    public ApiResponse<List<PaymentMethod>> paymentMethods() {
+        return ApiResponse.ok(orderService.availablePaymentMethods());
     }
 
     /* ---- KHQR ---------------------------------------------------------- */

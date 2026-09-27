@@ -17,7 +17,14 @@ import {
   type PaymentMethod,
 } from "@/types/order";
 
-const METHODS: PaymentMethod[] = ["CASH", "CARD", "KHQR", "TRANSFER"];
+/**
+ * The fallback order, used until the till says what it offers.
+ *
+ * <p>KHQR is omitted here on purpose: showing it and then taking it away when
+ * the answer arrives is worse than showing it a moment late, because a cashier
+ * may already have tapped it.
+ */
+const METHODS_WHILE_LOADING: PaymentMethod[] = ["CASH", "CARD", "TRANSFER"];
 const KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "0", ".", "⌫"];
 
 function PaymentScreen() {
@@ -30,6 +37,20 @@ function PaymentScreen() {
   const apiError = useApiError();
 
   const orderId = Number(params.get("orderId") || 0);
+
+  /*
+   * Which methods this till can actually carry out. KHQR is absent unless a
+   * Bakong account is configured — offering a method the server will refuse
+   * means the cashier finds out only after tapping it, in front of a customer.
+   */
+  const methods = useQuery({
+    queryKey: ["payment-methods"],
+    queryFn: () => get<PaymentMethod[]>("/orders/payment-methods"),
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  const available = methods.data ?? METHODS_WHILE_LOADING;
 
   const [method, setMethod] = useState<PaymentMethod>("CASH");
   const [tendered, setTendered] = useState("");
@@ -133,7 +154,7 @@ function PaymentScreen() {
 
         <Card title={t("method")}>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {METHODS.map((m) => (
+            {available.map((m) => (
               <button
                 key={m}
                 type="button"

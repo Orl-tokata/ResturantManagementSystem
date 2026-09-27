@@ -30,6 +30,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -300,6 +301,21 @@ public class OrderService {
 
     /* ===================================================================== */
     /* Internals                                                             */
+    /**
+     * The payment methods this till can actually carry out.
+     *
+     * <p>KHQR drops out when no Bakong account is configured. Offering a method
+     * the till will refuse is a small cruelty: the cashier taps it in front of
+     * a waiting customer and only then finds out. Cash, card and transfer are
+     * always available because settling them needs nothing from this software
+     * beyond recording what happened.
+     */
+    public List<PaymentMethod> availablePaymentMethods() {
+        return Arrays.stream(PaymentMethod.values())
+                .filter(m -> m != PaymentMethod.KHQR || khqrProperties.canGenerate())
+                .toList();
+    }
+
     /* ===================================================================== */
     /* KHQR                                                                  */
     /* ===================================================================== */
