@@ -312,6 +312,51 @@ function report() {
     console.log(`${flag} ${String(r.status).padEnd(4)} ${r.method.padEnd(6)} ${r.path.padEnd(38)} ${r.label}${detail}`);
   }
   console.log(`\n${results.length} calls · ${results.length - failed.length} as expected · ${failed.length} not`);
+
+  /*
+   * A 429 is almost always this script tripping the limiter on its own previous
+   * run rather than anything being wrong. Each run makes three /auth/register
+   * calls against a limit of five an hour, so a second run inside the hour
+   * fails — and then every call needing the account it could not create fails
+   * after it, reporting "Authentication required" against an undefined id. The
+   * cascade looks alarming and means nothing, so say so outright.
+   */
+  if (failed.some((r) => r.status === 429)) {
+    console.log(
+      "\nSome calls were rate limited (429), and the failures after them follow\n" +
+      "from that rather than from anything being broken. This script makes 3\n" +
+      "register attempts per run against a limit of 5 an hour, so running it\n" +
+      "twice inside the hour does this to itself. Either wait, or start the\n" +
+      "backend with RATE_LIMIT_ENABLED=false. CI is unaffected — it runs the dev\n" +
+      "profile, where the limiter is off.",
+    );
+  }
+
+  /*
+   * On CI, say which call failed somewhere a reader can actually see it.
+   *
+   * Actions logs need a sign-in even on a public repository, so a red smoke run
+   * reported nothing but "Process completed with exit code 1" — which is how a
+   * flake and a real regression look identical. Annotations show on the run
+   * page to anyone.
+   */
+  if (process.env.GITHUB_ACTIONS === "true") {
+    for (const r of failed) {
+      const title = `smoke: ${r.method} ${r.path}`;
+      const message = `${r.label} — got ${r.status}, expected ${r.expect}${r.msg ? `: ${r.msg}` : ""}`;
+      console.log(`::error title=${clean(title)}::${clean(message)}`);
+    }
+  }
+}
+
+/** Annotation text is one line, and % and newlines have to be escaped. */
+function clean(text) {
+  return String(text)
+    .replace(/%/g, "%25")
+    .replace(/\r/g, "%0D")
+    .replace(/\n/g, "%0A")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 main().catch((e) => {
