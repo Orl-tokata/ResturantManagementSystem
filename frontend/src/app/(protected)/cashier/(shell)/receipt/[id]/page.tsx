@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Printer, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, Button } from "@/components/ui";
+import { Barcode } from "@/components/pos/Barcode";
 import { get } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 // formatKhr converts from USD at the current rate. A receipt must show the riel
@@ -168,14 +169,13 @@ export default function ReceiptPage() {
           <div>{t("thanks")}</div>
           <div>{t("comeAgain")}</div>
           {/*
-            * The invoice number, not a picture of a barcode. What stood here
-            * was a run of pipe characters that looked like one and encoded
-            * nothing — a scanner reads it as the text "||||| |||| || ||||| |||"
-            * or, more often, refuses it. Printing the number plainly is honest
-            * and is what anyone reconciling by hand actually needs. A real
-            * Code128 belongs here if a scanner is ever put on the counter.
+            * A real Code 128 of the invoice number, and the number in text
+            * beneath it so the slip stays useful to a person as well as a
+            * scanner. What stood here originally was a run of pipe characters
+            * that looked like a barcode and encoded nothing.
             */}
-          <div className="mt-2 font-[family-name:var(--font-num)] tracking-[2px]">
+          <Barcode value={order.invoiceNo} className="mx-auto mt-3" height={38} />
+          <div className="font-[family-name:var(--font-num)] tracking-[2px]">
             {order.invoiceNo}
           </div>
         </div>
