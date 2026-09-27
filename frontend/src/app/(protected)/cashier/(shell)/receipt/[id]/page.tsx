@@ -9,10 +9,11 @@ import { Alert, Button } from "@/components/ui";
 import { Barcode } from "@/components/pos/Barcode";
 import { get } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
+import { useBilingual, useBilingualPair } from "@/i18n/bilingual";
 // formatKhr converts from USD at the current rate. A receipt must show the riel
 // figure the customer actually paid, which the server stored on the order — so
 // totalKhr is printed as-is rather than recomputed.
-import { formatUsd } from "@/lib/format";
+import { formatReceiptDateTime, formatUsd } from "@/lib/format";
 import type { Receipt } from "@/types/order";
 
 export default function ReceiptPage() {
@@ -20,9 +21,16 @@ export default function ReceiptPage() {
   const tc = useTranslations("common");
   const tH = useTranslations("history");
   const tCh = useTranslations("cashierHome");
-  const tPay = useTranslations("enum.paymentMethod");
-  const tP = useTranslations("payment");
   const apiError = useApiError();
+
+  /*
+   * The slip prints both languages. Everywhere else one is right, because the
+   * person reading chose it; a receipt is handed to a customer nobody asked,
+   * and may end up in front of a bank or an accountant. The cashier's language
+   * leads and the other follows.
+   */
+  const bi = useBilingual();
+  const biPair = useBilingualPair();
 
   const { id } = useParams<{ id: string }>();
 
@@ -48,7 +56,7 @@ export default function ReceiptPage() {
   }
 
   const { restaurantName, restaurantNameEn, address, phone, order } = receipt.data;
-  const paidAt = order.paidAt ? new Date(order.paidAt).toLocaleString() : "—";
+  const paidAt = formatReceiptDateTime(order.paidAt);
 
   return (
     <>
@@ -103,18 +111,18 @@ export default function ReceiptPage() {
           <div className="text-[15px] font-bold">{restaurantName}</div>
           <div>{restaurantNameEn}</div>
           {address && <div className="mt-1">{address}</div>}
-          {phone && <div>{tc("phone")}: {phone}</div>}
+          {phone && <div>{bi("common.phone")}: {phone}</div>}
         </div>
 
         <Dashes />
 
-        <Row label={t("invoice")} value={order.invoiceNo} />
-        <Row label={t("table")} value={order.tableName ?? "—"} />
+        <Row label={bi("receipt.invoice")} value={order.invoiceNo} />
+        <Row label={bi("receipt.table")} value={order.tableName ?? "—"} />
         {order.guestCount != null && (
-          <Row label={t("guests")} value={String(order.guestCount)} />
+          <Row label={bi("receipt.guests")} value={String(order.guestCount)} />
         )}
-        <Row label={t("cashier")} value={order.cashierName ?? "—"} />
-        <Row label={tc("date")} value={paidAt} />
+        <Row label={bi("receipt.cashier")} value={order.cashierName ?? "—"} />
+        <Row label={bi("common.date")} value={paidAt} />
 
         <Dashes />
 
@@ -139,35 +147,44 @@ export default function ReceiptPage() {
 
         <Dashes />
 
-        <Row label={tc("subtotal")} value={formatUsd(order.subtotal)} />
+        <Row label={bi("common.subtotal")} value={formatUsd(order.subtotal)} />
         {order.discount > 0 && (
-          <Row label={tc("discount")} value={`-${formatUsd(order.discount)}`} />
+          <Row label={bi("common.discount")} value={`-${formatUsd(order.discount)}`} />
         )}
-        <Row label={`${tc("vat")} ${order.vatRate}%`} value={formatUsd(order.vatAmount)} />
-        <div className="flex justify-between text-[15px] font-bold">
-          <span>{t("totalCaps")}</span>
+        <Row label={`${bi("common.vat")} ${order.vatRate}%`} value={formatUsd(order.vatAmount)} />
+        <div className="flex justify-between gap-3 text-[15px] font-bold">
+          <span>{bi("receipt.totalCaps")}</span>
           <span className="font-[family-name:var(--font-num)] tabular-nums">
             {formatUsd(order.total)}
           </span>
         </div>
-        <Row label={tc("khr")} value={`${order.totalKhr.toLocaleString()} ៛`} />
+        <Row label={bi("common.khr")} value={`${order.totalKhr.toLocaleString()} ៛`} />
 
         {order.status === "PAID" && (
           <>
             <Dashes />
             <Row
-              label={order.paymentMethod ? tPay(order.paymentMethod) : "—"}
+              label={
+                order.paymentMethod
+                  ? bi(`enum.paymentMethod.${order.paymentMethod}`)
+                  : "—"
+              }
               value={formatUsd(order.amountTendered ?? 0)}
             />
-            <Row label={tP("change")} value={formatUsd(order.changeAmount ?? 0)} />
+            <Row label={bi("payment.change")} value={formatUsd(order.changeAmount ?? 0)} />
           </>
         )}
 
         <Dashes />
 
         <div className="text-center">
-          <div>{t("thanks")}</div>
-          <div>{t("comeAgain")}</div>
+          {/* Sentences, so they stack instead of being joined with a slash. */}
+          {biPair("receipt.thanks").map(
+            (line, i) => line && <div key={i}>{line}</div>,
+          )}
+          {biPair("receipt.comeAgain").map(
+            (line, i) => line && <div key={i}>{line}</div>,
+          )}
           {/*
             * A real Code 128 of the invoice number, and the number in text
             * beneath it so the slip stays useful to a person as well as a
