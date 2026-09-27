@@ -54,3 +54,10 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---- generated ------------------------------------------------------------
+# Output of scripts/khmer-review-sheet.mjs. The script is the source; a blank
+# sheet regenerates in a second, and a filled-in one belongs wherever the
+# reviewer keeps it rather than in version control.
+khmer-review.csv
+khmer-review.md
