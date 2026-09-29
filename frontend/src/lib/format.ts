@@ -65,3 +65,26 @@ export function formatReceiptDateTime(value: string | Date | null | undefined): 
     ` ${pad(d.getHours())}:${pad(d.getMinutes())}`
   );
 }
+
+/**
+ * A timestamp to the second: `2026-11-09 20:16:42`.
+ *
+ * <p>Same year-month-day reasoning as the receipt above, and for the same
+ * reason — the browser's locale must not decide what a record says.
+ *
+ * <p>Seconds are kept here, where the receipt drops them. An audit log is read
+ * in order, and two changes a few seconds apart are exactly the pair someone is
+ * trying to tell apart; showing both as 20:16 would make the log look like it
+ * recorded them simultaneously.
+ */
+export function formatTimestamp(value: string | Date | null | undefined): string {
+  if (!value) return "—";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    ` ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  );
+}

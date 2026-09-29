@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatReceiptDateTime } from "./format";
+import { formatReceiptDateTime, formatTimestamp } from "./format";
 
 /*
  * A receipt timestamp is read by whoever holds the slip, which may be an
@@ -29,5 +29,26 @@ describe("formatReceiptDateTime", () => {
 
   it("accepts a Date as well as a string", () => {
     expect(formatReceiptDateTime(new Date(2026, 10, 9, 20, 16))).toBe("2026-11-09 20:16");
+  });
+});
+
+describe("formatTimestamp", () => {
+  it("keeps the seconds a receipt drops", () => {
+    expect(formatTimestamp("2026-11-09T20:16:42")).toBe("2026-11-09 20:16:42");
+  });
+
+  it("pads every part", () => {
+    expect(formatTimestamp("2026-01-05T08:07:09")).toBe("2026-01-05 08:07:09");
+  });
+
+  it("distinguishes two changes in the same minute", () => {
+    // The whole reason this exists beside formatReceiptDateTime.
+    expect(formatTimestamp("2026-11-09T20:16:01"))
+      .not.toBe(formatTimestamp("2026-11-09T20:16:59"));
+  });
+
+  it("says nothing rather than Invalid Date", () => {
+    expect(formatTimestamp(null)).toBe("—");
+    expect(formatTimestamp("not a date")).toBe("—");
   });
 });

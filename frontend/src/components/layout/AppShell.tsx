@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { Clock } from "@/components/layout/Clock";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { MENUS, type ShellVariant } from "@/lib/menus";
+import { MENUS, activeMenuItem, type ShellVariant } from "@/lib/menus";
 
 /** Chrome colour per area — teal for the cashier, green for admin. */
 const CHROME: Record<ShellVariant, string> = {
@@ -44,9 +44,7 @@ export function AppShell({
     if (drawerOpen) setDrawerOpen(false);
   }
 
-  const current = MENUS[variant].find(
-    (m) => pathname === m.href || pathname.startsWith(`${m.href}/`),
-  );
+  const current = activeMenuItem(pathname, MENUS[variant]);
   const title = current ? tNav(current.key) : tApp("name");
 
   const settingsHref = variant === "admin" ? "/admin/settings" : "/cashier/profile";

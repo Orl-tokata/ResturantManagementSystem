@@ -22,7 +22,8 @@
     "receipt": "Receipt",
     "history": "History",
     "profile": "Profile",
-    "logout": "Log out"
+    "logout": "Log out",
+    "audit": "Audit log"
   },
   "common": {
     "save": "Save",
@@ -570,5 +571,25 @@
     "closeMenu": "Close menu",
     "language": "Language",
     "clearSearch": "Clear search"
+  },
+  "audit": {
+    "readOnly": "This log is written automatically and cannot be edited or deleted.",
+    "when": "When",
+    "who": "Who",
+    "what": "What",
+    "change": "Change",
+    "ip": "IP",
+    "entity": "Record type",
+    "allEntities": "All types",
+    "from": "From",
+    "to": "To",
+    "searchUser": "Filter by user",
+    "noEntries": "No changes recorded for these filters",
+    "noDetail": "No field detail",
+    "action": {
+      "CREATE": "Created",
+      "UPDATE": "Changed",
+      "DELETE": "Deleted"
+    }
   }
 }
