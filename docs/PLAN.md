@@ -1,0 +1,301 @@
+# Step 5 — Build Plan
+
+Closes the set: [ARCHITECTURE](ARCHITECTURE.md) · [SCREENS](SCREENS.md) ·
+[ERD](ERD.md) · [API](API.md).
+
+Baseline today: 15 tables, 76 endpoints, 22 screens, 19 backend test classes,
+8 frontend test files, 4 CI jobs, 172 real orders in PostgreSQL.
+
+---
+
+## 1. The ordering principle, and its cost
+
+Packages below are ordered by **how expensive each becomes if deferred**, not
+by how much a user would notice. Adding `branch_id` to 172 orders is an
+afternoon; adding it to 100,000 is a weekend with a maintenance window.
+
+**The honest consequence: the first three packages are nearly invisible.** Two
+weeks of work and the app looks identical. That is a real risk — for
+motivation, and for anyone judging progress by screenshots.
+
+> **Mitigation, and I would take it:** pull package **P5 (POS consolidation)**
+> forward and do it after P1. It is frontend-only, needs no migration, removes
+> a screen, and is the single most visible improvement in the plan. It buys
+> room to do the invisible work without the project looking stalled.
+
+---
+
+## 2. Definition of done
+
+Every package, no exceptions:
+
+- [ ] Migration runs clean on PostgreSQL **and** on a copy of the real database
+- [ ] Backend tests cover the new service logic; existing 19 classes still pass
+- [ ] Frontend tests cover new components
+- [ ] `smoke-api.mjs` extended to the new endpoints
+- [ ] Khmer and English strings present; i18n CI job green
+- [ ] All 4 CI jobs green before merge
+- [ ] Main is deployable at the end of the package
+
+**No long-lived branches.** Each package is days, not weeks, and merges green.
+A six-week feature branch against a schema that is changing underneath it is
+how this plan fails.
+
+---
+
+## 3. Packages
+
+### P0 — Foundations · ~3 days · no migration risk
+
+Nothing user-visible. Everything after is safer for it.
+
+| | Work | State |
+|---|---|---|
+| a | ~~`dev` profile H2 → PostgreSQL~~ | **moved to P3** — see below |
+| b | `code` field on `ApiResponse` (API §2) | **done** |
+| c | `Idempotency-Key` filter + `idempotency_key` table | **done** (V6) |
+| d | `audit_log` table + a Hibernate change listener | **done** (V7) |
+
+**(a) was based on a wrong premise, found when it came to be done.** Three
+facts, none of which this document knew:
+
+- `bootRun` takes no profile argument, so the running application already uses
+  the default profile — which points at PostgreSQL. Development was never on
+  H2.
+- `build.gradle` sets `spring.profiles.active=dev` on the `test` task. H2 is
+  confined to `./gradlew test`, and `postgresTest` plus the CI `postgres` job
+  already cover real PostgreSQL.
+- There is no Docker on the development machine, so moving the default test
+  task to Testcontainers would leave the suite unrunnable locally.
+
+So the change would have delivered nothing and broken the local test loop.
+
+**It becomes forced at P3.** The partial unique index that makes the
+one-open-shift rule real (ERD §3.2) is PostgreSQL-only, and H2 rejects it in
+the *migration* — so the whole suite fails at Flyway, completely rather than
+gradually. That is the moment to decide, and by then whether Docker is
+available will be known.
+
+*Risk:* low. (d) touches every write path, so it was landed alone.
+
+**(d) is a listener, not the aspect this document specified.** An aspect over
+service methods records only what someone remembered to annotate, and it cannot
+answer "from what, to what" without re-reading the row before the change.
+Hibernate holds both states at flush time already, which is exactly the
+question ERD §3.8 asks the log to answer. Entities opt in with `@Audited`;
+orders, order lines and stock movements deliberately do not, because a day of
+trading would bury every master-data change.
+
+Two things the tests caught that the design had missed:
+
+- A dining table's `status` flips on every order, so auditing it wrote 200 rows
+  a day of noise. That is a different reason from hiding a password, so the
+  annotation now separates `redact` (a secret; removing one is a security
+  decision) from `ignore` (churn; removing one is a judgement about noise).
+- `regId`/`regDtm`/`modId`/`modDtm` change on every update of every entity.
+  They were putting two fields of bookkeeping beside each real change, and an
+  update that touched nothing else still wrote a row saying "something was
+  saved". They are now skipped for all audited entities. `actYn` is not, since
+  a row being deactivated is a real change and one of the more interesting
+  ones.
+
+**And one the tests could not have caught.** The audit query was written as
+`:param IS NULL OR column = :param`, which H2 accepts and PostgreSQL rejects:
+*could not determine data type of parameter $7*. All 207 tests passed; the
+live smoke run against the real database returned 500. It is now a
+`Specification`, which emits only the predicates actually asked for, so the
+question never arises.
+
+That is the H2 divergence in §P0a arriving early and by itself — the
+`postgresTest` task would have caught it, and there is no Docker here to run
+it. The smoke script now covers every filter combination for this endpoint,
+because those were the parameters that broke.
+
+**(c) as built differs from ERD §3.8 in two ways**, both decided while writing
+it:
+
+- The row stores the finished response body, not a `response_ref` pointing at
+  the created record. A reference needs per-endpoint logic to rebuild each
+  reply and still would not reproduce one exactly; a body replays verbatim and
+  does not care which endpoint produced it.
+- A failed request **releases** its key rather than caching the failure. A
+  cashier told "amount tendered is less than the total" corrects it and sends
+  the same intent again — a cached rejection would answer the corrected request
+  with the original complaint. It also stops one transient 500 making a key
+  permanently unusable.
+
+Requiring the header was a breaking change, as API §5 said it would be: 48
+existing tests failed until they sent one. That is the correct direction —
+protection a client can forget to ask for is not protection — but it means the
+frontend and `smoke-api.mjs` had to move in the same commit.
+
+### P1 — Multi-branch · ~4 days · **highest retrofit risk**
+
+V6, V7. `company` and `branch` tables; `branch_id` on nine tables, `NOT NULL`,
+backfilled to branch 1; `MANAGER` added to both role CHECKs; branch claim in
+the JWT; `POST /api/auth/switch-branch`.
+
+**Back up the database first.** 172 real orders.
+
+*Risk:* high — it touches every query. But it is strictly cheaper now than at
+any future point, which is the entire argument for doing it first.
+
+*Visible result:* a branch badge in the header. That is all, and it is correct
+that it is all.
+
+### P5 — POS consolidation · ~3 days · pull forward to here
+
+SCREENS §2.1. Payment becomes a panel on `/cashier/order`; `/cashier/payment`
+is deleted. Frontend only, no migration, no API change.
+
+Four screens per sale become two. The cashier screen count goes **down**.
+
+*Risk:* low, and reversible — it is a routing change.
+
+### P2 — Money integrity · ~5 days
+
+V9, V10 (partial), V11. `sale_payment`; `orders.fx_rate_khr` stamped at
+settlement; `fx_rate` table; `order_item.unit_cost`.
+
+**Two data-carrying migrations.** V9 must write a `sale_payment` row for every
+paid order before dropping `payment_method`. Back up again.
+
+**V10 backfills `unit_cost` from today's `product.cost`, and for historical
+lines that is wrong** — a cost never recorded cannot be recovered. Label
+pre-cutover margin as *estimated* in the reports UI and say so in the migration
+comment. A silently plausible wrong number is worse than a labelled gap, and
+this project has already been bitten once by a silent substitution.
+
+*Risk:* high. Money, and irreversible history.
+
+### P3 — Shift and cash · ~4 days
+
+V8. `cash_shift`, `cash_movement`, the partial unique index, six endpoints,
+`/cashier/shift`, and the **gate** — no open shift, no POS.
+
+*Risk:* medium. The gate changes the daily routine of every cashier, so it
+needs to be two taps or it will be worked around. Watch this one in use.
+
+### P4 — Stock ledger · ~4 days
+
+V10 (rest). Widen `stock_movement`; write one per sale line inside the settle
+transaction; `product.stock_qty` becomes derived; `/admin/stock` reworked to
+read-only levels + ledger + adjust modal.
+
+*Risk:* medium. **Reconcile before and after** — current `stock_qty` values
+must equal the ledger sum on day one, or every count is suspect from the start.
+
+### P6 — Customers and loyalty · ~4 days
+### P7 — Returns · ~5 days
+
+Depends on P2, P3, P4, P6 — a return writes a payment reversal, a cash
+movement, a stock movement and a loyalty reversal in one transaction. It is
+last in Phase 1 because it needs all four to exist.
+
+*Risk:* high. Returns are how money leaves the drawer.
+
+### P8 — Variants and modifiers · ~5 days
+### P9 — Promotions · ~4 days — percent and fixed only
+### P10 — Navigation regroup · ~2 days
+
+SCREENS §2.2. Five collapsible groups, persistent branch badge.
+
+---
+
+## 4. Phase 1 total
+
+| Package | Days |
+|---|---|
+| P0 Foundations | 3 |
+| P1 Multi-branch | 4 |
+| P5 POS consolidation | 3 |
+| P2 Money integrity | 5 |
+| P3 Shift and cash | 4 |
+| P4 Stock ledger | 4 |
+| P6 Customers | 4 |
+| P8 Variants | 5 |
+| P9 Promotions | 4 |
+| P7 Returns | 5 |
+| P10 Navigation | 2 |
+| **Total** | **43 days** |
+
+**Read that as ~9 working weeks, and expect 12.** These are focused-day
+estimates for one developer who knows the codebase. They contain no allowance
+for the thing that actually happens — a migration that will not apply, a
+Khmer string that clips, a test that fails only on CI. This project has already
+spent real time on all three.
+
+Phase 2 (kitchen display, supplier ledger, roles-as-data, warehouse transfers,
+buy-X-get-Y) is not estimated here. Estimating work three months out is
+fiction.
+
+---
+
+## 5. CI must grow with it
+
+Four jobs today: `backend` (H2 + smoke), `postgres` (Testcontainers),
+`frontend`, `i18n`.
+
+| Package | CI addition |
+|---|---|
+| P0 | idempotency replay test; envelope `code` asserted |
+| P1 | **a job that runs migrations against a dump of the real database** |
+| P2 | V9 data migration verified — every paid order gets exactly one payment |
+| P3 | concurrent shift-open test proving the partial index holds |
+| P4 | reconciliation test — ledger sum equals expected level |
+
+**The P1 addition matters most.** CI currently proves migrations work on an
+*empty* database. Every migration bug this project has hit was a bug on a
+*populated* one. A nightly job restoring a sanitised dump and running Flyway
+forward would have caught the V4 checksum mismatch before it reached the real
+database.
+
+---
+
+## 6. What could go wrong
+
+| Risk | Mitigation |
+|---|---|
+| P1 breaks a query that silently returns another branch's rows | Every repository method gets a branch-scoped test. There is no safe partial rollout |
+| P2 loses payment data | Back up; V9 verified by count, not by inspection |
+| V10 estimated margins mistaken for real | Label in the UI, not only in a comment |
+| The shift gate gets worked around | Two taps, or it fails. Watch it in use in week one |
+| Scope grows mid-package | The package list is the contract. New ideas go to Phase 2 |
+| Estimates slip and Phase 1 never lands | P0–P5 alone is a coherent release. Ship there if needed |
+
+**If time runs short, stop after P4.** Foundations, multi-branch, a consolidated
+POS, real payments, shifts and a stock ledger is a genuinely better system than
+today's and it stands on its own. Customers, variants, promotions and returns
+are additive. Stopping mid-P7 is not — a half-built return path is worse than
+none.
+
+---
+
+## 7. Decisions still open
+
+Blocking, in the order they bite:
+
+1. **`dev` off H2 onto PostgreSQL?** — P0a. Decides whether the one-open-shift
+   rule is a database guarantee or a service-layer hope.
+2. **`code` on the response envelope?** — P0b. One line in `ApiResponse`.
+3. **Historical margin labelled estimated?** — P2. Affects what reports say.
+4. **Collapsing payment into the order screen?** — P5. Deletes a route.
+5. **Offline scope: render-only, queue nothing?** — SCREENS §6.
+6. **`orders` keeps its name** rather than becoming `sale`? — ERD §2.
+
+Not blocking, and worth revisiting at Phase 2: Redis, WebSocket, the load
+balancer, GitLab CI. ARCHITECTURE §3.2 argues for deferring all four; nothing
+in Steps 2–5 has changed that.
+
+---
+
+## 8. Where I would start on Monday
+
+1. Back up the database. Verify the backup restores — an unverified backup is a
+   belief, not a backup.
+2. P0a: point `dev` at PostgreSQL, run the whole suite, fix what H2 was hiding.
+3. P0b: add `code` to `ApiResponse`, assert it in one test.
+4. Then P0c and P0d, then stop and reassess before P1.
+
+Step 1 of that list is worth doing today regardless of whether any of this plan
+is adopted.
