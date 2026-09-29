@@ -129,7 +129,6 @@
     "monthSales": "This month",
     "paidInvoices": "Paid invoices",
     "lowStock": "Low stock",
-    "salesLast7": "Sales, last 7 days",
     "bestSellers": "Best sellers this month",
     "dish": "Dish",
     "revenue": "Revenue",
@@ -142,7 +141,8 @@
     "viewStock": "View stock",
     "noSalesYet": "No sales yet this month",
     "stockHealthy": "Everything is above its reorder level",
-    "invoices": "invoices"
+    "invoices": "invoices",
+    "salesLast30": "Sales, last 30 days"
   },
   "cashierHome": {
     "todaySales": "Today's sales",

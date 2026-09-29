@@ -48,7 +48,12 @@ public class ReportService {
                 tableRepository.countByStatus(TableStatus.FREE),
                 tableRepository.countByStatus(TableStatus.OCCUPIED),
                 tableRepository.countByStatus(TableStatus.RESERVED),
-                dailySeries(today.minusDays(6), today),
+                // Thirty days rather than a calendar month: on the first of
+                // the month a calendar chart is a single bar, which tells a
+                // manager nothing. A rolling window always shows a full month
+                // of trend. The "this month" tile above it is the calendar
+                // figure, and the two answer different questions.
+                dailySeries(today.minusDays(29), today),
                 bestSellers(monthStart, today, 5),
                 stockRepository.findLowStock().stream()
                         .limit(5)

@@ -129,7 +129,6 @@
     "monthSales": "ការលក់ខែនេះ",
     "paidInvoices": "វិក្កយបត្របានបង់",
     "lowStock": "ស្តុកជិតអស់",
-    "salesLast7": "ការលក់ ៧ ថ្ងៃចុងក្រោយ",
     "bestSellers": "ម្ហូបលក់ដាច់ខែនេះ",
     "dish": "ម្ហូប",
     "revenue": "ចំណូល",
@@ -142,7 +141,8 @@
     "viewStock": "មើលស្តុក",
     "noSalesYet": "មិនទាន់មានការលក់",
     "stockHealthy": "ស្តុកគ្រប់គ្រាន់",
-    "invoices": "វិក្កយបត្រ"
+    "invoices": "វិក្កយបត្រ",
+    "salesLast30": "ការលក់ ៣០ ថ្ងៃចុងក្រោយ"
   },
   "cashierHome": {
     "todaySales": "ការលក់ថ្ងៃនេះ",

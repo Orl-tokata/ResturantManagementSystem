@@ -113,24 +113,24 @@ class ReportControllerTest {
 	}
 
 	@Test
-	@DisplayName("the 7-day series zero-fills quiet days instead of omitting them")
-	void sevenDaySeriesIsDense() throws Exception {
+	@DisplayName("the 30-day series zero-fills quiet days instead of omitting them")
+	void thirtyDaySeriesIsDense() throws Exception {
 		sell(1);
 
 		JsonNode series = data(mvc.perform(get("/api/dashboard/summary")
-				.header("Authorization", admin)).andReturn()).path("lastSevenDays");
+				.header("Authorization", admin)).andReturn()).path("lastThirtyDays");
 
-		assertThat(series.size()).isEqualTo(7);
+		assertThat(series.size()).isEqualTo(30);
 
-		// Six quiet days at zero, today carrying the sale.
+		// Twenty-nine quiet days at zero, today carrying the sale.
 		long zeroDays = 0;
 		for (JsonNode point : series) {
 			if (point.path("total").asDouble() == 0.0) zeroDays++;
 		}
-		assertThat(zeroDays).isEqualTo(6);
-		assertThat(series.get(6).path("date").asText()).isEqualTo(today);
-		assertThat(series.get(6).path("total").asDouble()).isEqualTo(9.90);
-		assertThat(series.get(6).path("orders").asLong()).isEqualTo(1);
+		assertThat(zeroDays).isEqualTo(29);
+		assertThat(series.get(29).path("date").asText()).isEqualTo(today);
+		assertThat(series.get(29).path("total").asDouble()).isEqualTo(9.90);
+		assertThat(series.get(29).path("orders").asLong()).isEqualTo(1);
 	}
 
 	@Test

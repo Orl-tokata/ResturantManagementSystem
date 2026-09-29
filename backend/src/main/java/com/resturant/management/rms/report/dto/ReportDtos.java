@@ -18,7 +18,7 @@ public final class ReportDtos {
             long tablesFree,
             long tablesOccupied,
             long tablesReserved,
-            List<DailyPoint> lastSevenDays,
+            List<DailyPoint> lastThirtyDays,
             List<BestSeller> bestSellers,
             List<LowStockRow> lowStock
     ) {}

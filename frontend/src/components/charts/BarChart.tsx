@@ -26,6 +26,10 @@ export interface BarPoint {
  *   on hover. A number over every bar is noise.
  * - Per-mark hover tooltip, with a hit target spanning the full column height
  *   rather than just the drawn bar.
+ * - Ticks thin out as the series grows. Thirty labels in the width that held
+ *   seven is a grey smear, and a smear is worse than a gap — the reader loses
+ *   the dates they could have had. Every bar still has its date on hover and
+ *   in its aria-label, so nothing is lost, only deferred.
  */
 export function BarChart({
   points,
@@ -49,6 +53,13 @@ export function BarChart({
       </p>
     );
   }
+
+  /*
+   * At most ten labels, counted back from the newest point so the right-hand
+   * end is always dated — that is the one a reader looks at first.
+   */
+  const tickEvery = Math.max(1, Math.ceil(points.length / 10));
+  const labelled = (i: number) => (points.length - 1 - i) % tickEvery === 0;
 
   const max = Math.max(...points.map((p) => p.value));
   const peak = points.reduce((best, p, i) => (p.value > points[best].value ? i : best), 0);
@@ -118,8 +129,14 @@ export function BarChart({
       <div className="mt-1.5 flex gap-0.5 border-t border-ink-300 pt-1.5">
         {points.map((p, i) => (
           <div key={`${p.label}-tick-${i}`} className="flex-1 text-center">
-            <div className="truncate text-[10px] text-ink-500">{p.label}</div>
-            {p.sublabel && <div className="truncate text-[10px] text-ink-400">{p.sublabel}</div>}
+            {labelled(i) && (
+              <div className="truncate text-[10px] text-ink-500">{p.label}</div>
+            )}
+            {/* The weekday is a second line under an already-thin tick; it only
+                earns its place when every bar is labelled. */}
+            {labelled(i) && tickEvery === 1 && p.sublabel && (
+              <div className="truncate text-[10px] text-ink-400">{p.sublabel}</div>
+            )}
           </div>
         ))}
       </div>

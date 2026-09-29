@@ -29,7 +29,7 @@ public class ReportController {
     @GetMapping("/dashboard/summary")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Admin dashboard",
-            description = "KPI tiles, a zero-filled 7-day series, best sellers and low stock.")
+            description = "KPI tiles, a zero-filled 30-day series, best sellers and low stock.")
     public ApiResponse<DashboardSummary> dashboard() {
         return ApiResponse.ok(reportService.dashboard());
     }

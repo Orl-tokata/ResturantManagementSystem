@@ -85,7 +85,7 @@ export default function AdminDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr] lg:items-start">
         <div className="space-y-4">
           <Card
-            title={t("salesLast7")}
+            title={t("salesLast30")}
             action={
               <Link href="/admin/reports">
                 <Button size="sm" variant="ghost">
@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
               <p className="py-16 text-center text-sm text-ink-500">{tc("loading")}</p>
             ) : (
               <BarChart
-                points={(d?.lastSevenDays ?? []).map((p) => ({
+                points={(d?.lastThirtyDays ?? []).map((p) => ({
                   label: dayOfMonth(p.date),
                   sublabel: tw(String(weekdayIndex(p.date))),
                   value: p.total,

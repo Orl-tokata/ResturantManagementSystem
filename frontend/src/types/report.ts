@@ -42,7 +42,7 @@ export interface DashboardSummary {
   tablesFree: number;
   tablesOccupied: number;
   tablesReserved: number;
-  lastSevenDays: DailyPoint[];
+  lastThirtyDays: DailyPoint[];
   bestSellers: BestSeller[];
   lowStock: LowStockRow[];
 }
