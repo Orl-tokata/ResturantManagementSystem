@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.UUID;
 
 /** Milestone 11 — suppliers, purchase orders, goods receipt and stock adjustments. */
 @SpringBootTest
@@ -119,7 +120,7 @@ class SupplyChainControllerTest {
 	void adjustIn() throws Exception {
 		double before = stockQty(2);   // beef, seeded at 2.5
 
-		MvcResult res = mvc.perform(post("/api/stock/2/adjust").header("Authorization", admin)
+		MvcResult res = mvc.perform(post("/api/stock/2/adjust").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"type":"IN","qty":10,"reason":"ទិញបន្ថែម"}"""))
@@ -138,13 +139,13 @@ class SupplyChainControllerTest {
 	@Test
 	@DisplayName("OUT and DAMAGED remove stock even though qty is sent positive")
 	void adjustOutAndDamaged() throws Exception {
-		mvc.perform(post("/api/stock/1/adjust").header("Authorization", admin)
+		mvc.perform(post("/api/stock/1/adjust").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"type":"OUT","qty":20}"""))
 				.andExpect(jsonPath("$.data.qty").value(100.0));      // 120 − 20
 
-		mvc.perform(post("/api/stock/1/adjust").header("Authorization", admin)
+		mvc.perform(post("/api/stock/1/adjust").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"type":"DAMAGED","qty":5,"reason":"ខូច"}"""))
@@ -156,7 +157,7 @@ class SupplyChainControllerTest {
 	void adjustCannotGoNegative() throws Exception {
 		double before = stockQty(2);
 
-		mvc.perform(post("/api/stock/2/adjust").header("Authorization", admin)
+		mvc.perform(post("/api/stock/2/adjust").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"type":"OUT","qty":999}"""))
@@ -170,13 +171,13 @@ class SupplyChainControllerTest {
 	@Test
 	@DisplayName("a zero or negative adjustment quantity is rejected")
 	void adjustRejectsNonPositive() throws Exception {
-		mvc.perform(post("/api/stock/1/adjust").header("Authorization", admin)
+		mvc.perform(post("/api/stock/1/adjust").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"type":"IN","qty":0}"""))
 				.andExpect(status().isBadRequest());
 
-		mvc.perform(post("/api/stock/1/adjust").header("Authorization", admin)
+		mvc.perform(post("/api/stock/1/adjust").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"type":"IN","qty":-5}"""))
@@ -198,7 +199,7 @@ class SupplyChainControllerTest {
 	@Test
 	@DisplayName("an item with movement history cannot be deleted")
 	void cannotDeleteItemWithHistory() throws Exception {
-		mvc.perform(post("/api/stock/3/adjust").header("Authorization", admin)
+		mvc.perform(post("/api/stock/3/adjust").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{"type":"IN","qty":1}"""));
@@ -258,7 +259,7 @@ class SupplyChainControllerTest {
 
 		long id = raisePo();
 
-		mvc.perform(post("/api/purchases/" + id + "/receive").header("Authorization", admin))
+		mvc.perform(post("/api/purchases/" + id + "/receive").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.status").value("RECEIVED"));
 
@@ -282,10 +283,10 @@ class SupplyChainControllerTest {
 	@DisplayName("an order cannot be received twice")
 	void cannotReceiveTwice() throws Exception {
 		long id = raisePo();
-		mvc.perform(post("/api/purchases/" + id + "/receive").header("Authorization", admin))
+		mvc.perform(post("/api/purchases/" + id + "/receive").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin))
 				.andExpect(status().isOk());
 
-		mvc.perform(post("/api/purchases/" + id + "/receive").header("Authorization", admin))
+		mvc.perform(post("/api/purchases/" + id + "/receive").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message")
 						.value(org.hamcrest.Matchers.containsString("already been received")));
@@ -295,7 +296,7 @@ class SupplyChainControllerTest {
 	@DisplayName("a received order cannot be cancelled or deleted")
 	void receivedOrderIsLocked() throws Exception {
 		long id = raisePo();
-		mvc.perform(post("/api/purchases/" + id + "/receive").header("Authorization", admin));
+		mvc.perform(post("/api/purchases/" + id + "/receive").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin));
 
 		mvc.perform(post("/api/purchases/" + id + "/cancel").header("Authorization", admin))
 				.andExpect(status().isBadRequest())
@@ -314,7 +315,7 @@ class SupplyChainControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.status").value("CANCELLED"));
 
-		mvc.perform(post("/api/purchases/" + id + "/receive").header("Authorization", admin))
+		mvc.perform(post("/api/purchases/" + id + "/receive").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", admin))
 				.andExpect(status().isBadRequest());
 	}
 

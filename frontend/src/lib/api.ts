@@ -12,6 +12,12 @@ import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale } from "@/i18n/config";
 
 export interface ApiResponse<T> {
   status: number;
+  /**
+   * Present on failures only: the server's message key, e.g.
+   * `order.table.occupied`. Branch on this rather than on `message`, which is
+   * prose and changes with the request's language.
+   */
+  code?: string;
   message: string;
   data: T;
   timestamp: string;
@@ -71,9 +77,56 @@ function preferredLanguage(): string {
   return isLocale(value) ? value : DEFAULT_LOCALE;
 }
 
+/* ---- Idempotency ---------------------------------------------------------
+   The server refuses these endpoints without an `Idempotency-Key`, so one
+   repeated request cannot become two bills. Mirrors IdempotencyFilter.REQUIRED
+   on the backend — the two lists have to be changed together.
+   ------------------------------------------------------------------------- */
+
+const IDEMPOTENT_ROUTES: RegExp[] = [
+  /^\/orders$/,
+  /^\/orders\/[^/]+\/pay$/,
+  /^\/orders\/[^/]+\/cancel$/,
+  /^\/stock\/[^/]+\/adjust$/,
+  /^\/purchases\/[^/]+\/receive$/,
+];
+
+/** Exported for its own test: the route list is where a mistake would hide. */
+export function needsIdempotencyKey(method: string | undefined, url: string | undefined): boolean {
+  if (method?.toLowerCase() !== "post" || !url) return false;
+  const path = url.split("?")[0].replace(/\/+$/, "");
+  return IDEMPOTENT_ROUTES.some((r) => r.test(path));
+}
+
+/**
+ * A fresh key. Pass one to `post()` when a screen needs a *stable* key for one
+ * user intent — the same value across a retry, a reconnect and a second tap of
+ * the same button — which is the case this whole mechanism exists for.
+ *
+ * Without an explicit key the interceptor still supplies one, so the request is
+ * accepted and a network-level retry is deduplicated; but two separate taps are
+ * two separate requests with two separate keys, and the server cannot tell they
+ * meant the same thing. Disabling the button is not a substitute for a stable
+ * key, it is the other half of it.
+ */
+export function newIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  // Older Safari and any non-secure context. Only needs to be unique, not
+  // unguessable — the key names a request, it does not authorise one.
+  return `k-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken) {
     config.headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+  if (needsIdempotencyKey(config.method, config.url)
+      && !config.headers.get("Idempotency-Key")) {
+    // Set on the config, so the retry after a 401 refresh re-sends this exact
+    // value rather than minting a second one and defeating the point.
+    config.headers.set("Idempotency-Key", newIdempotencyKey());
   }
   // Without this the backend answers in its default language, and a Khmer
   // cashier reads English validation messages under a Khmer form.
@@ -148,8 +201,14 @@ export async function get<T>(url: string, params?: object): Promise<T> {
   return res.data.data;
 }
 
-export async function post<T>(url: string, body?: unknown): Promise<T> {
-  const res = await api.post<ApiResponse<T>>(url, body);
+export async function post<T>(
+  url: string,
+  body?: unknown,
+  idempotencyKey?: string,
+): Promise<T> {
+  const res = await api.post<ApiResponse<T>>(url, body, {
+    headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
+  });
   return res.data.data;
 }
 

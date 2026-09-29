@@ -1,5 +1,6 @@
 package com.resturant.management.rms.stock;
 
+import com.resturant.management.rms.audit.Audited;
 import com.resturant.management.rms.common.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,6 +12,9 @@ import java.math.BigDecimal;
  * products are what customers buy, stock items are what gets purchased and
  * consumed. "1 kg beef" is a stock item; "Lok lak beef" is a product.
  */
+// qty already has its own history in stock_movement; auditing it too would
+// say the same thing twice, in the noisier of the two places.
+@Audited(ignore = "qty")
 @Entity
 @Table(name = "stock_item")
 @Getter

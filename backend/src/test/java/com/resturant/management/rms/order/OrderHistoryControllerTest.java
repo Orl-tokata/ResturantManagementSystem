@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.UUID;
 
 /** Milestone 10 — history listing, filters and the summary tiles. */
 @SpringBootTest
@@ -48,7 +49,7 @@ class OrderHistoryControllerTest {
 
 	/** Opens a bill at the table with 2 × fried rice (total 9.90). */
 	private long bill(long tableId) throws Exception {
-		MvcResult opened = mvc.perform(post("/api/orders")
+		MvcResult opened = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", auth())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"tableId\":%d}".formatted(tableId)))
@@ -65,7 +66,7 @@ class OrderHistoryControllerTest {
 	}
 
 	private void pay(long id) throws Exception {
-		mvc.perform(post("/api/orders/" + id + "/pay")
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", auth())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -97,7 +98,7 @@ class OrderHistoryControllerTest {
 		pay(paid);
 
 		long cancelled = bill(3);
-		mvc.perform(post("/api/orders/" + cancelled + "/cancel").header("Authorization", auth()));
+		mvc.perform(post("/api/orders/" + cancelled + "/cancel").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", auth()));
 
 		bill(4);   // stays OPEN
 
@@ -179,7 +180,7 @@ class OrderHistoryControllerTest {
 		pay(bill(3));
 
 		long cancelled = bill(4);
-		mvc.perform(post("/api/orders/" + cancelled + "/cancel").header("Authorization", auth()));
+		mvc.perform(post("/api/orders/" + cancelled + "/cancel").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", auth()));
 
 		bill(6);   // OPEN — counted in totalCount but not in sales
 

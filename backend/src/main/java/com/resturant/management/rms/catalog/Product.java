@@ -1,5 +1,6 @@
 package com.resturant.management.rms.catalog;
 
+import com.resturant.management.rms.audit.Audited;
 import com.resturant.management.rms.common.BaseAuditEntity;
 import com.resturant.management.rms.common.RecordStatus;
 import jakarta.persistence.*;
@@ -7,6 +8,9 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+// stockQty moves on every sale line — it belongs in the movement ledger
+// docs/PLAN.md P4 introduces, not in a log kept for price and menu edits.
+@Audited(ignore = "stockQty")
 @Entity
 @Table(name = "product")
 @Getter

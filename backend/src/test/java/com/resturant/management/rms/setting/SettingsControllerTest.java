@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.UUID;
 
 /** Milestone 13 — settings and self-service profile. */
 @SpringBootTest
@@ -133,7 +134,7 @@ class SettingsControllerTest {
 				.content("""
 						{"sales.vatRate":"0"}"""));
 
-		MvcResult opened = mvc.perform(post("/api/orders").header("Authorization", cashier)
+		MvcResult opened = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", cashier)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"tableId":1}"""))

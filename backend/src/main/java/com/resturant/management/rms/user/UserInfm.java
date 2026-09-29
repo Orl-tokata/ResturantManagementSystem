@@ -1,5 +1,6 @@
 package com.resturant.management.rms.user;
 
+import com.resturant.management.rms.audit.Audited;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +15,7 @@ import java.util.List;
  * Login account. Carried over from NIEI-Y4 including the lockout behaviour;
  * audit timestamps are real {@code TIMESTAMP} columns here rather than strings.
  */
+@Audited(redact = "userPwd", ignore = {"loginFailedCnt", "lstLgnDtm"})
 @Entity
 @Table(name = "users_infm")
 @Getter

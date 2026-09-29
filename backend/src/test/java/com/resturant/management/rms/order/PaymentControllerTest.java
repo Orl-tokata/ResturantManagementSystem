@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.UUID;
 
 /** Milestone 9 — the payment transaction and the receipt projection. */
 @SpringBootTest
@@ -41,7 +42,7 @@ class PaymentControllerTest {
 
 	/** Opens a bill at the given table with 2 × fried rice = 9.00 → total 9.90. */
 	private long billWithFriedRice(long tableId) throws Exception {
-		MvcResult opened = mvc.perform(post("/api/orders")
+		MvcResult opened = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"tableId\":%d,\"guestCount\":2}".formatted(tableId)))
@@ -60,7 +61,7 @@ class PaymentControllerTest {
 	}
 
 	private JsonNode pay(long id, String body) throws Exception {
-		MvcResult res = mvc.perform(post("/api/orders/" + id + "/pay")
+		MvcResult res = mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(body))
@@ -126,7 +127,7 @@ class PaymentControllerTest {
 		double stockBefore = stockOf(1);
 		long id = billWithFriedRice(6);
 
-		mvc.perform(post("/api/orders/" + id + "/pay")
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -148,7 +149,7 @@ class PaymentControllerTest {
 	void cashRequiresTender() throws Exception {
 		long id = billWithFriedRice(7);
 
-		mvc.perform(post("/api/orders/" + id + "/pay")
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -183,7 +184,7 @@ class PaymentControllerTest {
 		pay(id, """
 				{"paymentMethod":"CASH","amountTendered":10.00}""");
 
-		mvc.perform(post("/api/orders/" + id + "/pay")
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -196,7 +197,7 @@ class PaymentControllerTest {
 	@Test
 	@DisplayName("an empty bill cannot be paid")
 	void cannotPayEmptyBill() throws Exception {
-		MvcResult opened = mvc.perform(post("/api/orders")
+		MvcResult opened = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -205,7 +206,7 @@ class PaymentControllerTest {
 		long id = json.readTree(opened.getResponse().getContentAsString())
 				.path("data").path("id").asLong();
 
-		mvc.perform(post("/api/orders/" + id + "/pay")
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -235,7 +236,7 @@ class PaymentControllerTest {
 	void unknownMethod() throws Exception {
 		long id = billWithFriedRice(2);
 
-		mvc.perform(post("/api/orders/" + id + "/pay")
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -252,7 +253,7 @@ class PaymentControllerTest {
 	void malformedJson() throws Exception {
 		long id = billWithFriedRice(5);
 
-		mvc.perform(post("/api/orders/" + id + "/pay")
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"paymentMethod\":\"CASH\","))
@@ -281,7 +282,7 @@ class PaymentControllerTest {
 	@Test
 	@DisplayName("payment requires authentication")
 	void requiresAuth() throws Exception {
-		mvc.perform(post("/api/orders/1/pay")
+		mvc.perform(post("/api/orders/1/pay").header("Idempotency-Key", UUID.randomUUID().toString())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"paymentMethod":"CASH","amountTendered":1}"""))

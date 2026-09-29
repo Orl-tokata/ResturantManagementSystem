@@ -1,10 +1,12 @@
 package com.resturant.management.rms.catalog;
 
+import com.resturant.management.rms.audit.Audited;
 import com.resturant.management.rms.common.BaseAuditEntity;
 import com.resturant.management.rms.common.RecordStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+@Audited
 @Entity
 @Table(name = "category")
 @Getter

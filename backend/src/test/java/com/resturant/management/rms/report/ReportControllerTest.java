@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.UUID;
 
 /** Milestone 12 — dashboards, the sales report and CSV export. */
 @SpringBootTest
@@ -53,7 +54,7 @@ class ReportControllerTest {
 
 	/** Sells 2 × fried rice (price 4.50, cost 2.10) → revenue 9.90, cost 4.20. */
 	private void sell(long tableId) throws Exception {
-		MvcResult opened = mvc.perform(post("/api/orders").header("Authorization", cashier)
+		MvcResult opened = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", cashier)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"tableId\":%d}".formatted(tableId)))
 				.andReturn();
@@ -64,7 +65,7 @@ class ReportControllerTest {
 				.content("""
 						{"items":[{"productId":1,"qty":2}]}"""));
 
-		mvc.perform(post("/api/orders/" + id + "/pay").header("Authorization", cashier)
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", cashier)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"paymentMethod":"CASH","amountTendered":20}"""))
@@ -215,7 +216,7 @@ class ReportControllerTest {
 	void categorySharesSumTo100() throws Exception {
 		sell(1);   // Rice
 		// A drink from a second category, so the breakdown has something to split.
-		MvcResult opened = mvc.perform(post("/api/orders").header("Authorization", cashier)
+		MvcResult opened = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", cashier)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"tableId":3}"""))
@@ -225,7 +226,7 @@ class ReportControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{"items":[{"productId":10,"qty":4}]}"""));
-		mvc.perform(post("/api/orders/" + id + "/pay").header("Authorization", cashier)
+		mvc.perform(post("/api/orders/" + id + "/pay").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", cashier)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{"paymentMethod":"CASH","amountTendered":20}"""));

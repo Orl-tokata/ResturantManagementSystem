@@ -1,5 +1,6 @@
 package com.resturant.management.rms.supplier;
 
+import com.resturant.management.rms.audit.Audited;
 import com.resturant.management.rms.common.BaseAuditEntity;
 import com.resturant.management.rms.common.RecordStatus;
 import jakarta.persistence.*;
@@ -7,6 +8,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+@Audited
 @Entity
 @Table(name = "supplier")
 @Getter

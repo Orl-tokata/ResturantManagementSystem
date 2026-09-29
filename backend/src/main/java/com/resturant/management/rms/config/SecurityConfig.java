@@ -2,6 +2,7 @@ package com.resturant.management.rms.config;
 
 import com.resturant.management.rms.common.ApiResponse;
 import com.resturant.management.rms.common.i18n.Messages;
+import com.resturant.management.rms.idempotency.IdempotencyFilter;
 import com.resturant.management.rms.security.JwtAuthenticationFilter;
 import com.resturant.management.rms.security.RateLimitFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
@@ -19,7 +20,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.servlet.LocaleResolver;
@@ -53,6 +56,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final IdempotencyFilter idempotencyFilter;
     private final CorsConfigurationSource corsConfigurationSource;
     private final ObjectMapper objectMapper;
     private final Messages messages;
@@ -109,9 +113,31 @@ public class SecurityConfig {
                 // what matters anyway — the point is to refuse a flood before
                 // it costs a BCrypt comparison, the expensive part of a login.
                 .addFilterBefore(rateLimitFilter, SecurityContextHolderFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // Last, so a request that is about to be refused never claims a
+                // key: anonymous traffic should not be able to create rows in
+                // idempotency_key at all. It also means the principal is
+                // populated, which is what makes the stored row say who.
+                .addFilterAfter(idempotencyFilter, AuthorizationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * Stops Boot registering {@link IdempotencyFilter} in the servlet chain as
+     * well.
+     *
+     * <p>Any {@code Filter} bean is auto-registered there, which runs it ahead
+     * of Spring Security entirely — and {@code OncePerRequestFilter} would then
+     * skip the copy added above, quietly undoing the placement. Position is the
+     * whole point for this one, so the duplicate is disabled explicitly.
+     */
+    @Bean
+    public FilterRegistrationBean<IdempotencyFilter> idempotencyFilterNotInServletChain(
+            IdempotencyFilter filter) {
+        FilterRegistrationBean<IdempotencyFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     /**
@@ -132,7 +158,7 @@ public class SecurityConfig {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
         objectMapper.writeValue(response.getOutputStream(),
-                ApiResponse.error(status, messages.get(locale, messageKey)));
+                ApiResponse.error(status, messageKey, messages.get(locale, messageKey)));
     }
 
     @Bean

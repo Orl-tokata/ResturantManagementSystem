@@ -20,6 +20,7 @@
 --     stock_item.name         LIKE 'Smoke %'
 --     dining_table.name       LIKE 'Smoke %'
 --     orders.cashier_id       -> one of those users
+--     idempotency_key.user_id LIKE 'smoke%'
 --
 -- Not "DELETE FROM orders". An earlier ad-hoc version of this did exactly that,
 -- which was correct at the time because every order in the database happened to
@@ -57,7 +58,13 @@ UNION ALL SELECT 'purchases',         count(*) FROM purchase WHERE supplier_id I
 UNION ALL SELECT 'stock movements',   count(*) FROM stock_movement WHERE stock_item_id IN (SELECT id FROM _smoke_stock)
 UNION ALL SELECT 'tables',            count(*) FROM dining_table WHERE name LIKE 'Smoke %'
 UNION ALL SELECT 'staff',             count(*) FROM staff WHERE staff_code LIKE 'SMOKE-%'
+UNION ALL SELECT 'idempotency keys',  count(*) FROM idempotency_key WHERE user_id LIKE 'smoke%'
 ORDER BY what;
+
+-- Written in their own transaction by design, so they outlive the requests
+-- that made them and are not removed by anything else. Harmless, but they
+-- accumulate one row per smoke run per protected write.
+DELETE FROM idempotency_key WHERE user_id LIKE 'smoke%';
 
 -- Give back the stock those smoke sales consumed. Has to run before the order
 -- lines go, because it reads them; without it the inventory stays permanently

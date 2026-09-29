@@ -1,5 +1,6 @@
 package com.resturant.management.rms.setting;
 
+import com.resturant.management.rms.audit.Audited;
 import com.resturant.management.rms.common.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,6 +9,7 @@ import lombok.*;
  * Key/value configuration editable from {@code /admin/settings} — restaurant
  * details, VAT rate, KHR rate, feature toggles.
  */
+@Audited
 @Entity
 @Table(name = "app_setting")
 @Getter

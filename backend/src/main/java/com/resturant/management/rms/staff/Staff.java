@@ -1,5 +1,6 @@
 package com.resturant.management.rms.staff;
 
+import com.resturant.management.rms.audit.Audited;
 import com.resturant.management.rms.common.BaseAuditEntity;
 import com.resturant.management.rms.user.Role;
 import com.resturant.management.rms.user.UserInfm;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
  * <p>Distinct from {@link UserInfm}: not every employee has a login. When one
  * does, {@code user} links the two.
  */
+@Audited
 @Entity
 @Table(name = "staff")
 @Getter

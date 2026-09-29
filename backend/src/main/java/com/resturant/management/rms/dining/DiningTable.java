@@ -1,5 +1,6 @@
 package com.resturant.management.rms.dining;
 
+import com.resturant.management.rms.audit.Audited;
 import com.resturant.management.rms.common.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,6 +9,7 @@ import lombok.*;
  * Named {@code DiningTable} rather than {@code Table} to avoid colliding with
  * {@link jakarta.persistence.Table}.
  */
+@Audited(ignore = "status")   // flips on every order; the seating plan is what matters
 @Entity
 @jakarta.persistence.Table(name = "dining_table")
 @Getter

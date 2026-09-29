@@ -125,6 +125,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfter));
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
         objectMapper.writeValue(response.getOutputStream(),
-                ApiResponse.error(429, messages.get(locale, "error.request.tooManyRequests", retryAfter)));
+                ApiResponse.error(429, "error.request.tooManyRequests",
+                        messages.get(locale, "error.request.tooManyRequests", retryAfter)));
     }
 }

@@ -31,11 +31,23 @@ public class GlobalExceptionHandler {
 
     private final Messages messages;
 
+    /**
+     * Builds a failure from a single message key.
+     *
+     * <p>The key becomes both the {@code code} a client branches on and the
+     * sentence a person reads, so the two cannot drift apart — which they would
+     * the first time a handler was edited and only one of them updated.
+     */
+    private ResponseEntity<ApiResponse<Void>> fail(HttpStatus status, String key, Object... args) {
+        return ResponseEntity.status(status)
+                .body(ApiResponse.error(status.value(), key, messages.get(key, args)));
+    }
+
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiResponse<Void>> handleApi(ApiException ex) {
         String text = messages.get(ex.getMessageKey(), resolveArgs(ex.getArgs()));
         return ResponseEntity.status(ex.getStatus())
-                .body(ApiResponse.error(ex.getStatus().value(), text));
+                .body(ApiResponse.error(ex.getStatus().value(), ex.getMessageKey(), text));
     }
 
     /**
@@ -74,7 +86,8 @@ public class GlobalExceptionHandler {
                 .map(this::describe)
                 .collect(Collectors.joining("; "));
         return ResponseEntity.badRequest()
-                .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), detail));
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(),
+                        "error.request.validation", detail));
     }
 
     /**
@@ -110,8 +123,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
         // Deliberately vague: do not reveal whether the username exists.
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error(401, messages.get("error.auth.badCredentials")));
+        return fail(HttpStatus.UNAUTHORIZED, "error.auth.badCredentials");
     }
 
     /**
@@ -121,20 +133,17 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<ApiResponse<Void>> handleLocked(LockedException ex) {
-        return ResponseEntity.status(HttpStatus.LOCKED)
-                .body(ApiResponse.error(423, messages.get("error.auth.locked")));
+        return fail(HttpStatus.LOCKED, "error.auth.locked");
     }
 
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ApiResponse<Void>> handleDisabled(DisabledException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error(403, messages.get("error.auth.disabled")));
+        return fail(HttpStatus.FORBIDDEN, "error.auth.disabled");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error(403, messages.get("error.auth.forbidden")));
+        return fail(HttpStatus.FORBIDDEN, "error.auth.forbidden");
     }
 
     /**
@@ -146,8 +155,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIntegrity(
             org.springframework.dao.DataIntegrityViolationException ex) {
         log.warn("Database constraint violated: {}", ex.getMostSpecificCause().getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(409, messages.get("error.request.conflict")));
+        return fail(HttpStatus.CONFLICT, "error.request.conflict");
     }
 
     /**
@@ -161,7 +169,8 @@ public class GlobalExceptionHandler {
             org.springframework.http.converter.HttpMessageNotReadableException ex) {
 
         Throwable cause = ex.getMostSpecificCause();
-        String detail = messages.get("error.request.unreadable");
+        String code = "error.request.unreadable";
+        String detail = messages.get(code);
 
         // Name the offending field and the accepted values — a bare "malformed
         // JSON" tells the caller nothing actionable.
@@ -175,26 +184,26 @@ public class GlobalExceptionHandler {
                 // options cannot provoke — so the reader is whoever is calling
                 // the API, and they need the exact JSON key and the exact
                 // strings to send, not prose describing them.
-                detail = messages.get("error.request.invalidValueEnum",
+                code = "error.request.invalidValueEnum";
+                detail = messages.get(code,
                         field, ife.getValue(), Arrays.toString(target.getEnumConstants()));
             } else {
-                detail = messages.get("error.request.invalidValue", field, ife.getValue());
+                code = "error.request.invalidValue";
+                detail = messages.get(code, field, ife.getValue());
             }
         }
 
         log.debug("Unreadable request body: {}", cause.getMessage());
-        return ResponseEntity.badRequest().body(ApiResponse.error(400, detail));
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, code, detail));
     }
 
     /** Enum path/query parameters that do not match any constant. */
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
-        return ResponseEntity.badRequest().body(ApiResponse.error(400,
-                // Same reasoning as above: a path or query parameter that
-                // will not convert is a caller error, so name it as the caller
-                // wrote it.
-                messages.get("error.request.invalidValue", ex.getName(), ex.getValue())));
+        // Same reasoning as above: a path or query parameter that will not
+        // convert is a caller error, so name it as the caller wrote it.
+        return fail(HttpStatus.BAD_REQUEST, "error.request.invalidValue", ex.getName(), ex.getValue());
     }
 
     /* ---- Client mistakes that must not read as server failures ----------
@@ -209,8 +218,7 @@ public class GlobalExceptionHandler {
             org.springframework.web.servlet.resource.NoResourceFoundException.class
     })
     public ResponseEntity<ApiResponse<Void>> handleNotFound(Exception ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(404, messages.get("error.request.noEndpoint")));
+        return fail(HttpStatus.NOT_FOUND, "error.request.noEndpoint");
     }
 
     @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
@@ -219,24 +227,21 @@ public class GlobalExceptionHandler {
         String allowed = ex.getSupportedHttpMethods() == null
                 ? ""
                 : ex.getSupportedHttpMethods().toString();
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(ApiResponse.error(405,
-                        messages.get("error.request.methodNotAllowed", ex.getMethod(), allowed)));
+        return fail(HttpStatus.METHOD_NOT_ALLOWED,
+                "error.request.methodNotAllowed", ex.getMethod(), allowed);
     }
 
     @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnsupportedMediaType(
             org.springframework.web.HttpMediaTypeNotSupportedException ex) {
-        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-                .body(ApiResponse.error(415,
-                        messages.get("error.request.mediaType", String.valueOf(ex.getContentType()))));
+        return fail(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "error.request.mediaType", String.valueOf(ex.getContentType()));
     }
 
     @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingParam(
             org.springframework.web.bind.MissingServletRequestParameterException ex) {
-        return ResponseEntity.badRequest().body(ApiResponse.error(400,
-                messages.get("error.request.missingParam", ex.getParameterName())));
+        return fail(HttpStatus.BAD_REQUEST, "error.request.missingParam", ex.getParameterName());
     }
 
     /** Violations on @RequestParam / @PathVariable, which bypass @Valid. */
@@ -246,7 +251,8 @@ public class GlobalExceptionHandler {
         String detail = ex.getConstraintViolations().stream()
                 .map(v -> v.getPropertyPath() + " " + v.getMessage())
                 .collect(Collectors.joining("; "));
-        return ResponseEntity.badRequest().body(ApiResponse.error(400, detail));
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(400, "error.request.validation", detail));
     }
 
     /* ---- Everything else ------------------------------------------------ */
@@ -259,7 +265,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(500, messages.get("error.request.internal")));
+        return fail(HttpStatus.INTERNAL_SERVER_ERROR, "error.request.internal");
     }
 }

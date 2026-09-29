@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.UUID;
 
 /** Milestone 8 — opening bills, editing the basket, and the money arithmetic. */
 @SpringBootTest
@@ -40,7 +41,7 @@ class OrderControllerTest {
 	}
 
 	private JsonNode openAt(long tableId) throws Exception {
-		MvcResult res = mvc.perform(post("/api/orders")
+		MvcResult res = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"tableId\":%d,\"guestCount\":4}".formatted(tableId)))
@@ -84,7 +85,7 @@ class OrderControllerTest {
 	@Test
 	@DisplayName("opening at a table that does not exist is a 404")
 	void unknownTable() throws Exception {
-		mvc.perform(post("/api/orders")
+		mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
@@ -210,7 +211,7 @@ class OrderControllerTest {
 	void cancelFreesTable() throws Exception {
 		long id = openAt(9).path("id").asLong();
 
-		mvc.perform(post("/api/orders/" + id + "/cancel")
+		mvc.perform(post("/api/orders/" + id + "/cancel").header("Idempotency-Key", UUID.randomUUID().toString())
 						.header("Authorization", "Bearer " + token))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.status").value("CANCELLED"));

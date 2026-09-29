@@ -9,7 +9,7 @@
  * Exits 0 when every call answered as expected, 1 otherwise, so it can gate a
  * deploy or run in CI.
  *
- * This is not a replacement for the test suite — those 166 tests cover the
+ * This is not a replacement for the test suite — those 200 tests cover the
  * branches this cannot reach, roll back after themselves, and run without a
  * server. What this adds is the one thing they cannot: proof that the wired,
  * running application answers correctly over real HTTP, through the filter
@@ -51,10 +51,34 @@ if (!["localhost", "127.0.0.1", "::1"].includes(host) && process.env.SMOKE_ALLOW
 
 const results = [];
 
-async function call(label, method, path, { tok, body, expect = [200, 201], raw = false } = {}) {
+/*
+ * Mirrors IdempotencyFilter.REQUIRED on the backend and IDEMPOTENT_ROUTES in
+ * the frontend client. Three copies of one list is two too many, but the
+ * alternative is the server publishing it and every caller fetching it before
+ * its first write, which is worse for five routes.
+ */
+const IDEMPOTENT = [
+  /^\/orders$/,
+  /^\/orders\/[^/]+\/pay$/,
+  /^\/orders\/[^/]+\/cancel$/,
+  /^\/stock\/[^/]+\/adjust$/,
+  /^\/purchases\/[^/]+\/receive$/,
+];
+
+function idempotencyKey(method, path) {
+  if (method !== "POST") return null;
+  const clean = path.split("?")[0];
+  return IDEMPOTENT.some((r) => r.test(clean)) ? crypto.randomUUID() : null;
+}
+
+async function call(label, method, path, { tok, body, expect = [200, 201], raw = false, idem } = {}) {
   const headers = {};
   if (tok) headers.Authorization = "Bearer " + tok;
   if (body !== undefined) headers["Content-Type"] = "application/json";
+  // `idem` lets a caller pin the key, which is how the replay check below
+  // sends the same intent twice.
+  const key = idem ?? idempotencyKey(method, path);
+  if (key) headers["Idempotency-Key"] = key;
 
   let status = 0, text = "", json = null;
   try {
@@ -281,6 +305,59 @@ async function main() {
   await call("fetch receipt", "GET", `/orders/${order?.id}/receipt`, { tok: posTok });
   const order2 = await call("open a second bill", "POST", "/orders", { tok: posTok, body: { tableId: 6 } });
   await call("cancel order", "POST", `/orders/${order2?.id}/cancel`, { tok: posTok });
+
+  /* ---- idempotency, against the running server -------------------------
+     The suite proves this with MockMvc; what it cannot prove is that the
+     filter is actually in the chain of the assembled application. A key that
+     is silently ignored looks exactly like one that works, right up until two
+     bills exist for one sale. */
+  const sameKey = crypto.randomUUID();
+  const firstTry = await call("open a bill with a fixed key", "POST", "/orders",
+    { tok: posTok, body: { tableId: 8 }, idem: sameKey });
+  const replay = await call("repeat it with the same key", "POST", "/orders",
+    { tok: posTok, body: { tableId: 8 }, idem: sameKey });
+
+  results.push({
+    label: "the repeat returned the first bill, not a second one",
+    method: "POST", path: "/orders", status: replay?.invoiceNo === firstTry?.invoiceNo ? 200 : 0,
+    ok: Boolean(firstTry?.invoiceNo) && replay?.invoiceNo === firstTry?.invoiceNo,
+    expect: [200],
+    msg: `first ${firstTry?.invoiceNo ?? "?"}, repeat ${replay?.invoiceNo ?? "?"}`,
+  });
+
+  await call("cancel the idempotency bill", "POST", `/orders/${firstTry?.id}/cancel`, { tok: posTok });
+  await call("a protected write with no key is refused", "POST", "/orders",
+    { tok: posTok, body: { tableId: 8 }, idem: "", expect: [400] });
+
+  /* ---- audit ------------------------------------------------------------
+     Written by a Hibernate listener rather than by any service, so the only
+     way to know it is wired into the running application is to change
+     something and look. */
+  const audit = await call("audit log", "GET", "/audit", { tok: adminTok });
+
+  // A 200 only proves the endpoint answers. The listener is registered against
+  // Hibernate at startup, outside anything the suite exercises, so the question
+  // that matters is whether the products and categories created above actually
+  // produced entries.
+  results.push({
+    label: "the changes made by this run were recorded",
+    method: "GET", path: "/audit", status: audit?.totalElements > 0 ? 200 : 0,
+    ok: (audit?.totalElements ?? 0) > 0,
+    expect: [200],
+    msg: `${audit?.totalElements ?? 0} entries`,
+  });
+  await call("audit log, filtered by entity", "GET", "/audit?entity=Product&size=5", { tok: adminTok });
+  // The date parameters are the ones that actually broke: PostgreSQL could not
+  // infer the type of a timestamp compared only against NULL, where H2 could.
+  // Every combination of supplied and omitted filters is a different query.
+  await call("audit log, filtered by date", "GET",
+    `/audit?from=2020-01-01&to=${today()}`, { tok: adminTok });
+  await call("audit log, one date filter only", "GET", "/audit?from=2020-01-01", { tok: adminTok });
+  await call("audit log, filtered by user", "GET", "/audit?userId=admin&size=5", { tok: adminTok });
+  await call("audit log is admin-only", "GET", "/audit", { tok: posTok, expect: [403] });
+  await call("audit log cannot be written to", "POST", "/audit", {
+    tok: adminTok, body: {}, expect: [405],
+  });
 
   /* ---- reports, dashboards, settings ----------------------------------- */
   const d = today();
