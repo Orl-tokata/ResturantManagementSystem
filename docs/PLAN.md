@@ -243,9 +243,64 @@ for the thing that actually happens — a migration that will not apply, a
 Khmer string that clips, a test that fails only on CI. This project has already
 spent real time on all three.
 
-Phase 2 (kitchen display, supplier ledger, roles-as-data, warehouse transfers,
-buy-X-get-Y) is not estimated here. Estimating work three months out is
-fiction.
+Phase 2 is not estimated here. Estimating work three months out is fiction.
+§4a lists what is in it.
+
+---
+
+## 4a. Phase 2
+
+Held deliberately, not forgotten. Nothing here fixes a number that is currently
+wrong, which is what separates it from Phase 1.
+
+| | Work | Waits on |
+|---|---|---|
+| Q1 | Kitchen display (SCREENS §3.9) | P8 — modifiers are most of what a cook reads |
+| Q2 | **Staff attendance** — see below | P3 |
+| Q3 | Supplier ledger; `supplier.balance` derived (ERD §1.3) | P2 |
+| Q4 | Roles and permissions as data (ARCHITECTURE §5) | P1 |
+| Q5 | Warehouse transfers | a second warehouse existing |
+| Q6 | Buy-X-get-Y promotions | P7 — it interacts with returns |
+| Q7 | Customer-facing display | a second monitor |
+
+### Q2 — Staff attendance
+
+`staff.shift` says a person is scheduled for mornings. `staff.status` can say
+`ON_LEAVE`. Neither records that anyone actually turned up, and `staff.salary`
+is a stored figure computed from nothing.
+
+**Scope, deliberately small:**
+
+- Record **raw facts only** — clock in, clock out, who recorded it. Compute
+  nothing. A person works out pay from the hours.
+- **Derive cashier attendance from `cash_shift`.** P3 already makes opening a
+  shift a gate: no open shift, no POS. That `opened_at` is the cashier's
+  arrival, recorded because they cannot sell without it. Asking them to clock
+  in *as well* is two rituals for one arrival, and the one that is not enforced
+  is the one people skip. Manual clock-in is for staff with no till — chefs,
+  waiters, cleaners.
+- **Corrections go through the audit log**, which P0d already built. Attendance
+  a manager can edit silently is worthless the moment there is a dispute, and
+  that is the only moment it matters.
+
+**Explicitly not in scope:** leave balances, overtime calculation, payroll
+export, approval workflows.
+
+> **Why not more.** This is a point of sale, not an HR system. Attendance has
+> real depth — leave, overtime rules, public holidays, late penalties — and
+> Cambodia's overtime and holiday rules are specific enough that software
+> computing pay wrongly is a liability rather than a feature. Recording hours
+> and letting a person do the arithmetic is the honest version. Half-built
+> attendance is worse than none, because a number on a screen gets trusted.
+
+One table (`attendance`: staff, branch, clock-in, clock-out, source, note,
+recorded-by), a "who is in now" board, and a per-staff month view. Roughly
+3–4 days.
+
+**Sequenced after P3, not before**, because P3 establishes the shift and
+produces half the data — building attendance first means building it twice.
+It is also not in the pasted brief; it is an addition, and worth naming as a
+choice rather than a requirement.
 
 ---
 

@@ -239,6 +239,30 @@ reason the screen exists.
 Polls until WebSocket lands (ARCHITECTURE §7). One tap advances a card. Tap
 targets no smaller than 80px: the people using this have wet hands.
 
+### 3.10 Staff attendance — Phase 2
+
+| | |
+|---|---|
+| Route | `/admin/attendance`, `/admin/attendance/[staffId]` |
+| Roles | ADMIN, MANAGER |
+
+A board of who is in now, and a month view per person. Clock in and out record
+raw times and nothing else; the arithmetic that turns hours into pay stays with
+a person, because Cambodia's overtime and holiday rules are specific enough
+that computing it wrongly is a liability rather than a feature.
+
+**Cashiers do not clock in.** §3.1 already makes opening a shift a gate — no
+open shift, no POS — so `cash_shift.opened_at` is their arrival, recorded
+because they cannot sell without it. A second ritual for the same arrival is
+the one people skip, and attendance nobody maintains is worse than none: it
+looks authoritative and is not. Manual clock-in is for staff with no till.
+
+Corrections go through the audit log. Attendance a manager can edit silently is
+worthless the moment there is a dispute, and that is the only moment it matters.
+
+Scoped and sequenced in PLAN.md §4a Q2. Not in the pasted brief — an addition,
+and worth naming as a choice.
+
 ---
 
 ## 4. Screens the brief asks for that I would not build
@@ -305,10 +329,12 @@ guessing, and the cashier decides.
 | | Now | Phase 1 | Later |
 |---|---|---|---|
 | Auth | 4 | 4 | 4 |
-| Admin | 11 | 18 | 21 |
+| Admin | 11 | 18 | 23 |
 | Cashier | 7 | 6 | 6 |
 | Kitchen | 0 | 0 | 1 |
-| **Total** | **22** | **28** | **32** |
+| **Total** | **22** | **28** | **34** |
+
+Later gained two: the attendance board and its per-person month view (§3.10).
 
 Cashier goes *down* by one — that is §2.1, payment folding into the order
 screen. It is the only count in this document I am pleased about.
