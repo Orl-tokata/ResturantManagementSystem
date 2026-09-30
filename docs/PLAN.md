@@ -143,14 +143,32 @@ any future point, which is the entire argument for doing it first.
 *Visible result:* a branch badge in the header. That is all, and it is correct
 that it is all.
 
-### P5 — POS consolidation · ~3 days · pull forward to here
+### P5 — POS consolidation · **done**
 
-SCREENS §2.1. Payment becomes a panel on `/cashier/order`; `/cashier/payment`
-is deleted. Frontend only, no migration, no API change.
+SCREENS §2.1. Payment is a panel on `/cashier/order`; `/cashier/payment` is
+deleted, along with its nav entry and the three strings only it used. Frontend
+only, no migration, no API change.
 
-Four screens per sale become two. The cashier screen count goes **down**.
+Four screens per sale became two. The cashier screen count went **down**.
 
-*Risk:* low, and reversible — it is a routing change.
+The tender arithmetic moved to `lib/payment.ts` as a pure function with its own
+tests, following the precedent `landing.ts` set. `canPay` and the reason it is
+disabled are derived together rather than as two expressions listing the same
+conditions in the same order — which invites a disabled button with no reason
+given, or a reason beside an enabled one.
+
+Two bugs it turned up, both older than this package:
+
+- `AWAITING_PAYMENT` was missing from the frontend's `OrderStatus`, so a bill
+  with a live KHQR code fell through to the already-cancelled branch. A cashier
+  watching a customer scan was told the bill had been cancelled.
+- `Number(".")` is NaN, and the keypad allows a lone decimal point as the first
+  press. It poisoned the change, the comparison and the message at once.
+
+The panel holds one idempotency key for its lifetime, so a retry after a
+timeout settles the same bill rather than a second one — the case P0c built the
+mechanism for, and the first place needing a *stable* key rather than the
+interceptor's per-request one.
 
 ### P2 — Money integrity · ~5 days
 
@@ -208,7 +226,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 |---|---|
 | P0 Foundations | 3 |
 | P1 Multi-branch | 4 |
-| P5 POS consolidation | 3 |
+| P5 POS consolidation | 3 · **done** |
 | P2 Money integrity | 5 |
 | P3 Shift and cash | 4 |
 | P4 Stock ledger | 4 |
@@ -279,7 +297,6 @@ Blocking, in the order they bite:
    rule is a database guarantee or a service-layer hope.
 2. **`code` on the response envelope?** — P0b. One line in `ApiResponse`.
 3. **Historical margin labelled estimated?** — P2. Affects what reports say.
-4. **Collapsing payment into the order screen?** — P5. Deletes a route.
 5. **Offline scope: render-only, queue nothing?** — SCREENS §6.
 6. **`orders` keeps its name** rather than becoming `sale`? — ERD §2.
 
