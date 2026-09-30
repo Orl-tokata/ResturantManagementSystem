@@ -1,5 +1,4 @@
 import {
-  BadgeDollarSign,
   BookUser,
   Boxes,
   ClipboardList,
@@ -47,7 +46,6 @@ export const CASHIER_MENU: MenuItem[] = [
   { href: "/cashier", icon: Home, key: "home" },
   { href: "/cashier/order", icon: ShoppingCart, key: "order" },
   { href: "/cashier/tables", icon: BookUser, key: "tables" },
-  { href: "/cashier/payment", icon: BadgeDollarSign, key: "payment" },
   { href: "/cashier/receipt", icon: Receipt, key: "receipt" },
   { href: "/cashier/history", icon: Clock, key: "history" },
   { href: "/cashier/profile", icon: UserRound, key: "profile" },

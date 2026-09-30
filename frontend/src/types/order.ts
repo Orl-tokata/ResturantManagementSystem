@@ -1,4 +1,10 @@
-export type OrderStatus = "OPEN" | "PAID" | "CANCELLED";
+/**
+ * Mirrors the backend enum. AWAITING_PAYMENT means a KHQR code is on screen
+ * and the till is waiting for Bakong — the bill is frozen, not settled and not
+ * cancelled. It was missing here, so screens comparing against "CANCELLED" as
+ * the only other possibility told cashiers a live bill had been cancelled.
+ */
+export type OrderStatus = "OPEN" | "AWAITING_PAYMENT" | "PAID" | "CANCELLED";
 export type PaymentMethod = "CASH" | "CARD" | "KHQR" | "TRANSFER";
 
 export interface OrderItem {

@@ -18,7 +18,6 @@
     "password": "Change password",
     "home": "Home",
     "order": "Order",
-    "payment": "Payment",
     "receipt": "Receipt",
     "history": "History",
     "profile": "Profile",
@@ -200,11 +199,8 @@
     "confirm": "Settle payment",
     "backToOrder": "Back to order",
     "shortfall": "Less than the amount due",
-    "noOrder": "No order selected",
-    "pickTable": "Pick a table",
     "alreadyPaid": "This bill is already paid",
     "alreadyCancelled": "This bill was cancelled",
-    "viewReceipt": "View receipt",
     "items": "items",
     "noItems": "This bill has no items",
     "enterTendered": "Enter the amount received",
@@ -215,7 +211,8 @@
     "khqrAbandon": "Cancel and pay another way",
     "khqrAlt": "KHQR payment code for {amount}",
     "khqrDrawFailed": "Could not draw the code",
-    "khqrUnverified": "This code is real and can be scanned, but no Bakong token is set, so the till cannot confirm the money arrived. Check the merchant app before handing over the bill."
+    "khqrUnverified": "This code is real and can be scanned, but no Bakong token is set, so the till cannot confirm the money arrived. Check the merchant app before handing over the bill.",
+    "awaitingKhqr": "A QR code is showing. Wait for the payment, or cancel the code to use another method."
   },
   "receipt": {
     "title": "Receipt",

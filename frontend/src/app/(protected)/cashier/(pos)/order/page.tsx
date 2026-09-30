@@ -8,6 +8,7 @@ import { Minus, Plus, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Clock } from "@/components/layout/Clock";
 import { Alert, Button, SearchBar } from "@/components/ui";
+import { PaymentPanel } from "@/components/pos/PaymentPanel";
 import { get, post, put, type PageResponse } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import { pickName } from "@/i18n/name";
@@ -35,6 +36,8 @@ function PosScreen() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  /* Settling happens here rather than on a screen of its own — SCREENS.md 2.1. */
+  const [paying, setPaying] = useState(false);
 
   /* ---- Data ---------------------------------------------------------- */
 
@@ -146,11 +149,16 @@ function PosScreen() {
     return { subtotal, vat, total: subtotal + vat, rate };
   }, [cart, order.data?.vatRate]);
 
+  /*
+   * The basket has to reach the server before it can be paid for — the panel
+   * settles whatever the server holds, not what is on screen. Opening the panel
+   * only after a successful save is what keeps those two the same thing.
+   */
   async function saveThenPay() {
     setError(null);
     try {
       if (dirty) await saveItems.mutateAsync(cart);
-      router.push(`/cashier/payment?orderId=${order.data!.id}`);
+      setPaying(true);
     } catch (e) {
       setError(apiError(e, "saveOrder"));
     }
@@ -215,9 +223,18 @@ function PosScreen() {
       )}
 
       {/* ---- body ---- */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[92px_1fr_330px]">
+      <div
+        className={`grid min-h-0 flex-1 grid-cols-1 ${
+          paying ? "md:grid-cols-[92px_1fr_420px]" : "md:grid-cols-[92px_1fr_330px]"
+        }`}
+      >
         {/* category rail */}
-        <div className="scroll-invert hidden flex-col gap-1.5 overflow-y-auto bg-teal-800 p-1.5 md:flex">
+        <div
+          aria-hidden={paying}
+          className={`scroll-invert hidden flex-col gap-1.5 overflow-y-auto bg-teal-800 p-1.5 md:flex ${
+            paying ? "pointer-events-none opacity-40" : ""
+          }`}
+        >
           <button
             type="button"
             onClick={() => setCategoryId(null)}
@@ -243,8 +260,14 @@ function PosScreen() {
           ))}
         </div>
 
-        {/* product grid */}
-        <div className="grid auto-rows-min grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2.5 overflow-y-auto bg-ink-100 p-3">
+        {/* product grid — inert while settling, so a dish cannot be added
+            after the amount tendered has been counted out */}
+        <div
+          aria-hidden={paying}
+          className={`grid auto-rows-min grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2.5 overflow-y-auto bg-ink-100 p-3 ${
+            paying ? "pointer-events-none opacity-40" : ""
+          }`}
+        >
           {products.isLoading && (
             <p className="col-span-full py-10 text-center text-sm text-ink-500">{tc("loading")}</p>
           )}
@@ -284,7 +307,11 @@ function PosScreen() {
             <span className="font-[family-name:var(--font-num)]">{cart.length}</span>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* A floor rather than min-h-0: on a phone the payment panel would
+              otherwise take the whole column and squeeze the bill to nothing,
+              and keeping the bill in view is the point of settling here. One
+              line and a scrollbar is little, but it is not nothing. */}
+          <div className="min-h-[3.25rem] flex-1 overflow-y-auto">
             {cart.length === 0 ? (
               <p className="p-6 text-center text-xs text-ink-500">
                 {t("noItems")}
@@ -343,8 +370,13 @@ function PosScreen() {
             )}
           </div>
 
-          {/* totals */}
-          <div className="border-t-2 border-navy-800 bg-[#f7edd8] px-3 py-2.5 text-sm">
+          {/* totals — the local estimate, for while the cashier is tapping.
+              The panel below shows the server's figures instead. */}
+          <div
+            className={`border-t-2 border-navy-800 bg-[#f7edd8] px-3 py-2.5 text-sm ${
+              paying ? "hidden" : ""
+            }`}
+          >
             <div className="flex justify-between py-0.5">
               <span>{tc("subtotal")}</span>
               <b className="font-[family-name:var(--font-num)]">{formatUsd(totals.subtotal)}</b>
@@ -368,33 +400,41 @@ function PosScreen() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-2.5">
-            <Button
-              variant="light"
-              onClick={() => saveItems.mutate(cart)}
-              loading={saveItems.isPending}
-              disabled={!order.data || !dirty}
-            >
-              💾 {tc("save")}
-            </Button>
-            <Button
-              variant="accent"
-              onClick={saveThenPay}
-              disabled={!order.data || cart.length === 0}
-              loading={saveItems.isPending}
-            >
-              💵 {t("pay")}
-            </Button>
-            <Button
-              variant="danger"
-              className="col-span-2"
-              onClick={() => cancelOrder.mutate()}
-              loading={cancelOrder.isPending}
-              disabled={!order.data}
-            >
-              {t("cancelBill")}
-            </Button>
-          </div>
+          {paying && order.data ? (
+            <PaymentPanel
+              order={order.data}
+              onPaid={() => router.replace(`/cashier/receipt/${order.data!.id}`)}
+              onBack={() => setPaying(false)}
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-2 p-2.5">
+              <Button
+                variant="light"
+                onClick={() => saveItems.mutate(cart)}
+                loading={saveItems.isPending}
+                disabled={!order.data || !dirty}
+              >
+                💾 {tc("save")}
+              </Button>
+              <Button
+                variant="accent"
+                onClick={saveThenPay}
+                disabled={!order.data || cart.length === 0}
+                loading={saveItems.isPending}
+              >
+                💵 {t("pay")}
+              </Button>
+              <Button
+                variant="danger"
+                className="col-span-2"
+                onClick={() => cancelOrder.mutate()}
+                loading={cancelOrder.isPending}
+                disabled={!order.data}
+              >
+                {t("cancelBill")}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
