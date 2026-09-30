@@ -230,9 +230,9 @@
     "comeAgain": "Please come again",
     "newOrder": "New order",
     "notPaid": "This bill is not paid",
-    "pickFirst": "Choose a receipt first",
-    "pickHelp": "A receipt belongs to a specific bill. Pick one from the order history, or take a new order and settle it.",
-    "orderHistory": "Order history"
+    "orderHistory": "Order history",
+    "noSalesYet": "No sales yet",
+    "noSalesHelp": "Receipts appear here once a bill has been settled. Take an order to make the first one."
   },
   "history": {
     "title": "Order history",
