@@ -17,7 +17,6 @@
     "settings": "Settings",
     "password": "Change password",
     "home": "Home",
-    "order": "Order",
     "receipt": "Receipt",
     "history": "History",
     "profile": "Profile",
@@ -175,10 +174,7 @@
     "pay": "Pay",
     "cancelBill": "Cancel bill",
     "cashier": "Cashier",
-    "pickTableFirst": "Choose a table first",
-    "table": "Table",
-    "notSelected": "none selected",
-    "backToTables": "Back to tables"
+    "table": "Table"
   },
   "tables": {
     "title": "Table list",

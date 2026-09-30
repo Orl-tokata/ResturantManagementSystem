@@ -11,7 +11,6 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
-  ShoppingCart,
   Tags,
   TrendingUp,
   Truck,
@@ -44,9 +43,14 @@ export const ADMIN_MENU: MenuItem[] = [
   { href: "/admin/change-password", icon: KeyRound, key: "password" },
 ];
 
+/*
+ * No "Order" entry. Ordering happens against a table, so /cashier/order needs a
+ * tableId and a menu link has none — every click on it landed on a dead end
+ * with no sidebar to leave by. Tables is the way in, and the home screen
+ * already offers both a New order button and a link into each open bill.
+ */
 export const CASHIER_MENU: MenuItem[] = [
   { href: "/cashier", icon: Home, key: "home" },
-  { href: "/cashier/order", icon: ShoppingCart, key: "order" },
   { href: "/cashier/tables", icon: BookUser, key: "tables" },
   { href: "/cashier/receipt", icon: Receipt, key: "receipt" },
   { href: "/cashier/history", icon: Clock, key: "history" },

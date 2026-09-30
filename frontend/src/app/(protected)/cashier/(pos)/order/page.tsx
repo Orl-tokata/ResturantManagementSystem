@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -164,20 +164,19 @@ function PosScreen() {
     }
   }
 
-  /* ---- No table chosen ------------------------------------------------- */
+  /* ---- No table chosen -------------------------------------------------
+     A bookmark, a typed URL, or a back button after the bill was settled. Send
+     them to the table picker rather than showing a card with one button and no
+     sidebar to leave by — it is where they were trying to get to anyway. */
+
+  useEffect(() => {
+    if (!tableId) router.replace("/cashier/tables");
+  }, [tableId, router]);
 
   if (!tableId) {
     return (
-      <div className="grid min-h-screen place-items-center bg-ink-100 p-6">
-        <div className="max-w-md rounded-md border border-ink-200 bg-white p-8 text-center shadow-sm">
-          <div className="mb-2 text-4xl">🪑</div>
-          <h1 className="mb-1 text-lg font-bold">{t("pickTableFirst")}</h1>
-          <Link href="/cashier/tables">
-            <Button variant="accent" size="lg">
-              {t("backToTables")}
-            </Button>
-          </Link>
-        </div>
+      <div className="grid min-h-screen place-items-center bg-ink-100 text-sm text-ink-500">
+        …
       </div>
     );
   }
