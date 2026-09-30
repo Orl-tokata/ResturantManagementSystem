@@ -93,10 +93,30 @@ public class AuthService {
      * so the failed-attempt counter and lockout on {@link UserInfm} are actually
      * maintained — a plain {@code DaoAuthenticationProvider} would not touch them.
      */
-    @Transactional
+    /*
+     * noRollbackFor is load-bearing, not tidiness.
+     *
+     * BadCredentialsException is a RuntimeException, so a plain @Transactional
+     * rolled the whole method back — including the save that had just recorded
+     * the failed attempt. The counter went back to zero every time, never
+     * reached five, and the account never locked. The lockout had never once
+     * worked; the log line below printed "attempt 1" on the fiftieth guess,
+     * because the object in memory incremented and the row never did.
+     *
+     * A failed sign-in is the one thing that must survive the failure.
+     */
+    @Transactional(noRollbackFor = BadCredentialsException.class)
     public LoginResult login(LoginRequest request) {
         UserInfm user = userRepository.findByUserId(request.username())
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
+
+        // An automatic lock whose fifteen minutes are up is cleared here rather
+        // than merely ignored, so the row stops claiming to be locked and the
+        // admin screen does not show a lock that no longer applies.
+        if (user.clearExpiredLock()) {
+            userRepository.save(user);
+            log.info("Automatic lock on '{}' expired", user.getUserId());
+        }
 
         if (user.isLocked()) {
             // The message is not used: the handler answers LockedException with

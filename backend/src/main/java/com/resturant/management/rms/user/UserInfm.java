@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -26,6 +27,16 @@ import java.util.List;
 public class UserInfm implements UserDetails {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
+
+    /**
+     * How long an automatic lock lasts.
+     *
+     * <p>Long enough that guessing is pointless — with the rate limiter's ten
+     * attempts a minute, five guesses then a quarter of an hour's wait is about
+     * twenty an hour — and short enough that a cashier who fat-fingered their
+     * password during service is not out of action for the evening.
+     */
+    private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,6 +74,9 @@ public class UserInfm implements UserDetails {
     @Builder.Default
     @Column(name = "login_failed_cnt", nullable = false)
     private Integer loginFailedCnt = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
 
     @Column(name = "lst_lgn_dtm")
     private LocalDateTime lstLgnDtm;
@@ -108,7 +122,7 @@ public class UserInfm implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !"Y".equals(lockYn);
+        return !isLocked();
     }
 
     @Override
@@ -127,15 +141,52 @@ public class UserInfm implements UserDetails {
         this.loginFailedCnt = (this.loginFailedCnt == null) ? 1 : this.loginFailedCnt + 1;
         if (this.loginFailedCnt >= MAX_FAILED_ATTEMPTS) {
             this.lockYn = "Y";
+            this.lockedUntil = LocalDateTime.now().plus(LOCK_DURATION);
         }
     }
 
     public void resetFailedLoginAttempts() {
         this.loginFailedCnt = 0;
         this.lockYn = "N";
+        this.lockedUntil = null;
     }
 
+    /**
+     * Locked right now.
+     *
+     * <p>A null {@code lockedUntil} on a locked account means an administrator
+     * set it, and it stays until one lifts it. A time in the past means an
+     * automatic lock that has served its purpose — reported as unlocked here,
+     * and cleared for real by {@link #clearExpiredLock()} on the next attempt.
+     */
     public boolean isLocked() {
-        return "Y".equals(this.lockYn);
+        if (!"Y".equals(this.lockYn)) return false;
+        return this.lockedUntil == null || LocalDateTime.now().isBefore(this.lockedUntil);
+    }
+
+    /**
+     * Drops an automatic lock whose time has passed, so the row says what is
+     * true rather than leaving a stale 'Y' for a screen to misreport.
+     *
+     * @return whether anything changed, so the caller knows to save
+     */
+    public boolean clearExpiredLock() {
+        boolean expired = "Y".equals(this.lockYn)
+                && this.lockedUntil != null
+                && !LocalDateTime.now().isBefore(this.lockedUntil);
+        if (expired) {
+            resetFailedLoginAttempts();
+        }
+        return expired;
+    }
+
+    /** An administrator lifting a lock by hand, automatic or not. */
+    public void unlock() {
+        resetFailedLoginAttempts();
+    }
+
+    /** Null unless locked; the moment an automatic lock lifts. */
+    public LocalDateTime lockedUntilOrNull() {
+        return isLocked() ? this.lockedUntil : null;
     }
 }

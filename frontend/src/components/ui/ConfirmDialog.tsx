@@ -38,7 +38,11 @@ export function ConfirmDialog({
   // the ones it wants to override.
   const heading = title ?? t("confirmDelete");
   const body = message ?? t("confirmDeleteMessage", { name: "" });
-  const hint = detail ?? t("cannotUndo");
+  // Only a destructive action gets the irreversibility warning by default. It
+  // used to be unconditional, so the first non-destructive dialog — unlocking
+  // an account, which can simply be done again — told the reader it could not
+  // be undone. A caller wanting a hint on one of those passes `detail`.
+  const hint = detail ?? (destructive ? t("cannotUndo") : undefined);
   const confirmText = confirmLabel ?? t("yesDelete");
   const cancelText = cancelLabel ?? t("no");
 

@@ -329,6 +329,29 @@ async function main() {
   await call("a protected write with no key is refused", "POST", "/orders",
     { tok: posTok, body: { tableId: 8 }, idem: "", expect: [400] });
 
+  /* ---- accounts and locks -----------------------------------------------
+     The lockout counter is written on a path that then throws, which is how it
+     came to be rolled back and silently never work. Exercising it against the
+     running server is the only way to see that it counts. */
+  const accounts = await call("account list", "GET", "/users", { tok: adminTok });
+  await call("account list is admin-only", "GET", "/users", { tok: posTok, expect: [403] });
+
+  const smokeAccount = (accounts?.content ?? []).find((a) => a.username === USER);
+  if (smokeAccount) {
+    await call("unlock an account that is not locked", "POST", `/users/${smokeAccount.id}/unlock`,
+      { tok: adminTok });
+    results.push({
+      label: "the account list reports lock state without any password field",
+      method: "GET", path: "/users",
+      status: 200,
+      ok: typeof smokeAccount.locked === "boolean"
+        && !JSON.stringify(accounts).includes("userPwd")
+        && !JSON.stringify(accounts).includes("$2a$"),
+      expect: [200],
+      msg: `locked=${smokeAccount.locked}, failedAttempts=${smokeAccount.failedAttempts}`,
+    });
+  }
+
   /* ---- audit ------------------------------------------------------------
      Written by a Hibernate listener rather than by any service, so the only
      way to know it is wired into the running application is to change

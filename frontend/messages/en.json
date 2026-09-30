@@ -22,7 +22,8 @@
     "history": "History",
     "profile": "Profile",
     "logout": "Log out",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "users": "Accounts"
   },
   "common": {
     "save": "Save",
@@ -78,7 +79,8 @@
     "notPermitted": "Not permitted",
     "showingNone": "Showing 0 of 0",
     "rowsPerPage": "Rows",
-    "allRows": "All"
+    "allRows": "All",
+    "role": "Role"
   },
   "auth": {
     "loginTitle": "Restaurant Management System",
@@ -552,7 +554,8 @@
     "exportReport": "Could not export the report",
     "saveSettings": "Could not save the settings",
     "createAccount": "Could not create the login",
-    "khqrFailed": "Could not start the KHQR payment"
+    "khqrFailed": "Could not start the KHQR payment",
+    "unlock": "Could not unlock that account"
   },
   "a11y": {
     "edit": "Edit {name}",
@@ -593,5 +596,22 @@
       "UPDATE": "Changed",
       "DELETE": "Deleted"
     }
+  },
+  "users": {
+    "help": "Five wrong passwords lock an account for 15 minutes. Unlock one here if someone cannot wait.",
+    "username": "Account",
+    "failedAttempts": "Failed tries",
+    "lastLogin": "Last signed in",
+    "neverSignedIn": "Never",
+    "ok": "Active",
+    "locked": "Locked",
+    "disabled": "Disabled",
+    "until": "until {time}",
+    "lockedByAdmin": "set by an administrator",
+    "unlock": "Unlock",
+    "unlockTitle": "Unlock this account?",
+    "unlockConfirm": "{name} will be able to sign in again, and the failed-attempt count is cleared.",
+    "unlocked": "{name} can sign in again",
+    "noAccounts": "No accounts"
   }
 }
