@@ -92,13 +92,11 @@ export default function CashierHomePage() {
       <h2 className="mb-3 text-xl font-semibold">{t("quickActions")}</h2>
 
       <div className="mb-4 flex flex-wrap gap-2">
+        {/* One button, not two. "Select table" and "New order" started the
+            same job — and the clearer-named one pointed at /cashier/order with
+            no tableId, which could only ever dead-end. */}
         <Link href="/cashier/tables">
           <Button variant="accent" size="lg">
-            🪑 {t("selectTable")}
-          </Button>
-        </Link>
-        <Link href="/cashier/order">
-          <Button variant="primary" size="lg">
             🛒 {t("newOrder")}
           </Button>
         </Link>

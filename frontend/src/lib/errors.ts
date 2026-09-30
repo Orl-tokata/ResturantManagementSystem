@@ -39,3 +39,15 @@ export function describeError(error: unknown): ErrorInfo {
   }
   return { kind: "unknown" };
 }
+
+/**
+ * The HTTP status of a failed request, or null when it never got a response.
+ *
+ * <p>Separate from {@link describeError}, which answers "what do I tell the
+ * reader". This answers "was that the answer I expected" — a 404 from
+ * `/orders/open` means the table has no bill yet, which is the ordinary case
+ * and not an error at all.
+ */
+export function httpStatus(error: unknown): number | null {
+  return axios.isAxiosError(error) ? (error.response?.status ?? null) : null;
+}

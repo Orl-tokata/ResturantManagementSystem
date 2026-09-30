@@ -11,10 +11,11 @@ import { Alert, Button, SearchBar } from "@/components/ui";
 import { PaymentPanel } from "@/components/pos/PaymentPanel";
 import { get, post, put, type PageResponse } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
+import { httpStatus } from "@/lib/errors";
 import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
-import type { Category, Product } from "@/types/master";
+import type { Category, DiningTable, Product } from "@/types/master";
 import type { CartLine, Order } from "@/types/order";
 
 function PosScreen() {
@@ -58,24 +59,88 @@ function PosScreen() {
     placeholderData: (prev) => prev,
   });
 
-  // Opening is idempotent per table on the server, so this both creates the
-  // bill and recovers the existing one after a reload.
+  /*
+   * Reads the bill for this table. Deliberately a GET.
+   *
+   * It used to POST /orders here, which meant loading the screen created a
+   * bill — burning an invoice number and marking the table occupied before a
+   * single dish was tapped. Open the POS, change your mind, walk away, and an
+   * empty bill sat on that table for the rest of the day. Five of the last
+   * twelve orders in the real database were created that way and contained
+   * nothing.
+   *
+   * A 404 is the ordinary answer here: this table has no bill yet.
+   */
   const order = useQuery({
     queryKey: ["order", "table", tableId],
-    queryFn: () => post<Order>("/orders", { tableId }),
+    queryFn: async () => {
+      try {
+        return await get<Order>("/orders/open", { tableId });
+      } catch (e) {
+        if (httpStatus(e) === 404) return null;
+        throw e;
+      }
+    },
     enabled: tableId > 0,
     staleTime: Infinity,
     retry: false,
   });
 
+  const bill = order.data ?? null;
+
+  /*
+   * The table's name, which until a bill exists has to come from somewhere
+   * else. Cheap, cached, and better than showing "Table 1" where every other
+   * screen says "Table 01".
+   */
+  const table = useQuery({
+    queryKey: ["table", tableId],
+    queryFn: () => get<DiningTable>(`/tables/${tableId}`),
+    enabled: tableId > 0,
+    staleTime: 5 * 60_000,
+  });
+
+  /**
+   * Creates the bill if this table has none yet, and returns it either way.
+   *
+   * <p>Called from saving and from paying — the two moments something real
+   * happens. POST /orders is idempotent per table on the server, so a racing
+   * second call returns the same bill rather than a second one.
+   */
+  const openBill = useMutation({
+    mutationFn: () => post<Order>("/orders", { tableId }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["tables"] });
+      /*
+       * Deliberately not written into ["order", "table", …].
+       *
+       * A bill created a moment ago has no items, and publishing it made the
+       * seeding block below see a new id and reset the basket to empty —
+       * losing what the cashier had just tapped, while the save that followed
+       * quietly succeeded. The screen showed nothing for a bill that had one
+       * line on the server.
+       *
+       * ensureBill hands the id straight to the caller, so nothing needs it in
+       * the cache. The save's own onSuccess publishes the bill once it has
+       * contents.
+       */
+    },
+  });
+
+  async function ensureBill(): Promise<Order> {
+    return bill ?? (await openBill.mutateAsync());
+  }
+
   // Seed the basket from the server exactly once per bill; after that the local
   // cart is the source of truth until it is saved. Adjusted during render
   // rather than in an effect, so the first paint already shows the lines.
+  // `dirty` guards it as well as the id: a server write arriving mid-edit must
+  // not overwrite what the cashier is still typing, whichever bill it is for.
   const [seededFor, setSeededFor] = useState<number | null>(null);
-  if (order.data && seededFor !== order.data.id) {
-    setSeededFor(order.data.id);
+  if (bill && seededFor !== bill.id && !dirty) {
+    setSeededFor(bill.id);
     setCart(
-      order.data.items.map((i) => ({
+      bill.items.map((i) => ({
         productId: i.productId ?? 0,
         productName: i.productName,
         unitPrice: i.unitPrice,
@@ -89,8 +154,11 @@ function PosScreen() {
   /* ---- Mutations ------------------------------------------------------ */
 
   const saveItems = useMutation({
-    mutationFn: (lines: CartLine[]) =>
-      put<Order>(`/orders/${order.data!.id}/items`, {
+    // The id is passed in rather than read from the query, because the bill may
+    // have been created moments earlier by ensureBill and the cache write that
+    // follows it has not necessarily landed yet.
+    mutationFn: ({ orderId, lines }: { orderId: number; lines: CartLine[] }) =>
+      put<Order>(`/orders/${orderId}/items`, {
         items: lines.map((l) => ({ productId: l.productId, qty: l.qty, note: l.note })),
       }),
     onSuccess: (updated) => {
@@ -100,12 +168,37 @@ function PosScreen() {
   });
 
   const cancelOrder = useMutation({
-    mutationFn: () => post<Order>(`/orders/${order.data!.id}/cancel`),
+    mutationFn: () => post<Order>(`/orders/${bill!.id}/cancel`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["tables"] });
       router.push("/cashier/tables");
     },
   });
+
+  /** Saves, creating the bill first if this is the first thing on it. */
+  async function save() {
+    setError(null);
+    try {
+      const b = await ensureBill();
+      await saveItems.mutateAsync({ orderId: b.id, lines: cart });
+    } catch (e) {
+      setError(apiError(e, "saveOrder"));
+    }
+  }
+
+  /**
+   * Leaving without ordering anything.
+   *
+   * <p>With no bill there is nothing to cancel — and nothing was ever created,
+   * which is the point of the change. Just go back to the tables.
+   */
+  function discard() {
+    if (!bill) {
+      router.push("/cashier/tables");
+      return;
+    }
+    cancelOrder.mutate();
+  }
 
   /* ---- Cart operations ------------------------------------------------ */
 
@@ -144,10 +237,10 @@ function PosScreen() {
 
   const totals = useMemo(() => {
     const subtotal = cart.reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
-    const rate = order.data?.vatRate ?? 10;
+    const rate = bill?.vatRate ?? 10;
     const vat = (subtotal * rate) / 100;
     return { subtotal, vat, total: subtotal + vat, rate };
-  }, [cart, order.data?.vatRate]);
+  }, [cart, bill?.vatRate]);
 
   /*
    * The basket has to reach the server before it can be paid for — the panel
@@ -157,7 +250,11 @@ function PosScreen() {
   async function saveThenPay() {
     setError(null);
     try {
-      if (dirty) await saveItems.mutateAsync(cart);
+      const b = await ensureBill();
+      // Always save before paying, not only when dirty: on a bill created two
+      // lines above, nothing has reached the server yet however clean the local
+      // cart looks.
+      await saveItems.mutateAsync({ orderId: b.id, lines: cart });
       setPaying(true);
     } catch (e) {
       setError(apiError(e, "saveOrder"));
@@ -204,9 +301,11 @@ function PosScreen() {
 
         <div className="shrink-0 text-right text-xs leading-tight">
           <b className="block text-sm">
-            {order.data?.tableName ?? `Table ${tableId}`}
+            {bill?.tableName ?? table.data?.name ?? `Table ${tableId}`}
           </b>
-          <span className="text-white/70">{order.data?.invoiceNo ?? "…"}</span>
+          {/* No number until there is a bill to number. Saying so beats an
+              ellipsis that never resolves. */}
+          <span className="text-white/70">{bill?.invoiceNo ?? t("notStarted")}</span>
         </div>
       </div>
 
@@ -399,38 +498,40 @@ function PosScreen() {
             )}
           </div>
 
-          {paying && order.data ? (
+          {paying && bill ? (
             <PaymentPanel
-              order={order.data}
-              onPaid={() => router.replace(`/cashier/receipt/${order.data!.id}`)}
+              order={bill}
+              onPaid={() => router.replace(`/cashier/receipt/${bill.id}`)}
               onBack={() => setPaying(false)}
             />
           ) : (
             <div className="grid grid-cols-2 gap-2 p-2.5">
               <Button
                 variant="light"
-                onClick={() => saveItems.mutate(cart)}
-                loading={saveItems.isPending}
-                disabled={!order.data || !dirty}
+                onClick={save}
+                loading={saveItems.isPending || openBill.isPending}
+                // Nothing to save, and nothing worth opening a bill for: an
+                // empty basket is exactly the case this change exists to stop
+                // from creating one.
+                disabled={!dirty || (cart.length === 0 && !bill)}
               >
                 💾 {tc("save")}
               </Button>
               <Button
                 variant="accent"
                 onClick={saveThenPay}
-                disabled={!order.data || cart.length === 0}
-                loading={saveItems.isPending}
+                disabled={cart.length === 0}
+                loading={saveItems.isPending || openBill.isPending}
               >
                 💵 {t("pay")}
               </Button>
               <Button
                 variant="danger"
                 className="col-span-2"
-                onClick={() => cancelOrder.mutate()}
+                onClick={discard}
                 loading={cancelOrder.isPending}
-                disabled={!order.data}
               >
-                {t("cancelBill")}
+                {bill ? t("cancelBill") : t("leave")}
               </Button>
             </div>
           )}

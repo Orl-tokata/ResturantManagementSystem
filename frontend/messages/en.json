@@ -22,7 +22,8 @@
     "profile": "Profile",
     "logout": "Log out",
     "audit": "Audit log",
-    "users": "Accounts"
+    "users": "Accounts",
+    "order": "Order"
   },
   "common": {
     "save": "Save",
@@ -156,7 +157,6 @@
     "occupied": "Occupied",
     "openBills": "Open bills",
     "quickActions": "Quick actions",
-    "selectTable": "Select table",
     "newOrder": "New order",
     "recentOrders": "Recent orders",
     "noOrders": "No orders yet",
@@ -174,7 +174,9 @@
     "pay": "Pay",
     "cancelBill": "Cancel bill",
     "cashier": "Cashier",
-    "table": "Table"
+    "table": "Table",
+    "notStarted": "New bill",
+    "leave": "Leave"
   },
   "tables": {
     "title": "Table list",

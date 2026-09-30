@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
   Receipt,
+  ShoppingCart,
   Settings,
   ShieldCheck,
   Tags,
@@ -44,14 +45,19 @@ export const ADMIN_MENU: MenuItem[] = [
 ];
 
 /*
- * No "Order" entry. Ordering happens against a table, so /cashier/order needs a
- * tableId and a menu link has none — every click on it landed on a dead end
- * with no sidebar to leave by. Tables is the way in, and the home screen
- * already offers both a New order button and a link into each open bill.
+ * "Order" points at the table picker, not at /cashier/order.
+ *
+ * Ordering happens against a table, so /cashier/order needs a tableId and a
+ * menu link has none — the old entry landed on a dead end every time, with no
+ * sidebar to leave by. But the label was never the problem: a cashier looks for
+ * where to take an order, not for furniture, and the admin menu already uses
+ * "Tables" for managing the table list, which is a different job.
+ *
+ * So the label names the task and the route is the screen that starts it.
  */
 export const CASHIER_MENU: MenuItem[] = [
   { href: "/cashier", icon: Home, key: "home" },
-  { href: "/cashier/tables", icon: BookUser, key: "tables" },
+  { href: "/cashier/tables", icon: ShoppingCart, key: "order" },
   { href: "/cashier/receipt", icon: Receipt, key: "receipt" },
   { href: "/cashier/history", icon: Clock, key: "history" },
   { href: "/cashier/profile", icon: UserRound, key: "profile" },
