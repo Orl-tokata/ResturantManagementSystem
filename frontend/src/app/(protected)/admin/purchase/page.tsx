@@ -39,7 +39,8 @@ import {
   type Supplier,
 } from "@/types/supply";
 
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 const STATUS_TONE: Record<PurchaseStatus, BadgeTone> = {
   PENDING: "warn",
@@ -65,6 +66,7 @@ export default function PurchasePage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PurchaseStatus | "">("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   const [creating, setCreating] = useState(false);
   const [supplierId, setSupplierId] = useState<number | "">("");
@@ -83,7 +85,7 @@ export default function PurchasePage() {
     search,
     status: status === "" ? undefined : status,
     page,
-    size: SIZE,
+    size: size,
   });
 
   const summary = useQuery({
@@ -218,7 +220,7 @@ export default function PurchasePage() {
   /* ---- columns ---- */
 
   const columns: Column<Purchase>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     { key: "po", header: t("poNo"), render: (r) => <span className="font-medium">{r.poNo}</span> },
     { key: "supplier", header: t("supplier"), render: (r) => r.supplierName ?? "—" },
     { key: "date", header: tc("date"), hideOnMobile: true, render: (r) => r.purchaseDate },
@@ -325,8 +327,12 @@ export default function PurchasePage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
 
       {/* ---- new purchase order ---- */}

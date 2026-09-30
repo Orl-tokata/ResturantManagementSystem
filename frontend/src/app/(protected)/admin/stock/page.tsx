@@ -40,7 +40,8 @@ import {
 
 const EMPTY: StockItemRequest = { name: "", unit: "", qty: 0, minQty: 0, unitCost: 0 };
 const EMPTY_ADJUST: AdjustRequest = { type: "IN", qty: 1, reason: "" };
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 export default function StockPage() {
   const t = useTranslations("stock");
@@ -54,6 +55,7 @@ export default function StockPage() {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
   const [onlyLow, setOnlyLow] = useState(false);
 
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
@@ -67,7 +69,7 @@ export default function StockPage() {
   const [historyFor, setHistoryFor] = useState<StockItem | null>(null);
   const [deleting, setDeleting] = useState<StockItem | null>(null);
 
-  const list = useList<StockItem>("stock", { search, page, size: SIZE });
+  const list = useList<StockItem>("stock", { search, page, size: size });
   const save = useSave<StockItem, StockItemRequest>("stock");
   const remove = useRemove("stock");
 
@@ -135,7 +137,7 @@ export default function StockPage() {
   }
 
   const columns: Column<StockItem>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     { key: "name", header: tc("name"), render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "unit", header: tc("unit"), hideOnMobile: true, render: (r) => r.unit },
     { key: "qty", header: t("onHand"), numeric: true, render: (r) => r.qty },
@@ -260,8 +262,12 @@ export default function StockPage() {
         page={onlyLow ? 0 : (list.data?.page ?? 0)}
         totalPages={onlyLow ? 1 : (list.data?.totalPages ?? 0)}
         totalElements={onlyLow ? rows.length : (list.data?.totalElements ?? 0)}
-        size={onlyLow ? Math.max(rows.length, 1) : (list.data?.size ?? SIZE)}
+        size={onlyLow ? Math.max(rows.length, 1) : (list.data?.size ?? size)}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
 
       {/* ---- create / edit ---- */}

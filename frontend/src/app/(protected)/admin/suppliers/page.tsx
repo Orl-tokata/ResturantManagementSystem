@@ -33,7 +33,8 @@ import {
 } from "@/types/supply";
 
 const EMPTY: SupplierRequest = { supplierCode: "", company: "", status: "ACTIVE" };
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 export default function SuppliersPage() {
   const t = useTranslations("suppliers");
@@ -46,13 +47,14 @@ export default function SuppliersPage() {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
   const [draft, setDraft] = useState<SupplierRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Supplier | null>(null);
 
-  const list = useList<Supplier>("suppliers", { search, page, size: SIZE });
+  const list = useList<Supplier>("suppliers", { search, page, size: size });
   const save = useSave<Supplier, SupplierRequest>("suppliers");
   const remove = useRemove("suppliers");
 
@@ -106,7 +108,7 @@ export default function SuppliersPage() {
   }
 
   const columns: Column<Supplier>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     { key: "code", header: tc("code"), render: (r) => r.supplierCode },
     {
       key: "company",
@@ -196,8 +198,12 @@ export default function SuppliersPage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
 
       <Modal

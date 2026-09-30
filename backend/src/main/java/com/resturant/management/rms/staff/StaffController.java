@@ -1,5 +1,6 @@
 package com.resturant.management.rms.staff;
 
+import com.resturant.management.rms.common.Paging;
 import com.resturant.management.rms.common.ApiResponse;
 import com.resturant.management.rms.common.PageResponse;
 import com.resturant.management.rms.staff.dto.StaffDtos.StaffRequest;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +35,7 @@ public class StaffController {
             @RequestParam(required = false) Role role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("staffCode").ascending());
+        var pageable = Paging.of(page, size, Sort.by("staffCode").ascending());
         return ApiResponse.ok(PageResponse.from(staffService.search(search, role, pageable)));
     }
 

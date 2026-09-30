@@ -1,5 +1,6 @@
 package com.resturant.management.rms.catalog;
 
+import com.resturant.management.rms.common.Paging;
 import com.resturant.management.rms.catalog.dto.CatalogDtos.CategoryRequest;
 import com.resturant.management.rms.catalog.dto.CatalogDtos.CategoryResponse;
 import com.resturant.management.rms.common.ApiResponse;
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +33,7 @@ public class CategoryController {
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("sortOrder").ascending());
+        var pageable = Paging.of(page, size, Sort.by("sortOrder").ascending());
         return ApiResponse.ok(PageResponse.from(categoryService.search(search, pageable)));
     }
 

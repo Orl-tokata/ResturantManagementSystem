@@ -18,6 +18,7 @@ export { Checkbox, Field, FieldRow, Input, Select, Textarea } from "./Field";
 export { Meter } from "./Meter";
 export { Modal } from "./Modal";
 export { Pagination } from "./Pagination";
+export { PasswordInput } from "./PasswordInput";
 export { SearchBar } from "./SearchBar";
 export { StatGrid, StatTile } from "./StatTile";
 export { Tabs, type TabItem } from "./Tabs";

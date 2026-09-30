@@ -50,7 +50,8 @@ const EMPTY_ACCOUNT: AccountRequest = {
   role: "CASHIER",
 };
 
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 const STATUS_TONE: Record<StaffStatus, BadgeTone> = {
   ACTIVE: "ok",
@@ -72,6 +73,7 @@ export default function StaffPage() {
   const [search, setSearch] = useState("");
   const [role, setRole] = useState<Role | "">("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
   const [draft, setDraft] = useState<StaffRequest>(EMPTY);
@@ -91,7 +93,7 @@ export default function StaffPage() {
     search,
     role: role === "" ? undefined : role,
     page,
-    size: SIZE,
+    size: size,
   });
   const save = useSave<Staff, StaffRequest>("staff");
   const remove = useRemove("staff");
@@ -206,7 +208,7 @@ export default function StaffPage() {
   }
 
   const columns: Column<Staff>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     { key: "code", header: tc("code"), render: (r) => r.staffCode },
     {
       key: "name",
@@ -331,8 +333,12 @@ export default function StaffPage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
 
       <Modal

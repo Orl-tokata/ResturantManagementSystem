@@ -44,7 +44,8 @@ const EMPTY: ProductRequest = {
   status: "ACTIVE",
 };
 
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 export default function ProductsPage() {
   const t = useTranslations("products");
@@ -58,6 +59,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<number | "">("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
   const [draft, setDraft] = useState<ProductRequest>(EMPTY);
@@ -69,7 +71,7 @@ export default function ProductsPage() {
     search,
     categoryId: categoryId === "" ? undefined : categoryId,
     page,
-    size: SIZE,
+    size: size,
   });
   const save = useSave<Product, ProductRequest>("products");
   const remove = useRemove("products");
@@ -129,7 +131,7 @@ export default function ProductsPage() {
   }
 
   const columns: Column<Product>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     {
       key: "img",
       header: t("image"),
@@ -244,8 +246,12 @@ export default function ProductsPage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
 
       <Modal

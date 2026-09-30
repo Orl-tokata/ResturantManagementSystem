@@ -28,7 +28,8 @@ import {
   type OrderStatus,
 } from "@/types/order";
 
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 function todayIso() {
   // Local date, not toISOString() — that shifts to UTC and can report yesterday.
@@ -63,6 +64,7 @@ export default function CashierHistoryPage() {
   const [status, setStatus] = useState<OrderStatus | "">("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   const params = {
     ...(from ? { from } : {}),
@@ -72,9 +74,9 @@ export default function CashierHistoryPage() {
   };
 
   const list = useQuery({
-    queryKey: ["orders", { ...params, page, size: SIZE }],
+    queryKey: ["orders", { ...params, page, size: size }],
     queryFn: () =>
-      get<PageResponse<Order>>("/orders", { ...params, page, size: SIZE }),
+      get<PageResponse<Order>>("/orders", { ...params, page, size: size }),
     placeholderData: (prev) => prev,
   });
 
@@ -95,7 +97,7 @@ export default function CashierHistoryPage() {
   }
 
   const columns: Column<Order>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     {
       key: "invoice",
       header: t("invoice"),
@@ -271,8 +273,12 @@ export default function CashierHistoryPage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
     </ListPage>
   );

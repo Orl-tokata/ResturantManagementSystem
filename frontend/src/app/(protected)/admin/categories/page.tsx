@@ -37,7 +37,8 @@ const EMPTY: CategoryRequest = {
   status: "ACTIVE",
 };
 
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 export default function CategoriesPage() {
   const t = useTranslations("categories");
@@ -49,6 +50,7 @@ export default function CategoriesPage() {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   // undefined = modal closed, null = creating, number = editing that id
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
@@ -56,7 +58,7 @@ export default function CategoriesPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Category | null>(null);
 
-  const list = useList<Category>("categories", { search, page, size: SIZE });
+  const list = useList<Category>("categories", { search, page, size: size });
   const save = useSave<Category, CategoryRequest>("categories");
   const remove = useRemove("categories");
 
@@ -103,7 +105,7 @@ export default function CategoriesPage() {
   }
 
   const columns: Column<Category>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     {
       key: "icon",
       header: t("icon"),
@@ -196,8 +198,12 @@ export default function CategoriesPage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
 
       <Modal

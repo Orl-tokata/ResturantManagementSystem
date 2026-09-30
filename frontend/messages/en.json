@@ -76,7 +76,9 @@
     "thisMonth": "This month",
     "allTime": "All time",
     "notPermitted": "Not permitted",
-    "showingNone": "Showing 0 of 0"
+    "showingNone": "Showing 0 of 0",
+    "rowsPerPage": "Rows",
+    "allRows": "All"
   },
   "auth": {
     "loginTitle": "Restaurant Management System",
@@ -122,7 +124,10 @@
     "otpSubtitle": "Enter the code sent to your email",
     "resetSubtitle": "Choose a new password",
     "codeResent": "A new code has been sent",
-    "invalidResetLink": "This link is missing its reset token. Start again from forgot password."
+    "invalidResetLink": "This link is missing its reset token. Start again from forgot password.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "passwordToggleHint": "Use the button at the end of the field to show or hide what you typed."
   },
   "dashboard": {
     "todaySales": "Today's sales",

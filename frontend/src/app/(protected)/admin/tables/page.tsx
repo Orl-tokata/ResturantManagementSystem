@@ -36,7 +36,8 @@ import {
 } from "@/types/master";
 
 const EMPTY: TableRequest = { name: "", seats: 4, zone: "INDOOR", status: "FREE" };
-const SIZE = 50;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 50;
 
 export default function TablesPage() {
   const t = useTranslations("tables");
@@ -50,6 +51,7 @@ export default function TablesPage() {
   const [search, setSearch] = useState("");
   const [zone, setZone] = useState<TableZone | "">("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
   const [draft, setDraft] = useState<TableRequest>(EMPTY);
@@ -60,7 +62,7 @@ export default function TablesPage() {
     search,
     zone: zone === "" ? undefined : zone,
     page,
-    size: SIZE,
+    size: size,
   });
   const summary = useQuery({
     queryKey: ["tables", "summary"],
@@ -110,7 +112,7 @@ export default function TablesPage() {
   }
 
   const columns: Column<DiningTable>[] = [
-    { key: "n", header: "#", width: "56px", render: (_r, i) => page * SIZE + i + 1 },
+    { key: "n", header: "#", width: "56px", render: (_r, i) => page * size + i + 1 },
     { key: "name", header: t("tableName"), render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "seats", header: t("seats"), numeric: true, render: (r) => r.seats },
     { key: "zone", header: t("zone"), hideOnMobile: true, render: (r) => tZone(r.zone) },
@@ -202,8 +204,12 @@ export default function TablesPage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
 
       <Modal

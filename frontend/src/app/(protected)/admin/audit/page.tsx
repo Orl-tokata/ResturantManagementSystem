@@ -22,7 +22,8 @@ import { useApiError } from "@/lib/use-api-error";
 import { formatTimestamp } from "@/lib/format";
 import { type AuditEntry, parseFields } from "@/types/audit";
 
-const SIZE = 20;
+/** Where this screen starts; the reader can change it. */
+const INITIAL_SIZE = 20;
 
 /**
  * Only the entities that carry `@Audited` on the server. Listing them rather
@@ -55,6 +56,7 @@ export default function AuditPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
   const list = useList<AuditEntry>("audit", {
     entity,
@@ -62,7 +64,7 @@ export default function AuditPage() {
     from,
     to,
     page,
-    size: SIZE,
+    size: size,
   });
 
   /** Every filter resets to the first page; staying on page 4 of a narrower
@@ -175,8 +177,12 @@ export default function AuditPage() {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={(n) => {
+          setSize(n);
+          setPage(0);
+        }}
       />
     </ListPage>
   );

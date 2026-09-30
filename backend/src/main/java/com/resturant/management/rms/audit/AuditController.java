@@ -1,12 +1,12 @@
 package com.resturant.management.rms.audit;
 
+import com.resturant.management.rms.common.Paging;
 import com.resturant.management.rms.common.ApiResponse;
 import com.resturant.management.rms.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,7 +49,7 @@ public class AuditController {
         // Newest first, and by id within a timestamp — two changes in the same
         // millisecond are otherwise ordered arbitrarily, which makes a log read
         // top to bottom occasionally lie about which came first.
-        var pageable = PageRequest.of(page, Math.min(size, 100),
+        var pageable = Paging.of(page, size,
                 Sort.by(Sort.Direction.DESC, "createdAt", "id"));
 
         var results = repository.findAll(

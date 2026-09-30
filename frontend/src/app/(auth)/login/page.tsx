@@ -8,6 +8,7 @@ import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/lib/auth-context";
 import { useApiError } from "@/lib/use-api-error";
 import { landingPath } from "@/lib/landing";
@@ -66,10 +67,9 @@ function LoginForm() {
         </Field>
 
         <Field label={t("password")} htmlFor="password">
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
             value={password}
