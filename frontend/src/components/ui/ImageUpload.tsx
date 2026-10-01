@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
+import { ImageCropper } from "@/components/ui/ImageCropper";
 import { productImageUrl } from "@/lib/images";
 
 /**
@@ -41,6 +42,8 @@ export function ImageUpload({
   const t = useTranslations("products");
   const input = useRef<HTMLInputElement>(null);
   const [tooBig, setTooBig] = useState(false);
+  /* Picked, but not yet framed. The cropper decides what is actually sent. */
+  const [cropping, setCropping] = useState<File | null>(null);
 
   /*
    * A local preview of a file that has not been uploaded.
@@ -71,7 +74,10 @@ export function ImageUpload({
       return;
     }
     setTooBig(false);
-    onPick(picked);
+    // Straight to the cropper rather than to the caller: a tile is 4:3 and a
+    // photograph rarely is, so someone has to choose what is kept. Better the
+    // person who can see the dish than a rule that always takes the middle.
+    setCropping(picked);
   }
 
   const shown = preview ?? (file ? productImageUrl(file) : null);
@@ -79,6 +85,17 @@ export function ImageUpload({
 
   return (
     <div>
+      {cropping && (
+        <ImageCropper
+          file={cropping}
+          onCancel={() => setCropping(null)}
+          onDone={(cropped) => {
+            setCropping(null);
+            onPick(cropped);
+          }}
+        />
+      )}
+
       <div className="flex items-center gap-3">
         <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded border border-ink-300 bg-ink-50">
           {shown ? (

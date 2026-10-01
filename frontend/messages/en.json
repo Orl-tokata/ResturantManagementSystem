@@ -280,7 +280,11 @@
     "removePhoto": "Remove",
     "photoHint": "JPEG or PNG, up to 5MB. Scaled down when saved; the emoji shows if there is no photo.",
     "photoTooBig": "That image is larger than 5MB",
-    "photoOnSave": "JPEG or PNG, up to 5MB. Uploaded when you save the product."
+    "photoOnSave": "JPEG or PNG, up to 5MB. Uploaded when you save the product.",
+    "cropTitle": "Frame the photograph",
+    "cropHelp": "Drag to move, slide to zoom. What is inside the box is what the tile will show.",
+    "cropZoom": "Zoom",
+    "cropUse": "Use this"
   },
   "categories": {
     "title": "Category list",

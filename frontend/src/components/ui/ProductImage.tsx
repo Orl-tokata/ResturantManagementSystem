@@ -62,7 +62,14 @@ export function ProductImage({
         alt={alt}
         loading="lazy"
         onError={() => setFailed(true)}
-        className={`absolute inset-0 h-full w-full object-contain ${className}`}
+        /*
+         * cover, now that photographs are cropped to the tile's shape on the
+         * way in. contain was right while an arbitrary picture could arrive and
+         * had to be shown whole; a 4:3 picture in a 4:3 tile loses nothing to
+         * cover, and an older photograph uploaded before cropping existed is
+         * trimmed at the edges rather than sitting in grey bars.
+         */
+        className={`absolute inset-0 h-full w-full object-cover ${className}`}
       />
     </span>
   );
