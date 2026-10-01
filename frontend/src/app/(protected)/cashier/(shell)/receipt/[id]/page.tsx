@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Printer, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Alert, Button, Input } from "@/components/ui";
+import { Alert, Badge, Button, Pagination, SearchBar, toneForOrderStatus } from "@/components/ui";
 import { Barcode } from "@/components/pos/Barcode";
-import { get, type PageResponse } from "@/lib/api";
+import { useList } from "@/hooks/useCrud";
+import { get } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import { useBilingual, useBilingualPair } from "@/i18n/bilingual";
 // formatKhr converts from USD at the current rate. A receipt must show the riel
@@ -16,6 +17,9 @@ import { useBilingual, useBilingualPair } from "@/i18n/bilingual";
 // totalKhr is printed as-is rather than recomputed.
 import { formatReceiptDateTime, formatUsd } from "@/lib/format";
 import type { Order, Receipt } from "@/types/order";
+
+/** A short list beside a slip, not a page of history — this is a picker. */
+const SIZE = 15;
 
 export default function ReceiptPage() {
   const t = useTranslations("receipt");
@@ -60,14 +64,23 @@ export default function ReceiptPage() {
   const paidAt = formatReceiptDateTime(order.paidAt);
 
   return (
-    <>
+    /*
+     * The bills on the left, the one being read on the right.
+     *
+     * `print:block` collapses the grid when printing, and the list carries
+     * `print:hidden` — so the paper gets the slip and nothing else, whatever is
+     * on screen beside it.
+     */
+    <div className="grid gap-4 lg:grid-cols-[clamp(240px,24vw,320px)_1fr] lg:items-start print:block">
+      <InvoiceList currentId={id} />
+
+      <div>
       {/* Toolbar is screen-only; the print stylesheet drops it. */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/cashier/history">
             <Button variant="ghost">← {tH("title")}</Button>
           </Link>
-          <InvoiceLookup />
         </div>
         <div className="flex gap-2">
           <Button variant="light" onClick={() => window.print()}>
@@ -201,7 +214,8 @@ export default function ReceiptPage() {
           </div>
         </div>
       </div>
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -226,72 +240,90 @@ function Dashes() {
 }
 
 
+
 /**
- * Jumping to another bill's slip without leaving this screen.
+ * Every bill, with the one being read marked.
  *
- * <p>The Receipt entry lands on the most recent sale, which is what a cashier
- * usually wants — but a customer coming back a day later arrives holding a
- * number, and until this the only way to use it was to go to the history,
- * search, and come back. The slip in their hand is the search term.
+ * <p>The Receipt screen used to show exactly one slip — the latest — and the
+ * only way to another was out to the history and back. A customer returning
+ * with yesterday's bill is an ordinary thing, so the bills belong on the screen
+ * whose job is printing them.
  *
- * <p>Matches the way the history searches: a partial number works, so "219"
- * finds INV-00219 without anyone typing the prefix.
+ * <p>Carries `print:hidden`: the paper gets the slip and nothing else.
  */
-function InvoiceLookup() {
+function InvoiceList({ currentId }: { currentId: string }) {
   const t = useTranslations("receipt");
   const tH = useTranslations("history");
+  const tStatus = useTranslations("enum.orderStatus");
   const router = useRouter();
 
-  const [term, setTerm] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [missing, setMissing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    const q = term.trim();
-    if (!q) return;
-
-    setBusy(true);
-    setMissing(false);
-    try {
-      const page = await get<PageResponse<Order>>("/orders", { search: q, size: 1 });
-      const found = page.content[0];
-      if (!found) {
-        setMissing(true);
-        return;
-      }
-      setTerm("");
-      router.push(`/cashier/receipt/${found.id}`);
-    } catch {
-      // A failed lookup is not a failed receipt: the slip on screen is still
-      // correct and printable, so this says so quietly rather than replacing
-      // the page with an error.
-      setMissing(true);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const list = useList<Order>("orders", { search, page, size: SIZE });
+  const rows = list.data?.content ?? [];
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-1.5">
-      <Input
-        value={term}
-        onChange={(e) => {
-          setTerm(e.target.value);
-          setMissing(false);
+    <aside className="flex min-h-0 flex-col rounded-md border border-ink-200 bg-white p-2.5 print:hidden">
+      <SearchBar
+        value={search}
+        onChange={(v) => {
+          setSearch(v);
+          setPage(0);
         }}
         placeholder={tH("invoiceNo")}
-        aria-label={t("lookupLabel")}
-        className="w-36 py-1.5 text-sm"
       />
-      <Button type="submit" variant="light" size="sm" loading={busy} disabled={!term.trim()}>
-        {t("open")}
-      </Button>
-      {missing && (
-        <span role="status" className="text-xs font-semibold text-danger">
-          {t("notFound")}
-        </span>
-      )}
-    </form>
+
+      {/* Capped rather than page-length, so the slip beside it stays put as the
+          list is searched instead of the whole page growing and shrinking. */}
+      <div className="mt-2 min-h-0 max-h-[min(60vh,32rem)] flex-1 overflow-y-auto">
+        {list.isLoading && (
+          <p className="py-6 text-center text-xs text-ink-500">{tH("title")}…</p>
+        )}
+
+        {!list.isLoading && rows.length === 0 && (
+          <p className="py-6 text-center text-xs text-ink-500">{t("notFound")}</p>
+        )}
+
+        <ul className="space-y-1">
+          {rows.map((o) => {
+            const current = String(o.id) === currentId;
+            return (
+              <li key={o.id}>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/cashier/receipt/${o.id}`)}
+                  aria-current={current ? "true" : undefined}
+                  className={`w-full rounded border px-2 py-1.5 text-left text-xs transition ${
+                    current
+                      ? "border-teal-600 bg-[#e8f5f5] font-semibold"
+                      : "border-transparent hover:border-ink-200 hover:bg-ink-50"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-[family-name:var(--font-num)]">{o.invoiceNo}</span>
+                    <span className="font-[family-name:var(--font-num)] font-semibold">
+                      {formatUsd(o.total)}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[11px] text-ink-500">
+                    <span className="truncate">{o.tableName ?? "—"}</span>
+                    <Badge tone={toneForOrderStatus(o.status)}>{tStatus(o.status)}</Badge>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <Pagination
+        page={list.data?.page ?? 0}
+        totalPages={list.data?.totalPages ?? 0}
+        totalElements={list.data?.totalElements ?? 0}
+        size={list.data?.size ?? SIZE}
+        onPage={setPage}
+      />
+    </aside>
   );
 }
