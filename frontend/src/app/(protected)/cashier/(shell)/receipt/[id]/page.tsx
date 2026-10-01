@@ -85,10 +85,22 @@ export default function ReceiptPage() {
      * `print:hidden` — so the paper gets the slip and nothing else, whatever is
      * on screen beside it.
      */
-    <div className="grid gap-4 lg:grid-cols-[clamp(240px,24vw,320px)_1fr] lg:items-start print:block">
+    <div className="grid gap-4 lg:h-full lg:min-h-0 lg:grid-cols-[clamp(240px,24vw,320px)_1fr] print:block print:h-auto print:overflow-visible">
       <InvoiceList currentId={id} />
 
-      <div>
+      {/*
+        * Scrolls itself rather than letting the page scroll.
+        *
+        * A slip is taller than the window — this one is 688px in a 614px
+        * content area — so something has to scroll. Keeping it inside this
+        * column means the toolbar, the list and the app chrome all stay put
+        * while it does, instead of the whole screen sliding and taking Print
+        * off the top with it.
+        *
+        * Only from `lg`: below that the two panels stack, and a phone scrolling
+        * its page is the right behaviour, not a bug to design around.
+        */}
+      <div className="lg:h-full lg:min-h-0 lg:overflow-y-auto print:h-auto print:overflow-visible">
       {/* Toolbar is screen-only; the print stylesheet drops it. */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div className="flex flex-wrap items-center gap-2">
@@ -292,7 +304,7 @@ function InvoiceList({ currentId }: { currentId: string }) {
   }
 
   return (
-    <aside className="flex min-h-0 flex-col rounded-md border border-ink-200 bg-white p-2.5 print:hidden">
+    <aside className="flex min-h-0 flex-col rounded-md border border-ink-200 bg-white p-2.5 lg:h-full print:hidden">
       <SearchBar
         value={search}
         onChange={filter(setSearch)}
@@ -315,7 +327,9 @@ function InvoiceList({ currentId }: { currentId: string }) {
 
       {/* Capped rather than page-length, so the slip beside it stays put as the
           list is searched instead of the whole page growing and shrinking. */}
-      <div className="mt-2 min-h-0 max-h-[min(60vh,32rem)] flex-1 overflow-y-auto">
+      {/* Capped while stacked, and simply the leftover height once the grid
+          gives the column one. */}
+      <div className="mt-2 min-h-0 max-h-[min(60vh,32rem)] flex-1 overflow-y-auto lg:max-h-none">
         {list.isLoading && (
           <p className="py-6 text-center text-xs text-ink-500">{tH("title")}…</p>
         )}

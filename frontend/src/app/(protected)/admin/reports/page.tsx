@@ -156,6 +156,19 @@ export default function ReportsPage() {
       {report.isError && <Alert tone="error">{apiError(report.error)}</Alert>}
       {exportError && <Alert tone="error">{exportError}</Alert>}
 
+      {/*
+        * Sticks to the top while the report scrolls.
+        *
+        * This is the one screen in the app that is genuinely longer than a
+        * window — two charts and three tables, about 1100px past the fold on a
+        * 1080p till — and it should be, because a report is read rather than
+        * worked through. What was wrong was that changing the date range or
+        * reaching Print meant scrolling back to the top first.
+        *
+        * The negative margins pull the background out to main's padding so
+        * rows pass underneath it rather than beside it.
+        */}
+      <div className="sticky top-0 z-10 -mx-4 bg-white px-4 md:-mx-5 md:px-5 print:static">
       <Toolbar
         left={
           <>
@@ -196,6 +209,7 @@ export default function ReportsPage() {
           </>
         }
       />
+      </div>
 
       <StatGrid>
         <StatTile tone={1} label={t("revenue")} value={formatUsd(r?.revenue ?? 0)} />
