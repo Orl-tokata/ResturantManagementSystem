@@ -232,7 +232,10 @@
     "notPaid": "This bill is not paid",
     "orderHistory": "Order history",
     "noSalesYet": "No sales yet",
-    "noSalesHelp": "Receipts appear here once a bill has been settled. Take an order to make the first one."
+    "noSalesHelp": "Receipts appear here once a bill has been settled. Take an order to make the first one.",
+    "open": "Open",
+    "notFound": "No bill with that number",
+    "lookupLabel": "Open another receipt by invoice number"
   },
   "history": {
     "title": "Order history",

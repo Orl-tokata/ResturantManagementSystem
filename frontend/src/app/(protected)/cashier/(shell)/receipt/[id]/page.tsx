@@ -1,20 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Printer, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Alert, Button } from "@/components/ui";
+import { Alert, Button, Input } from "@/components/ui";
 import { Barcode } from "@/components/pos/Barcode";
-import { get } from "@/lib/api";
+import { get, type PageResponse } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import { useBilingual, useBilingualPair } from "@/i18n/bilingual";
 // formatKhr converts from USD at the current rate. A receipt must show the riel
 // figure the customer actually paid, which the server stored on the order — so
 // totalKhr is printed as-is rather than recomputed.
 import { formatReceiptDateTime, formatUsd } from "@/lib/format";
-import type { Receipt } from "@/types/order";
+import type { Order, Receipt } from "@/types/order";
 
 export default function ReceiptPage() {
   const t = useTranslations("receipt");
@@ -62,9 +63,12 @@ export default function ReceiptPage() {
     <>
       {/* Toolbar is screen-only; the print stylesheet drops it. */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
-        <Link href="/cashier/history">
-          <Button variant="ghost">← {tH("title")}</Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/cashier/history">
+            <Button variant="ghost">← {tH("title")}</Button>
+          </Link>
+          <InvoiceLookup />
+        </div>
         <div className="flex gap-2">
           <Button variant="light" onClick={() => window.print()}>
             <Printer size={15} /> {tc("print")}
@@ -219,4 +223,75 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function Dashes() {
   return <div className="my-2 border-t border-dashed border-ink-500" />;
+}
+
+
+/**
+ * Jumping to another bill's slip without leaving this screen.
+ *
+ * <p>The Receipt entry lands on the most recent sale, which is what a cashier
+ * usually wants — but a customer coming back a day later arrives holding a
+ * number, and until this the only way to use it was to go to the history,
+ * search, and come back. The slip in their hand is the search term.
+ *
+ * <p>Matches the way the history searches: a partial number works, so "219"
+ * finds INV-00219 without anyone typing the prefix.
+ */
+function InvoiceLookup() {
+  const t = useTranslations("receipt");
+  const tH = useTranslations("history");
+  const router = useRouter();
+
+  const [term, setTerm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [missing, setMissing] = useState(false);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const q = term.trim();
+    if (!q) return;
+
+    setBusy(true);
+    setMissing(false);
+    try {
+      const page = await get<PageResponse<Order>>("/orders", { search: q, size: 1 });
+      const found = page.content[0];
+      if (!found) {
+        setMissing(true);
+        return;
+      }
+      setTerm("");
+      router.push(`/cashier/receipt/${found.id}`);
+    } catch {
+      // A failed lookup is not a failed receipt: the slip on screen is still
+      // correct and printable, so this says so quietly rather than replacing
+      // the page with an error.
+      setMissing(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="flex items-center gap-1.5">
+      <Input
+        value={term}
+        onChange={(e) => {
+          setTerm(e.target.value);
+          setMissing(false);
+        }}
+        placeholder={tH("invoiceNo")}
+        aria-label={t("lookupLabel")}
+        className="w-36 py-1.5 text-sm"
+      />
+      <Button type="submit" variant="light" size="sm" loading={busy} disabled={!term.trim()}>
+        {t("open")}
+      </Button>
+      {missing && (
+        <span role="status" className="text-xs font-semibold text-danger">
+          {t("notFound")}
+        </span>
+      )}
+    </form>
+  );
 }
