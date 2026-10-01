@@ -1,5 +1,5 @@
 import { ProfileScreen } from "@/components/account/ProfileScreen";
 
-export default function CashierProfilePage() {
+export default function AdminProfilePage() {
   return <ProfileScreen />;
 }

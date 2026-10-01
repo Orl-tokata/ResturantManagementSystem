@@ -20,6 +20,14 @@ interface AuthContextValue {
   status: Status;
   login: (username: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
+  /**
+   * Replaces the cached account after it is changed elsewhere.
+   *
+   * <p>`user` is the snapshot taken at sign-in. Without a way to refresh it,
+   * the name in the sidebar keeps the old value until the next login, and
+   * anything that seeds a form from it writes stale data back.
+   */
+  setUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -120,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ user, status, login, logout }),
+    () => ({ user, status, login, logout, setUser }),
     [user, status, login, logout],
   );
 

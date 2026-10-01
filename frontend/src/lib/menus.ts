@@ -41,6 +41,7 @@ export const ADMIN_MENU: MenuItem[] = [
   { href: "/admin/users", icon: ShieldCheck, key: "users" },
   { href: "/admin/audit", icon: FileClock, key: "audit" },
   { href: "/admin/settings", icon: Settings, key: "settings" },
+  { href: "/admin/profile", icon: UserRound, key: "profile" },
   { href: "/admin/change-password", icon: KeyRound, key: "password" },
 ];
 
