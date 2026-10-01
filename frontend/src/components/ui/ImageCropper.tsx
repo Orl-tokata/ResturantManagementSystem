@@ -75,11 +75,29 @@ export function ImageCropper({
   const w = coverW * zoom;
   const h = coverH * zoom;
 
-  /** Keeps the window covered: no strip of nothing can be framed, or stored. */
+  /**
+   * How far out the slider goes: far enough to see the whole photograph.
+   *
+   * <p>It used to stop at 1, which is the point where the picture just covers
+   * the window — so a square photograph in a 4:3 window could never show its
+   * own top and bottom, however far the slider was dragged. Filling the tile is
+   * the usual answer, which is why zoom still *starts* at 1, but "show all of
+   * it and let the sides be white" is a legitimate choice and was unreachable.
+   */
+  const minZoom = 1 / Math.max(coverW, coverH);
+
+  /**
+   * Keeps the window covered while the picture is larger than it, and centres
+   * the picture once it is smaller.
+   *
+   * <p>Below a zoom of 1 there is nothing to pan — any offset would only put
+   * the gap on one side instead of splitting it — so the axis is pinned to the
+   * middle rather than left draggable to no purpose.
+   */
   function clamp(next: { x: number; y: number }) {
     return {
-      x: Math.min(0, Math.max(1 - w, next.x)),
-      y: Math.min(0, Math.max(1 - h, next.y)),
+      x: w >= 1 ? Math.min(0, Math.max(1 - w, next.x)) : (1 - w) / 2,
+      y: h >= 1 ? Math.min(0, Math.max(1 - h, next.y)) : (1 - h) / 2,
     };
   }
 
@@ -188,7 +206,7 @@ export function ImageCropper({
         {t("cropZoom")}
         <input
           type="range"
-          min={1}
+          min={minZoom}
           max={MAX_ZOOM}
           step={0.01}
           value={zoom}
