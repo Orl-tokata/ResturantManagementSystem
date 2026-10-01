@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { productImageUrl } from "@/lib/images";
@@ -19,21 +19,45 @@ import { productImageUrl } from "@/lib/images";
  */
 export function ImageUpload({
   file,
+  pending,
   busy,
   onPick,
   onRemove,
-  disabledReason,
+  hint,
 }: {
+  /** A stored photograph's filename. */
   file?: string | null;
+  /**
+   * A file chosen but not uploaded yet — the new-product case, where there is
+   * no id to upload against until Save has created one.
+   */
+  pending?: File | null;
   busy?: boolean;
   onPick: (file: File) => void;
   onRemove: () => void;
-  /** Shown instead of the controls when uploading is not possible yet. */
-  disabledReason?: string;
+  /** Replaces the standing hint, e.g. to say the photo uploads on save. */
+  hint?: string;
 }) {
   const t = useTranslations("products");
   const input = useRef<HTMLInputElement>(null);
   const [tooBig, setTooBig] = useState(false);
+
+  /*
+   * A local preview of a file that has not been uploaded.
+   *
+   * Derived rather than held in state: an effect that sets state runs a second
+   * render for a value already known during the first. The effect is only here
+   * to revoke — object URLs hold the file in memory until they are, so picking
+   * three photographs before saving would otherwise leak all three.
+   */
+  const preview = useMemo(
+    () => (pending ? URL.createObjectURL(pending) : null),
+    [pending],
+  );
+  useEffect(() => {
+    if (!preview) return;
+    return () => URL.revokeObjectURL(preview);
+  }, [preview]);
 
   /** Matches app.uploads.max-image-size, so the refusal is instant. */
   const MAX_BYTES = 5 * 1024 * 1024;
@@ -50,22 +74,17 @@ export function ImageUpload({
     onPick(picked);
   }
 
-  if (disabledReason) {
-    return <p className="text-xs text-ink-500">{disabledReason}</p>;
-  }
+  const shown = preview ?? (file ? productImageUrl(file) : null);
+  const has = Boolean(shown);
 
   return (
     <div>
       <div className="flex items-center gap-3">
         <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded border border-ink-300 bg-ink-50">
-          {file ? (
+          {shown ? (
             /* eslint-disable-next-line @next/next/no-img-element --
                Same reasoning as ProductImage: already scaled server-side. */
-            <img
-              src={productImageUrl(file)}
-              alt=""
-              className="h-full w-full object-cover"
-            />
+            <img src={shown} alt="" className="h-full w-full object-cover" />
           ) : (
             <span className="text-xs text-ink-500">{t("noPhoto")}</span>
           )}
@@ -89,9 +108,9 @@ export function ImageUpload({
             loading={busy}
             onClick={() => input.current?.click()}
           >
-            📷 {file ? t("replacePhoto") : t("addPhoto")}
+            📷 {has ? t("replacePhoto") : t("addPhoto")}
           </Button>
-          {file && (
+          {has && (
             <Button size="sm" variant="ghost" onClick={onRemove} disabled={busy}>
               {t("removePhoto")}
             </Button>
@@ -99,7 +118,7 @@ export function ImageUpload({
         </div>
       </div>
 
-      <p className="mt-1.5 text-xs text-ink-500">{t("photoHint")}</p>
+      <p className="mt-1.5 text-xs text-ink-500">{hint ?? t("photoHint")}</p>
       {tooBig && (
         <p role="alert" className="mt-1 text-xs font-semibold text-danger">
           {t("photoTooBig")}

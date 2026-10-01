@@ -280,7 +280,7 @@
     "removePhoto": "Remove",
     "photoHint": "JPEG or PNG, up to 5MB. Scaled down when saved; the emoji shows if there is no photo.",
     "photoTooBig": "That image is larger than 5MB",
-    "photoAfterSave": "Save the product first, then add a photograph."
+    "photoOnSave": "JPEG or PNG, up to 5MB. Uploaded when you save the product."
   },
   "categories": {
     "title": "Category list",

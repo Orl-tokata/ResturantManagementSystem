@@ -70,6 +70,9 @@ export default function ProductsPage() {
      draft because it is saved by its own endpoint, not by Save. */
   const [imageFile, setImageFile] = useState<string | null>(null);
   const [imageBusy, setImageBusy] = useState(false);
+  /* Chosen while creating a product, which has no id to upload against until
+     Save has made one. Sent immediately afterwards. */
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
   const [draft, setDraft] = useState<ProductRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
@@ -88,6 +91,7 @@ export default function ProductsPage() {
     setEditingId(null);
     setDraft({ ...EMPTY, categoryId: categories.data?.[0]?.id ?? 0 });
     setImageFile(null);
+    setPendingImage(null);
     setFormError(null);
   }
 
@@ -105,6 +109,7 @@ export default function ProductsPage() {
       status: row.status,
     });
     setImageFile(row.imageFile);
+    setPendingImage(null);
     setFormError(null);
   }
 
@@ -122,7 +127,25 @@ export default function ProductsPage() {
       return;
     }
     try {
-      await save.mutateAsync({ id: editingId ?? null, body: draft });
+      const saved = await save.mutateAsync({ id: editingId ?? null, body: draft });
+
+      // A photograph chosen before the product existed. Sent after, because
+      // only now is there an id to send it to. Deliberately not fatal: the
+      // product is already saved, and losing the whole save over a picture
+      // would be the wrong trade — the form stays open saying so.
+      if (pendingImage) {
+        try {
+          await upload<Product>(`/products/${saved.id}/image`, pendingImage);
+          setPendingImage(null);
+        } catch (e) {
+          setFormError(apiError(e, "uploadImage"));
+          setEditingId(saved.id);
+          setImageFile(null);
+          void list.refetch();
+          return;
+        }
+      }
+
       setEditingId(undefined);
     } catch (e) {
       setFormError(apiError(e, "saveProduct"));
@@ -381,13 +404,22 @@ export default function ProductsPage() {
         <Field label={t("photo")}>
           <ImageUpload
             file={imageFile}
+            pending={pendingImage}
             busy={imageBusy}
-            // No id to upload against until the product exists, and the form
-            // creates it on Save. Saying so beats a button that fails.
-            disabledReason={editingId === null ? t("photoAfterSave") : undefined}
+            // While creating, the photograph waits for Save; say so rather
+            // than let someone wonder why nothing uploaded.
+            hint={editingId === null ? t("photoOnSave") : undefined}
             onPick={async (picked) => {
-              setImageBusy(true);
               setFormError(null);
+
+              // No product yet: hold the file and show it from memory. The
+              // submit handler sends it once Save has created the id.
+              if (editingId === null) {
+                setPendingImage(picked);
+                return;
+              }
+
+              setImageBusy(true);
               try {
                 const saved = await upload<Product>(`/products/${editingId}/image`, picked);
                 setImageFile(saved.imageFile);
@@ -399,6 +431,10 @@ export default function ProductsPage() {
               }
             }}
             onRemove={async () => {
+              if (editingId === null) {
+                setPendingImage(null);
+                return;
+              }
               setImageBusy(true);
               try {
                 const saved = await del<Product>(`/products/${editingId}/image`);
