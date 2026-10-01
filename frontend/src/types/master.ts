@@ -33,7 +33,8 @@ export interface Product {
   price: number;
   cost: number;
   stockQty: number;
-  imageUrl: string | null;
+  /** An emoji, not a URL — the column was misnamed until V9. */
+  icon: string | null;
   description: string | null;
   status: RecordStatus;
 }
@@ -45,7 +46,7 @@ export interface ProductRequest {
   price: number;
   cost?: number;
   stockQty?: number;
-  imageUrl?: string;
+  icon?: string;
   description?: string;
   status?: RecordStatus;
 }

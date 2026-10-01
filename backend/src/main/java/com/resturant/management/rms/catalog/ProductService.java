@@ -69,7 +69,7 @@ public class ProductService {
         product.setPrice(r.price());
         product.setCost(r.cost() != null ? r.cost() : BigDecimal.ZERO);
         product.setStockQty(r.stockQty() != null ? r.stockQty() : BigDecimal.ZERO);
-        product.setImageUrl(r.imageUrl());
+        product.setIcon(r.icon());
         product.setDescription(r.description());
         product.setStatus(r.status() != null ? r.status() : RecordStatus.ACTIVE);
     }
@@ -79,6 +79,6 @@ public class ProductService {
                 p.getId(), p.getName(), p.getNameEn(),
                 p.getCategory().getId(), p.getCategory().getName(),
                 p.getPrice(), p.getCost(), p.getStockQty(),
-                p.getImageUrl(), p.getDescription(), p.getStatus());
+                p.getIcon(), p.getDescription(), p.getStatus());
     }
 }

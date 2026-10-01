@@ -45,7 +45,7 @@ public final class CatalogDtos {
             @Digits(integer = 10, fraction = 2, message = "{valid.decimals}")
             BigDecimal cost,
             @PositiveOrZero(message = "{valid.notNegative}") BigDecimal stockQty,
-            @Size(max = 255) String imageUrl,
+            @Size(max = 16) String icon,
             @Size(max = 1000) String description,
             RecordStatus status
     ) {}
@@ -59,7 +59,7 @@ public final class CatalogDtos {
             BigDecimal price,
             BigDecimal cost,
             BigDecimal stockQty,
-            String imageUrl,
+            String icon,
             String description,
             RecordStatus status
     ) {}

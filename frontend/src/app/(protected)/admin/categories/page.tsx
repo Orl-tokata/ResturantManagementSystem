@@ -23,6 +23,7 @@ import {
 } from "@/components/ui";
 import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useApiError } from "@/lib/use-api-error";
+import { IconPicker } from "@/components/ui/IconPicker";
 import {
   type Category,
   type CategoryRequest,
@@ -244,11 +245,10 @@ export default function CategoriesPage() {
 
         <FieldRow>
           <Field label={t("icon")} htmlFor="c-icon" hint="Emoji">
-            <Input
+            <IconPicker
               id="c-icon"
               value={draft.icon}
-              onChange={(e) => setDraft({ ...draft, icon: e.target.value })}
-              placeholder="🍚"
+              onChange={(icon) => setDraft({ ...draft, icon })}
             />
           </Field>
           <Field label={t("sortOrder")} htmlFor="c-sort">

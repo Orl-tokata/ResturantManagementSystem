@@ -48,8 +48,9 @@ public class Product extends BaseAuditEntity {
     private BigDecimal stockQty = BigDecimal.ZERO;
 
     /** Emoji in seed data; a URL once real uploads land. */
-    @Column(name = "image_url")
-    private String imageUrl;
+    /** An emoji, not a URL. See V9 — the column was misnamed for both. */
+    @Column(name = "icon", length = 16)
+    private String icon;
 
     @Column(name = "description", length = 1000)
     private String description;

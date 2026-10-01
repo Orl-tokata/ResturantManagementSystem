@@ -380,7 +380,7 @@ function PosScreen() {
                 className="overflow-hidden rounded-md border border-ink-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="grid h-[78px] place-items-center bg-ink-200 text-3xl">
-                  {p.imageUrl || "🍽️"}
+                  {p.icon || "🍽️"}
                 </div>
                 <div className="px-2 py-2">
                   <div className="text-xs font-semibold leading-tight">{p.name}</div>

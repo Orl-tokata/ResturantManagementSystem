@@ -25,6 +25,7 @@ import { useAll, useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useApiError } from "@/lib/use-api-error";
 import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
+import { IconPicker } from "@/components/ui/IconPicker";
 import {
   type Category,
   type Product,
@@ -39,7 +40,7 @@ const EMPTY: ProductRequest = {
   price: 0,
   cost: 0,
   stockQty: 0,
-  imageUrl: "",
+  icon: "",
   description: "",
   status: "ACTIVE",
 };
@@ -91,7 +92,7 @@ export default function ProductsPage() {
       price: row.price,
       cost: row.cost,
       stockQty: row.stockQty,
-      imageUrl: row.imageUrl ?? "",
+      icon: row.icon ?? "",
       description: row.description ?? "",
       status: row.status,
     });
@@ -137,7 +138,7 @@ export default function ProductsPage() {
       header: t("image"),
       width: "64px",
       align: "center",
-      render: (r) => <span className="text-xl">{r.imageUrl || "🍽️"}</span>,
+      render: (r) => <span className="text-xl">{r.icon || "🍽️"}</span>,
     },
     {
       key: "name",
@@ -357,11 +358,10 @@ export default function ProductsPage() {
           htmlFor="p-img"
           hint={t("imageHint")}
         >
-          <Input
+          <IconPicker
             id="p-img"
-            value={draft.imageUrl}
-            onChange={(e) => setDraft({ ...draft, imageUrl: e.target.value })}
-            placeholder="🍚"
+            value={draft.icon}
+            onChange={(icon) => setDraft({ ...draft, icon })}
           />
         </Field>
 

@@ -614,5 +614,16 @@
     "unlockConfirm": "{name} will be able to sign in again, and the failed-attempt count is cleared.",
     "unlocked": "{name} can sign in again",
     "noAccounts": "No accounts"
+  },
+  "icons": {
+    "search": "Search",
+    "clear": "Clear",
+    "noMatch": "Nothing matches",
+    "rice": "Rice & noodles",
+    "meat": "Meat & seafood",
+    "veg": "Vegetables",
+    "drink": "Drinks",
+    "sweet": "Sweets & fruit",
+    "other": "Other"
   }
 }
