@@ -380,7 +380,12 @@ function PosScreen() {
                 onClick={() => addProduct(p)}
                 className="overflow-hidden rounded-md border border-ink-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div className="grid h-[78px] place-items-center overflow-hidden bg-ink-200">
+                {/* 4:3 rather than a fixed 78px. A photograph of a dish is
+                    roughly square, so in a short strip it shrank to fit the
+                    height and left most of the tile grey. An aspect ratio also
+                    grows the picture with the column on a wider screen, which
+                    a fixed height cannot. */}
+                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink-200">
                   <ProductImage file={p.imageFile} icon={p.icon} alt={p.name} />
                 </div>
                 <div className="px-2 py-2">
