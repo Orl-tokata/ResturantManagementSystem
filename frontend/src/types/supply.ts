@@ -37,7 +37,8 @@ export const SUPPLY_TYPES = [
 
 /* ---- Stock --------------------------------------------------------------- */
 
-export type MovementType = "IN" | "OUT" | "DAMAGED";
+/** Mirrors the backend enum. SALE and RETURN arrived with the ledger in V11. */
+export type MovementType = "IN" | "OUT" | "DAMAGED" | "SALE" | "RETURN";
 
 export interface StockItem {
   id: number;
@@ -60,19 +61,42 @@ export interface StockItemRequest {
 }
 
 export interface AdjustRequest {
+  /** A correction is IN, OUT or DAMAGED; SALE and RETURN are written by the server. */
   type: MovementType;
   qty: number;
   reason?: string;
 }
 
+/**
+ * One line of the stock ledger.
+ *
+ * <p>The optional fields are optional rather than `| null` because the server
+ * serialises with `non_null`: a null column is left out of the JSON entirely
+ * and arrives here as `undefined`. Declaring them `| null` reads as honest and
+ * is not — it invites `=== null`, which is false for every one of them.
+ */
 export interface Movement {
   id: number;
-  stockItemId: number | null;
-  stockItemName: string | null;
+  /** A movement names a product or a stock item, never both. */
+  stockItemId?: number;
+  stockItemName?: string;
+  productId?: number;
+  productName?: string;
   type: MovementType;
   qty: number;
-  reason: string | null;
-  createdBy: string | null;
+  /** True when this added stock; `qty` itself is always positive. */
+  increase: boolean;
+  /**
+   * The balance immediately after this movement. Absent on rows written before
+   * the ledger existed — the balance before them was never recorded, so a
+   * figure here would be a guess reading as a record.
+   */
+  balanceAfter?: number;
+  /** What caused it, e.g. ORDER or PURCHASE, and that document's id. */
+  refType?: string;
+  refId?: number;
+  reason?: string;
+  createdBy?: string;
   createdAt: string;
 }
 

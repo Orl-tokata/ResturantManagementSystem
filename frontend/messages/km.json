@@ -398,7 +398,15 @@
     "namePlaceholder": "សាច់គោ",
     "unitPlaceholder": "គីឡូក្រាម",
     "reasonPlaceholder": "ទិញបន្ថែម / ខូច / រាប់ឡើងវិញ",
-    "onHand": "ស្តុកមាន"
+    "onHand": "ស្តុកមាន",
+    "balanceAfter": "សំណល់",
+    "ledger": "បញ្ជីចលនា",
+    "levels": "បរិមាណ",
+    "item": "មុខទំនិញ",
+    "ledgerHelp": "ចលនាទាំងអស់ តម្រៀបថ្មីមុន។ សញ្ញា — មានន័យថាចលនានេះមានមុនបញ្ជី ហើយសំណល់មិនធ្លាបកត់ត្រា។",
+    "dish": "ម្ហូប",
+    "ingredient": "គ្រឿងផ្សំ",
+    "subject": "ធាតុ"
   },
   "reports": {
     "title": "របាយការណ៍",
@@ -509,7 +517,9 @@
     "movementType": {
       "IN": "បញ្ចូល",
       "OUT": "ដក",
-      "DAMAGED": "ខូច/បាត់"
+      "DAMAGED": "ខូច/បាត់",
+      "SALE": "បានលក់",
+      "RETURN": "បានប្រគល់"
     },
     "supplyType": {
       "MEAT": "សាច់",

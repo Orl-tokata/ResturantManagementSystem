@@ -398,7 +398,15 @@
     "namePlaceholder": "Beef",
     "unitPlaceholder": "Kilogram",
     "reasonPlaceholder": "Restock / damaged / recount",
-    "onHand": "In stock"
+    "onHand": "In stock",
+    "balanceAfter": "Balance",
+    "ledger": "Ledger",
+    "levels": "Levels",
+    "ledgerHelp": "Every movement, newest first. A dash means the movement predates the ledger and its balance was never recorded.",
+    "item": "Item",
+    "dish": "Dish",
+    "ingredient": "Ingredient",
+    "subject": "Item"
   },
   "reports": {
     "title": "Reports",
@@ -509,7 +517,9 @@
     "movementType": {
       "IN": "Stock in",
       "OUT": "Stock out",
-      "DAMAGED": "Damaged"
+      "DAMAGED": "Damaged",
+      "SALE": "Sold",
+      "RETURN": "Returned"
     },
     "supplyType": {
       "MEAT": "Meat",

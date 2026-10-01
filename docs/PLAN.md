@@ -194,14 +194,41 @@ V8. `cash_shift`, `cash_movement`, the partial unique index, six endpoints,
 *Risk:* medium. The gate changes the daily routine of every cashier, so it
 needs to be two taps or it will be worked around. Watch this one in use.
 
-### P4 — Stock ledger · ~4 days
+### P4 — Stock ledger · **done**
 
-V10 (rest). Widen `stock_movement`; write one per sale line inside the settle
-transaction; `product.stock_qty` becomes derived; `/admin/stock` reworked to
-read-only levels + ledger + adjust modal.
+V11, not V10 — P2 had taken that number. `stock_movement` gained `product_id`,
+`ref_type`, `ref_id` and `balance_after`; a `CHECK` makes a row name a product
+or a stock item and never both. `StockLedger` is now the only thing that writes
+a stock figure, so the quantity and the movement explaining it are saved
+together or not at all. `/admin/stock` is two tabs: levels as before, and the
+whole ledger — dishes and ingredients together, newest first, signed
+quantities and a running balance.
 
-*Risk:* medium. **Reconcile before and after** — current `stock_qty` values
-must equal the ledger sum on day one, or every count is suspect from the start.
+`product.stock_qty` stayed a stored column rather than becoming derived. It is
+read on every POS tile render and the ledger is append-only, so deriving it
+would mean an aggregate per tile to recompute a number the ledger already
+knows; it is a cached balance, and `balance_after` is what makes the cache
+checkable. `StockLedgerTest.storedQuantityMatchesTheLedger` is that check.
+
+**Reconciled, as the risk note demanded.** Every product and stock item got one
+opening-balance movement at its current quantity, so the invariant holds from
+day one; all 19 products agreed with their ledger afterwards. Movements written
+before V11 keep a null balance and the screen shows a dash — the balance
+before them was never recorded, and a computed figure there would read as a
+record.
+
+Two things it turned up:
+
+- `ck_movement_qty` required `qty > 0`. Several products hold zero, so their
+  opening balances were refused. The column now permits zero and
+  `StockLedger.require` still refuses it, which means a zero can only ever come
+  from an opening balance.
+- The server serialises with `non_null`, so a null column is **absent** from the
+  JSON and arrives in the browser as `undefined`. Every frontend type declaring
+  such a field `| null` was inviting `=== null`, which is false for all of them:
+  the dash for a pre-ledger balance never rendered, and the audit screen had
+  been printing `#undefined`. The ledger's types are optional now and both
+  comparisons are `== null`.
 
 ### P6 — Customers and loyalty · ~4 days
 ### P7 — Returns · ~5 days
@@ -229,7 +256,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P5 POS consolidation | 3 · **done** |
 | P2 Money integrity | 5 |
 | P3 Shift and cash | 4 |
-| P4 Stock ledger | 4 |
+| P4 Stock ledger | 4 · **done** |
 | P6 Customers | 4 |
 | P8 Variants | 5 |
 | P9 Promotions | 4 |
@@ -360,7 +387,7 @@ Four jobs today: `backend` (H2 + smoke), `postgres` (Testcontainers),
 | P1 | **a job that runs migrations against a dump of the real database** |
 | P2 | V9 data migration verified — every paid order gets exactly one payment |
 | P3 | concurrent shift-open test proving the partial index holds |
-| P4 | reconciliation test — ledger sum equals expected level |
+| P4 | **done** — `StockLedgerTest` reconciles the stored figure against the ledger |
 
 **The P1 addition matters most.** CI currently proves migrations work on an
 *empty* database. Every migration bug this project has hit was a bug on a

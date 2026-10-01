@@ -4,7 +4,8 @@ export interface AuditEntry {
   userId: string;
   action: "CREATE" | "UPDATE" | "DELETE";
   entity: string;
-  entityId: number | null;
+  /** Absent, not null, when the record has none — the server omits nulls. */
+  entityId?: number;
   /**
    * JSON objects of the fields that changed, or absent. A create has no
    * `before` and a delete has no `after`; the server omits null fields rather

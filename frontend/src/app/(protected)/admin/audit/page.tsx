@@ -105,7 +105,7 @@ export default function AuditPage() {
           <Badge tone={TONE[r.action]}>{t(`action.${r.action}`)}</Badge>
           <span>
             {r.entity}
-            {r.entityId !== null && <span className="text-ink-500"> #{r.entityId}</span>}
+            {r.entityId != null && <span className="text-ink-500"> #{r.entityId}</span>}
           </span>
         </div>
       ),

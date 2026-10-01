@@ -21,6 +21,7 @@ import {
   Select,
   StatGrid,
   StatTile,
+  Tabs,
   Textarea,
   Toolbar,
   useToast,
@@ -43,6 +44,15 @@ const EMPTY_ADJUST: AdjustRequest = { type: "IN", qty: 1, reason: "" };
 /** Where this screen starts; the reader can change it. */
 const INITIAL_SIZE = 20;
 
+/** Added, removed by hand, or gone for a reason of its own. */
+const MOVEMENT_TONE: Record<MovementType, "ok" | "info" | "dead"> = {
+  IN: "ok",
+  RETURN: "ok",
+  OUT: "info",
+  SALE: "info",
+  DAMAGED: "dead",
+};
+
 export default function StockPage() {
   const t = useTranslations("stock");
   const tc = useTranslations("common");
@@ -57,6 +67,16 @@ export default function StockPage() {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(INITIAL_SIZE);
   const [onlyLow, setOnlyLow] = useState(false);
+
+  /*
+   * Levels answer "how much is there"; the ledger answers "why". They are two
+   * tabs of one screen because the second question only ever arrives from the
+   * first, and because the ledger covers dishes as well as ingredients — it has
+   * no other screen it could sensibly live on.
+   */
+  const [tab, setTab] = useState<"levels" | "ledger">("levels");
+  const [ledgerPage, setLedgerPage] = useState(0);
+  const [ledgerSize, setLedgerSize] = useState(INITIAL_SIZE);
 
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
   const [draft, setDraft] = useState<StockItemRequest>(EMPTY);
@@ -82,6 +102,15 @@ export default function StockPage() {
     queryKey: ["stock", historyFor?.id, "movements"],
     queryFn: () => get<PageResponse<Movement>>(`/stock/${historyFor!.id}/movements`, { size: 50 }),
     enabled: historyFor !== null,
+  });
+
+  const ledger = useQuery({
+    queryKey: ["stock", "ledger", ledgerPage, ledgerSize],
+    queryFn: () =>
+      get<PageResponse<Movement>>("/stock/ledger", { page: ledgerPage, size: ledgerSize }),
+    // Not fetched until the tab is opened: it is the larger query of the two
+    // and most visits to this screen only want the levels.
+    enabled: tab === "ledger",
   });
 
   const adjust = useMutation({
@@ -202,15 +231,75 @@ export default function StockPage() {
     {
       key: "type",
       header: t("movementType"),
+      render: (m) => <Badge tone={MOVEMENT_TONE[m.type]}>{tMv(m.type)}</Badge>,
+    },
+    {
+      key: "qty",
+      header: tc("qty"),
+      numeric: true,
+      // Signed for the reader even though the stored quantity is always
+      // positive — a column of bare numbers makes an addition and a removal
+      // look alike.
       render: (m) => (
-        <Badge tone={m.type === "IN" ? "ok" : m.type === "OUT" ? "info" : "dead"}>
-          {tMv(m.type)}
-        </Badge>
+        <span className={m.increase ? "text-success" : "text-danger"}>
+          {m.increase ? "+" : "−"}
+          {m.qty}
+        </span>
       ),
     },
-    { key: "qty", header: tc("qty"), numeric: true, render: (m) => m.qty },
+    {
+      key: "balance",
+      header: t("balanceAfter"),
+      numeric: true,
+      // The column the ledger exists for: the figure the screen showed after
+      // this row, so a wrong count can be traced to the row that made it wrong.
+      // A dash means the movement predates the ledger and its balance was never
+      // recorded — see V11.
+      // `== null`, not `=== null`: the server omits null columns, so an absent
+      // balance arrives as undefined.
+      render: (m) =>
+        m.balanceAfter == null ? (
+          <span className="text-ink-400">—</span>
+        ) : (
+          <b className="font-[family-name:var(--font-num)]">{m.balanceAfter}</b>
+        ),
+    },
     { key: "by", header: t("movementBy"), render: (m) => m.createdBy ?? "—" },
-    { key: "why", header: tc("reason"), render: (m) => m.reason ?? "—" },
+    {
+      key: "why",
+      header: tc("reason"),
+      render: (m) => (
+        <>
+          <div>{m.reason ?? "—"}</div>
+          {m.refType && (
+            <div className="text-[11px] text-ink-500">{m.refType}</div>
+          )}
+        </>
+      ),
+    },
+  ];
+
+  /**
+   * What moved. Only the whole ledger needs it — a history modal is already
+   * about one thing, and repeating its name down every row says nothing.
+   */
+  const subjectColumn: Column<Movement> = {
+    key: "subject",
+    header: t("subject"),
+    render: (m) => (
+      <>
+          <span className="font-medium">{m.productName ?? m.stockItemName ?? "—"}</span>
+          <div className="text-[11px] text-ink-500">
+            {m.productId == null ? t("ingredient") : t("dish")}
+          </div>
+      </>
+    ),
+  };
+
+  const ledgerColumns: Column<Movement>[] = [
+    movementColumns[0],
+    subjectColumn,
+    ...movementColumns.slice(1),
   ];
 
   return (
@@ -224,51 +313,91 @@ export default function StockPage() {
         <StatTile tone={4} label={t("outOfStock")} value={summary.data?.outOfStockCount ?? "—"} />
       </StatGrid>
 
-      <Toolbar
-        left={
-          <>
-            <Button variant="admin" onClick={openNew}>
-              ➕ {t("addItem")}
-            </Button>
-            <Select
-              className="w-auto"
-              value={onlyLow ? "low" : "all"}
-              onChange={(e) => setOnlyLow(e.target.value === "low")}
-              aria-label={tA11y("filter")}
-            >
-              <option value="all">{tc("all")}</option>
-              <option value="low">{t("lowStockOnly")}</option>
-            </Select>
-          </>
-        }
-        right={<SearchBar value={search} onChange={(v) => { setSearch(v); setPage(0); }} />}
+      <Tabs
+        items={[
+          { id: "levels", label: t("levels") },
+          { id: "ledger", label: t("ledger") },
+        ]}
+        active={tab}
+        onChange={(id) => setTab(id as "levels" | "ledger")}
       />
 
-      <DataTable
-        fill
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        loading={list.isLoading}
-        emptyMessage={t("noItems")}
-      />
+      {tab === "levels" ? (
+      <>
+        <Toolbar
+          left={
+            <>
+              <Button variant="admin" onClick={openNew}>
+                ➕ {t("addItem")}
+              </Button>
+              <Select
+                className="w-auto"
+                value={onlyLow ? "low" : "all"}
+                onChange={(e) => setOnlyLow(e.target.value === "low")}
+                aria-label={tA11y("filter")}
+              >
+                <option value="all">{tc("all")}</option>
+                <option value="low">{t("lowStockOnly")}</option>
+              </Select>
+            </>
+          }
+          right={<SearchBar value={search} onChange={(v) => { setSearch(v); setPage(0); }} />}
+        />
 
-      {/* The low-stock tab filters the rows already loaded rather than
-          asking the server, so it is a single page whose count is what the
-          filter left. Reporting the unfiltered total there would be a lie,
-          and reporting zero — which it briefly did — a worse one. The row is
-          always rendered so the table above keeps its height either way. */}
-      <Pagination
-        page={onlyLow ? 0 : (list.data?.page ?? 0)}
-        totalPages={onlyLow ? 1 : (list.data?.totalPages ?? 0)}
-        totalElements={onlyLow ? rows.length : (list.data?.totalElements ?? 0)}
-        size={onlyLow ? Math.max(rows.length, 1) : (list.data?.size ?? size)}
-        onPage={setPage}
-        onSize={(n) => {
-          setSize(n);
-          setPage(0);
-        }}
-      />
+        <DataTable
+          fill
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          loading={list.isLoading}
+          emptyMessage={t("noItems")}
+        />
+
+        {/* The low-stock tab filters the rows already loaded rather than
+            asking the server, so it is a single page whose count is what the
+            filter left. Reporting the unfiltered total there would be a lie,
+            and reporting zero — which it briefly did — a worse one. The row is
+            always rendered so the table above keeps its height either way. */}
+        <Pagination
+          page={onlyLow ? 0 : (list.data?.page ?? 0)}
+          totalPages={onlyLow ? 1 : (list.data?.totalPages ?? 0)}
+          totalElements={onlyLow ? rows.length : (list.data?.totalElements ?? 0)}
+          size={onlyLow ? Math.max(rows.length, 1) : (list.data?.size ?? size)}
+          onPage={setPage}
+          onSize={(n) => {
+            setSize(n);
+            setPage(0);
+          }}
+        />
+      </>
+      ) : (
+      <>
+        {ledger.isError && <Alert tone="error">{apiError(ledger.error)}</Alert>}
+
+        <p className="mb-3.5 text-sm text-ink-500">{t("ledgerHelp")}</p>
+
+        <DataTable
+          fill
+          columns={ledgerColumns}
+          rows={ledger.data?.content ?? []}
+          rowKey={(m) => m.id}
+          loading={ledger.isLoading}
+          emptyMessage={t("noMovements")}
+        />
+
+        <Pagination
+          page={ledger.data?.page ?? 0}
+          totalPages={ledger.data?.totalPages ?? 0}
+          totalElements={ledger.data?.totalElements ?? 0}
+          size={ledger.data?.size ?? ledgerSize}
+          onPage={setLedgerPage}
+          onSize={(n) => {
+            setLedgerSize(n);
+            setLedgerPage(0);
+          }}
+        />
+      </>
+      )}
 
       {/* ---- create / edit ---- */}
       <Modal
