@@ -1,6 +1,8 @@
 package com.resturant.management.rms.order;
 
 import com.resturant.management.rms.catalog.Product;
+import com.resturant.management.rms.stock.MovementType;
+import com.resturant.management.rms.stock.StockLedger;
 import com.resturant.management.rms.catalog.ProductRepository;
 import com.resturant.management.rms.common.Strings;
 import com.resturant.management.rms.common.exception.BadRequestException;
@@ -41,6 +43,7 @@ public class OrderService {
     private static final int MONEY_SCALE = 2;
 
     private final OrderRepository orderRepository;
+    private final StockLedger stockLedger;
     private final ProductRepository productRepository;
     private final DiningTableRepository tableRepository;
     private final UserRepository userRepository;
@@ -199,24 +202,22 @@ public class OrderService {
      * payment would be the wrong answer. A negative figure is a signal for the
      * stock screen, not a reason to fail here.
      *
-     * <p>Note: no {@code StockMovement} rows are written for sales. Movements are
-     * keyed to {@code stock_item} (raw ingredients), and there is no recipe table
-     * mapping a dish to its ingredients — see PROJECT-SPEC.md §12.
+     * <p>Each line leaves a movement naming the bill that caused it, so a count
+     * that looks wrong can be traced to the sales that made it so. Until V11
+     * this wrote nothing at all, and the question had no answer.
+     *
+     * <p>Still no recipe table: a dish decrements its own figure, not the
+     * ingredients behind it — PROJECT-SPEC.md §12.
      */
     private void decrementStock(Order order) {
         for (OrderItem item : order.getItems()) {
             Product product = item.getProduct();
             if (product == null) continue;
 
-            BigDecimal before = product.getStockQty() == null ? BigDecimal.ZERO : product.getStockQty();
-            BigDecimal after = before.subtract(item.getQty());
-            product.setStockQty(after);
-            productRepository.save(product);
-
-            if (after.compareTo(BigDecimal.ZERO) < 0) {
-                log.warn("Stock for '{}' is now negative ({}) after {}",
-                        product.getName(), after, order.getInvoiceNo());
-            }
+            // Inside the settle transaction, so a bill and the stock it moved
+            // commit together or not at all.
+            stockLedger.recordProduct(product, MovementType.SALE, item.getQty(),
+                    order.getInvoiceNo(), StockLedger.REF_ORDER, order.getId(), order.getModId());
         }
     }
 

@@ -129,11 +129,15 @@ class SupplyChainControllerTest {
 
 		assertThat(data(res).path("qty").asDouble()).isEqualTo(before + 10);
 
+		// Two: the opening balance V11 wrote when the ledger started, and this
+		// adjustment. The count still proves exactly one movement was added, and
+		// content[0] is the newest.
 		mvc.perform(get("/api/stock/2/movements").header("Authorization", admin))
-				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.totalElements").value(2))
 				.andExpect(jsonPath("$.data.content[0].type").value("IN"))
 				.andExpect(jsonPath("$.data.content[0].createdBy").value("admin"))
-				.andExpect(jsonPath("$.data.content[0].reason").value("ទិញបន្ថែម"));
+				.andExpect(jsonPath("$.data.content[0].reason").value("ទិញបន្ថែម"))
+				.andExpect(jsonPath("$.data.content[0].balanceAfter").exists());
 	}
 
 	@Test
@@ -266,10 +270,12 @@ class SupplyChainControllerTest {
 		assertThat(stockQty(2)).isEqualTo(beefBefore + 20);
 		assertThat(stockQty(4)).isEqualTo(prawnBefore + 15);
 
-		// A movement per line, attributed to whoever received it.
+		// A movement per line, attributed to whoever received it. Two in total:
+		// the opening balance from V11, and this receipt.
 		mvc.perform(get("/api/stock/2/movements").header("Authorization", admin))
-				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.totalElements").value(2))
 				.andExpect(jsonPath("$.data.content[0].type").value("IN"))
+				.andExpect(jsonPath("$.data.content[0].refType").value("PURCHASE"))
 				.andExpect(jsonPath("$.data.content[0].reason")
 						.value(org.hamcrest.Matchers.containsString("Received on PO-")));
 

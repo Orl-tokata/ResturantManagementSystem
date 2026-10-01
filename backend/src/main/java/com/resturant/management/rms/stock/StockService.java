@@ -23,6 +23,7 @@ public class StockService {
 
     private final StockItemRepository stockRepository;
     private final StockMovementRepository movementRepository;
+    private final StockLedger ledger;
 
     /* ---- Reads ----------------------------------------------------------- */
 
@@ -95,28 +96,17 @@ public class StockService {
         StockItem item = find(id);
 
         BigDecimal current = item.getQty() == null ? BigDecimal.ZERO : item.getQty();
-        BigDecimal delta = switch (request.type()) {
-            case IN -> request.qty();
-            case OUT, DAMAGED -> request.qty().negate();
-        };
+        BigDecimal after = current.add(request.type().applyTo(request.qty()));
 
-        BigDecimal after = current.add(delta);
+        // Refused here rather than in the ledger: a correction typed by hand
+        // that would take a shelf below empty is a mistake worth stopping. A
+        // sale is not — by then the food has gone.
         if (after.compareTo(BigDecimal.ZERO) < 0) {
             throw new BadRequestException(
                     "error.stock.insufficient", request.qty(), item.getName(), current);
         }
 
-        item.setQty(after);
-        stockRepository.save(item);
-
-        movementRepository.save(StockMovement.builder()
-                .stockItem(item)
-                .movementType(request.type())
-                .qty(request.qty())
-                .reason(request.reason())
-                .createdBy(username)
-                .createdAt(LocalDateTime.now())
-                .build());
+        ledger.recordItem(item, request.type(), request.qty(), request.reason(), null, null, username);
 
         log.info("Stock '{}' {} {} → {} by {}",
                 item.getName(), request.type(), request.qty(), after, username);
@@ -129,18 +119,28 @@ public class StockService {
      */
     @Transactional
     public void receive(StockItem item, BigDecimal qty, String reference, String username) {
-        BigDecimal current = item.getQty() == null ? BigDecimal.ZERO : item.getQty();
-        item.setQty(current.add(qty));
-        stockRepository.save(item);
+        ledger.recordItem(item, MovementType.IN, qty, "Received on " + reference,
+                StockLedger.REF_PURCHASE, null, username);
+    }
 
-        movementRepository.save(StockMovement.builder()
-                .stockItem(item)
-                .movementType(MovementType.IN)
-                .qty(qty)
-                .reason("Received on " + reference)
-                .createdBy(username)
-                .createdAt(LocalDateTime.now())
-                .build());
+    /** Movements for one product. */
+    @Transactional(readOnly = true)
+    public Page<MovementResponse> productMovements(Long productId, Pageable pageable) {
+        return movementRepository.findByProductIdOrderByCreatedAtDesc(productId, pageable)
+                .map(this::toMovement);
+    }
+
+    /**
+     * The whole ledger, products and ingredients together.
+     *
+     * <p>One list rather than two: "what moved today, and why" is a single
+     * question, and splitting it by what kind of thing moved would mean asking
+     * it twice and merging the answers by hand.
+     */
+    @Transactional(readOnly = true)
+    public Page<MovementResponse> ledger(Pageable pageable) {
+        return movementRepository.findAllByOrderByCreatedAtDescIdDesc(pageable)
+                .map(this::toMovement);
     }
 
     /* ---- Helpers ---------------------------------------------------------- */
@@ -171,6 +171,14 @@ public class StockService {
                 m.getId(),
                 m.getStockItem() != null ? m.getStockItem().getId() : null,
                 m.getStockItem() != null ? m.getStockItem().getName() : null,
-                m.getMovementType(), m.getQty(), m.getReason(), m.getCreatedBy(), m.getCreatedAt());
+                m.getProduct() != null ? m.getProduct().getId() : null,
+                m.getProduct() != null ? m.getProduct().getName() : null,
+                m.getMovementType(),
+                m.getQty(),
+                m.getMovementType().isIncrease(),
+                m.getBalanceAfter(),
+                m.getRefType(),
+                m.getRefId(),
+                m.getReason(), m.getCreatedBy(), m.getCreatedAt());
     }
 }

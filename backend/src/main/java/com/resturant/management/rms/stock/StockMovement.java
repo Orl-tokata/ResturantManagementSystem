@@ -24,7 +24,7 @@ public class StockMovement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_item_id", nullable = false)
     private StockItem stockItem;
 
@@ -35,6 +35,32 @@ public class StockMovement {
     /** Always positive — direction is carried by {@link #movementType}. */
     @Column(name = "qty", nullable = false, precision = 12, scale = 2)
     private BigDecimal qty;
+
+    /**
+     * The product this moved, when it is a product rather than an ingredient.
+     *
+     * <p>Exactly one of this and {@link #stockItem} is set; the database
+     * enforces it rather than trusting the code to.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private com.resturant.management.rms.catalog.Product product;
+
+    /** What caused this, e.g. {@code ORDER}. Null for a manual adjustment. */
+    @Column(name = "ref_type", length = 30)
+    private String refType;
+
+    @Column(name = "ref_id")
+    private Long refId;
+
+    /**
+     * The balance immediately after this movement.
+     *
+     * <p>Null on rows written before V11: the balance before them was never
+     * recorded, so any figure would be a guess presented as a record.
+     */
+    @Column(name = "balance_after", precision = 12, scale = 2)
+    private BigDecimal balanceAfter;
 
     @Column(name = "reason", length = 500)
     private String reason;

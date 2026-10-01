@@ -44,12 +44,34 @@ public final class StockDtos {
             @Size(max = 500) String reason
     ) {}
 
+    /**
+     * One line of the ledger.
+     *
+     * <p>A row is about a product or a stock item, never both, so one pair of
+     * fields is always null — which is the shape of the table rather than an
+     * oversight.
+     */
     public record MovementResponse(
             Long id,
             Long stockItemId,
             String stockItemName,
+            Long productId,
+            String productName,
             MovementType type,
             BigDecimal qty,
+            /** True when this added stock; the quantity itself is always positive. */
+            boolean increase,
+            /**
+             * The balance immediately after this movement.
+             *
+             * <p>Null on rows written before the ledger existed — the balance
+             * before them was never recorded, and a guess here would read as a
+             * record. See V11.
+             */
+            BigDecimal balanceAfter,
+            /** What caused it, e.g. ORDER, and that document's id. */
+            String refType,
+            Long refId,
             String reason,
             String createdBy,
             LocalDateTime createdAt

@@ -68,6 +68,28 @@ public class StockController {
         return ApiResponse.ok(PageResponse.from(stockService.movements(id, pageable)));
     }
 
+    @GetMapping("/ledger")
+    @Operation(summary = "The whole stock ledger",
+            description = "Every movement, products and ingredients together, newest first. "
+                    + "Rows written before the ledger existed carry no balance.")
+    public ApiResponse<PageResponse<MovementResponse>> ledger(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(PageResponse.from(stockService.ledger(Paging.of(page, size))));
+    }
+
+    @GetMapping("/products/{productId}/movements")
+    @Operation(summary = "Movement history for a product",
+            description = "Why a dish's count is what it is: every sale and correction, "
+                    + "each with the balance it left behind.")
+    public ApiResponse<PageResponse<MovementResponse>> productMovements(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(
+                PageResponse.from(stockService.productMovements(productId, Paging.of(page, size))));
+    }
+
     @PostMapping
     @Operation(summary = "Create a stock item")
     public ResponseEntity<ApiResponse<StockItemResponse>> create(

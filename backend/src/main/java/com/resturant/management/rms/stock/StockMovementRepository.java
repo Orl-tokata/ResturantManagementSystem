@@ -13,6 +13,11 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
 
     Page<StockMovement> findByStockItemIdOrderByCreatedAtDesc(Long stockItemId, Pageable pageable);
 
+    Page<StockMovement> findByProductIdOrderByCreatedAtDesc(Long productId, Pageable pageable);
+
+    /** The whole ledger, newest first — both products and ingredients. */
+    Page<StockMovement> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
+
     long countByStockItemId(Long stockItemId);
 
     List<StockMovement> findByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime from, LocalDateTime to);
