@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Alert, Button, Field, FieldRow, Input } from "@/components/ui";
+import { Alert, Button, Field, FieldRow } from "@/components/ui";
 import { post } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 /** Same regex the backend enforces, so the user sees the rule before a round trip. */
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -73,9 +74,8 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
         required
         error={fieldErrors.current}
       >
-        <Input
+        <PasswordInput
           id="cp-current"
-          type="password"
           autoComplete="current-password"
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
@@ -89,18 +89,16 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
           required
           error={fieldErrors.next}
         >
-          <Input
+          <PasswordInput
             id="cp-new"
-            type="password"
             autoComplete="new-password"
             value={next}
             onChange={(e) => setNext(e.target.value)}
           />
         </Field>
         <Field label={t("confirm")} htmlFor="cp-confirm" required error={fieldErrors.confirm}>
-          <Input
+          <PasswordInput
             id="cp-confirm"
-            type="password"
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}

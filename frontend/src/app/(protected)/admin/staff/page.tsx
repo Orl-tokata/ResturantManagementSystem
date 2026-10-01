@@ -28,6 +28,7 @@ import { post } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
 import type { AccountRequest, Role } from "@/types/auth";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import {
   type Gender,
   type Shift,
@@ -519,9 +520,8 @@ export default function StaffPage() {
             />
           </Field>
           <Field label={t("password")} htmlFor="a-pass" required>
-            <Input
+            <PasswordInput
               id="a-pass"
-              type="password"
               value={account.password}
               onChange={(e) => setAcc("password", e.target.value)}
               autoComplete="new-password"

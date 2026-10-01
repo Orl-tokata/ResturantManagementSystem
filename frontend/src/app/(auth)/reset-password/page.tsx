@@ -7,9 +7,10 @@ import { useTranslations } from "next-intl";
 import { AuthCard } from "@/components/ui/AuthCard";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Field";
+import { Field } from "@/components/ui/Field";
 import { post } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 const PASSWORD_RE = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
 
@@ -83,9 +84,8 @@ function ResetPasswordForm() {
           htmlFor="password"
           error={fieldErrors.password}
         >
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -97,9 +97,8 @@ function ResetPasswordForm() {
           htmlFor="confirm"
           error={fieldErrors.confirm}
         >
-          <Input
+          <PasswordInput
             id="confirm"
-            type="password"
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
