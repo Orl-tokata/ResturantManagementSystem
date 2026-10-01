@@ -26,6 +26,9 @@ import { useApiError } from "@/lib/use-api-error";
 import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
 import { IconPicker } from "@/components/ui/IconPicker";
+import { ProductImage } from "@/components/ui/ProductImage";
+import { ImageUpload } from "@/components/ui/ImageUpload";
+import { del, upload } from "@/lib/api";
 import {
   type Category,
   type Product,
@@ -63,6 +66,10 @@ export default function ProductsPage() {
   const [size, setSize] = useState(INITIAL_SIZE);
 
   const [editingId, setEditingId] = useState<number | null | undefined>(undefined);
+  /* The stored photograph of the product open in the form. Separate from the
+     draft because it is saved by its own endpoint, not by Save. */
+  const [imageFile, setImageFile] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
   const [draft, setDraft] = useState<ProductRequest>(EMPTY);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
@@ -80,6 +87,7 @@ export default function ProductsPage() {
   function openNew() {
     setEditingId(null);
     setDraft({ ...EMPTY, categoryId: categories.data?.[0]?.id ?? 0 });
+    setImageFile(null);
     setFormError(null);
   }
 
@@ -96,6 +104,7 @@ export default function ProductsPage() {
       description: row.description ?? "",
       status: row.status,
     });
+    setImageFile(row.imageFile);
     setFormError(null);
   }
 
@@ -138,7 +147,11 @@ export default function ProductsPage() {
       header: t("image"),
       width: "64px",
       align: "center",
-      render: (r) => <span className="text-xl">{r.icon || "🍽️"}</span>,
+      render: (r) => (
+        <span className="mx-auto grid h-9 w-9 place-items-center overflow-hidden rounded bg-ink-100">
+          <ProductImage file={r.imageFile} icon={r.icon} alt={r.name} iconClassName="text-xl" />
+        </span>
+      ),
     },
     {
       key: "name",
@@ -362,6 +375,41 @@ export default function ProductsPage() {
             id="p-img"
             value={draft.icon}
             onChange={(icon) => setDraft({ ...draft, icon })}
+          />
+        </Field>
+
+        <Field label={t("photo")}>
+          <ImageUpload
+            file={imageFile}
+            busy={imageBusy}
+            // No id to upload against until the product exists, and the form
+            // creates it on Save. Saying so beats a button that fails.
+            disabledReason={editingId === null ? t("photoAfterSave") : undefined}
+            onPick={async (picked) => {
+              setImageBusy(true);
+              setFormError(null);
+              try {
+                const saved = await upload<Product>(`/products/${editingId}/image`, picked);
+                setImageFile(saved.imageFile);
+                void list.refetch();
+              } catch (e) {
+                setFormError(apiError(e, "uploadImage"));
+              } finally {
+                setImageBusy(false);
+              }
+            }}
+            onRemove={async () => {
+              setImageBusy(true);
+              try {
+                const saved = await del<Product>(`/products/${editingId}/image`);
+                setImageFile(saved.imageFile);
+                void list.refetch();
+              } catch (e) {
+                setFormError(apiError(e, "uploadImage"));
+              } finally {
+                setImageBusy(false);
+              }
+            }}
           />
         </Field>
 

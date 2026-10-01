@@ -60,6 +60,14 @@ public final class CatalogDtos {
             BigDecimal cost,
             BigDecimal stockQty,
             String icon,
+            /**
+             * Filename of the product's photograph, or null.
+             *
+             * <p>Not a URL: the client builds one, so the API does not have to
+             * know where it is being served from. Null means the icon is what
+             * to show.
+             */
+            String imageFile,
             String description,
             RecordStatus status
     ) {}

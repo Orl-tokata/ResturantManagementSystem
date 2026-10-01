@@ -52,6 +52,15 @@ public class Product extends BaseAuditEntity {
     @Column(name = "icon", length = 16)
     private String icon;
 
+    /**
+     * Stored photograph, as a bare filename — the directory is configuration.
+     *
+     * <p>Null is the ordinary case, and the icon above is what the screens show
+     * then. See V10.
+     */
+    @Column(name = "image_file", length = 80)
+    private String imageFile;
+
     @Column(name = "description", length = 1000)
     private String description;
 

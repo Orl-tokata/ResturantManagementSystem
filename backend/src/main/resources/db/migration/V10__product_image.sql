@@ -1,0 +1,23 @@
+-- ---------------------------------------------------------------------------
+-- V10 — product photographs
+--
+-- Beside `icon`, not instead of it. The emoji renders instantly and stands in
+-- whenever a product has no photograph or the file cannot be served, so a
+-- missing image degrades to what the screen did before rather than to an empty
+-- box. A product can sensibly have both.
+--
+-- Stores the file *name*, not a path. The directory it lives in is
+-- configuration (app.uploads.dir) and may move between machines; a row holding
+-- D:\something is a row that stops meaning anything the moment it is restored
+-- somewhere else.
+--
+-- 80 characters: a UUID is 36, plus a dot and an extension.
+--
+-- Note for whoever restores this database: these rows reference files that
+-- pg_dump does not contain. A restore without the uploads directory comes back
+-- with every photograph missing — the screens will fall back to the emoji
+-- rather than break, but the pictures are gone unless that directory was
+-- backed up too.
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE product ADD COLUMN image_file VARCHAR(80);

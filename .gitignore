@@ -61,3 +61,8 @@ desktop.ini
 # reviewer keeps it rather than in version control.
 khmer-review.csv
 khmer-review.md
+
+# Uploaded product photographs. User content, not source: it belongs in a
+# backup alongside the database, never in the repository.
+backend/uploads/
+uploads/

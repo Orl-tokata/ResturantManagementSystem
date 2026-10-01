@@ -35,6 +35,8 @@ export interface Product {
   stockQty: number;
   /** An emoji, not a URL — the column was misnamed until V9. */
   icon: string | null;
+  /** Stored photograph's filename, or null. The icon shows when it is null. */
+  imageFile: string | null;
   description: string | null;
   status: RecordStatus;
 }

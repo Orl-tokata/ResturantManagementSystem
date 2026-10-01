@@ -54,6 +54,14 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  servlet:
+    multipart:
+      # Tomcat refuses oversized uploads before any of our code runs, so this
+      # has to be at least app.uploads.max-image-size or the application's own
+      # limit and message would never be reached.
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   mvc:
     # Raise NoHandlerFoundException so an unknown path reaches the exception
     # handler and returns a 404 in the ApiResponse shape, instead of Spring's
@@ -122,6 +130,26 @@ app:
     # The name an inbox shows instead of the raw sending address. Set it to the
     # restaurant so a reset code does not look like mail from a stranger.
     from-name: ${MAIL_FROM_NAME:Restaurant Management System}
+
+  uploads:
+    # Where product photographs are written. Relative to the working directory
+    # by default, which keeps a developer's machine self-contained; set an
+    # absolute path anywhere it is deployed, outside the application directory,
+    # so a redeploy cannot take the pictures with it.
+    #
+    # This directory is NOT in pg_dump. Back it up alongside the database or a
+    # restore returns every product to its emoji.
+    dir: ${UPLOADS_DIR:./uploads}
+
+    # Rejected before the file is read. Phone photographs are routinely larger
+    # than this; they are re-encoded down on the way in, but the cap stops an
+    # upload of arbitrary size being buffered first.
+    max-image-size: ${UPLOADS_MAX_IMAGE:5MB}
+
+    # The long edge a stored photograph is scaled to. The POS draws tiles at
+    # about 128px and the product form previews at 160px, so anything larger is
+    # bytes a till downloads and throws away.
+    image-max-edge: ${UPLOADS_IMAGE_EDGE:600}
 
   cors:
     # Next.js dev server. Comma-separated for multiple origins.

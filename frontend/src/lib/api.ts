@@ -36,6 +36,15 @@ export interface PageResponse<T> {
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8081/api";
 
+/**
+ * The same base, for URLs a browser fetches by itself.
+ *
+ * <p>An `<img src>` is not an axios request, so it carries none of the headers
+ * the interceptor adds — which is why product photographs are served from a
+ * path that needs no token.
+ */
+export const API_BASE_URL = BASE_URL;
+
 /* -------------------------------------------------------------------------
    Access token lives in memory only. The refresh token is an httpOnly cookie
    set by the backend, so it is never readable from JavaScript.
@@ -208,6 +217,25 @@ export async function post<T>(
 ): Promise<T> {
   const res = await api.post<ApiResponse<T>>(url, body, {
     headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
+  });
+  return res.data.data;
+}
+
+/**
+ * Sends a file.
+ *
+ * <p>The Content-Type is left unset on purpose: the browser sets it, and only
+ * the browser knows the multipart boundary it is about to generate. Declaring
+ * `multipart/form-data` by hand produces a request with no boundary, which the
+ * server cannot parse.
+ */
+export async function upload<T>(url: string, file: File, field = "file"): Promise<T> {
+  const form = new FormData();
+  form.append(field, file);
+  const res = await api.post<ApiResponse<T>>(url, form, {
+    headers: { "Content-Type": undefined },
+    // A photograph over a slow connection outlasts the default.
+    timeout: 60_000,
   });
   return res.data.data;
 }

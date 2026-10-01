@@ -47,6 +47,10 @@ public class SecurityConfig {
             "/api/auth/forgot-password",
             "/api/auth/verify-otp",
             "/api/auth/reset-password",
+            // Product photographs. An <img> sends no Authorization header,
+            // and these are pictures of menu items. Read-only: uploading and
+            // removing one stays behind ADMIN on the endpoints above.
+            "/api/products/images/**",
             "/api/health/**",
             "/swagger-ui/**",
             "/swagger-ui.html",

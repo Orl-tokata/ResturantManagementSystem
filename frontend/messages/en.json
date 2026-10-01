@@ -272,7 +272,15 @@
     "errName": "Product name is required",
     "errCategory": "Please choose a category",
     "errPrice": "Price cannot be negative",
-    "namePlaceholder": "Seafood fried rice"
+    "namePlaceholder": "Seafood fried rice",
+    "photo": "Photograph",
+    "noPhoto": "No photo",
+    "addPhoto": "Add photo",
+    "replacePhoto": "Replace",
+    "removePhoto": "Remove",
+    "photoHint": "JPEG or PNG, up to 5MB. Scaled down when saved; the emoji shows if there is no photo.",
+    "photoTooBig": "That image is larger than 5MB",
+    "photoAfterSave": "Save the product first, then add a photograph."
   },
   "categories": {
     "title": "Category list",
@@ -556,7 +564,8 @@
     "saveSettings": "Could not save the settings",
     "createAccount": "Could not create the login",
     "khqrFailed": "Could not start the KHQR payment",
-    "unlock": "Could not unlock that account"
+    "unlock": "Could not unlock that account",
+    "uploadImage": "Could not save that photograph"
   },
   "a11y": {
     "edit": "Edit {name}",
