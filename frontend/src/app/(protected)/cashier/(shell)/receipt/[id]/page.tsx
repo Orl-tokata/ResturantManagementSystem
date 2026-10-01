@@ -6,7 +6,15 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Printer, ShoppingCart } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Alert, Badge, Button, Pagination, SearchBar, toneForOrderStatus } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  Button,
+  Pagination,
+  SearchBar,
+  Select,
+  toneForOrderStatus,
+} from "@/components/ui";
 import { Barcode } from "@/components/pos/Barcode";
 import { useList } from "@/hooks/useCrud";
 import { get } from "@/lib/api";
@@ -18,8 +26,14 @@ import { useBilingual, useBilingualPair } from "@/i18n/bilingual";
 import { formatReceiptDateTime, formatUsd } from "@/lib/format";
 import type { Order, Receipt } from "@/types/order";
 
-/** A short list beside a slip, not a page of history — this is a picker. */
-const SIZE = 15;
+/**
+ * Where the picker starts. One of the sizes the chooser offers, so the control
+ * does not open showing a blank for a value that is not on its own list.
+ */
+const INITIAL_SIZE = 20;
+
+/** The statuses worth filtering a receipt list by. */
+const STATUSES = ["PAID", "OPEN", "CANCELLED"] as const;
 
 export default function ReceiptPage() {
   const t = useTranslations("receipt");
@@ -254,25 +268,50 @@ function Dashes() {
 function InvoiceList({ currentId }: { currentId: string }) {
   const t = useTranslations("receipt");
   const tH = useTranslations("history");
+  const tc = useTranslations("common");
   const tStatus = useTranslations("enum.orderStatus");
   const router = useRouter();
 
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(INITIAL_SIZE);
 
-  const list = useList<Order>("orders", { search, page, size: SIZE });
+  // Empty values are dropped before the query string is built, so "" really
+  // means no filter rather than a filter on nothing.
+  const list = useList<Order>("orders", { search, status, page, size });
   const rows = list.data?.content ?? [];
+
+  /** Any filter change goes back to the first page; page 4 of a narrower result
+      is an empty list that reads as a fault. */
+  function filter<T>(set: (v: T) => void) {
+    return (value: T) => {
+      set(value);
+      setPage(0);
+    };
+  }
 
   return (
     <aside className="flex min-h-0 flex-col rounded-md border border-ink-200 bg-white p-2.5 print:hidden">
       <SearchBar
         value={search}
-        onChange={(v) => {
-          setSearch(v);
-          setPage(0);
-        }}
+        onChange={filter(setSearch)}
         placeholder={tH("invoiceNo")}
       />
+
+      <Select
+        value={status}
+        onChange={(e) => filter(setStatus)(e.target.value)}
+        aria-label={tc("status")}
+        className="mt-1.5 py-1.5 text-xs"
+      >
+        <option value="">{tH("allStatus")}</option>
+        {STATUSES.map((v) => (
+          <option key={v} value={v}>
+            {tStatus(v)}
+          </option>
+        ))}
+      </Select>
 
       {/* Capped rather than page-length, so the slip beside it stays put as the
           list is searched instead of the whole page growing and shrinking. */}
@@ -321,8 +360,9 @@ function InvoiceList({ currentId }: { currentId: string }) {
         page={list.data?.page ?? 0}
         totalPages={list.data?.totalPages ?? 0}
         totalElements={list.data?.totalElements ?? 0}
-        size={list.data?.size ?? SIZE}
+        size={list.data?.size ?? size}
         onPage={setPage}
+        onSize={filter(setSize)}
       />
     </aside>
   );
