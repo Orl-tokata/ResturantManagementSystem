@@ -257,11 +257,12 @@ wrong, which is what separates it from Phase 1.
 |---|---|---|
 | Q1 | Kitchen display (SCREENS §3.9) | P8 — modifiers are most of what a cook reads |
 | Q2 | **Staff attendance** — see below | P3 |
-| Q3 | Supplier ledger; `supplier.balance` derived (ERD §1.3) | P2 |
-| Q4 | Roles and permissions as data (ARCHITECTURE §5) | P1 |
-| Q5 | Warehouse transfers | a second warehouse existing |
-| Q6 | Buy-X-get-Y promotions | P7 — it interacts with returns |
-| Q7 | Customer-facing display | a second monitor |
+| Q3 | **Product photographs** — see below | nothing technical; someone to take them |
+| Q4 | Supplier ledger; `supplier.balance` derived (ERD §1.3) | P2 |
+| Q5 | Roles and permissions as data (ARCHITECTURE §5) | P1 |
+| Q6 | Warehouse transfers | a second warehouse existing |
+| Q7 | Buy-X-get-Y promotions | P7 — it interacts with returns |
+| Q8 | Customer-facing display | a second monitor |
 
 ### Q2 — Staff attendance
 
@@ -301,6 +302,50 @@ recorded-by), a "who is in now" board, and a per-staff month view. Roughly
 produces half the data — building attendance first means building it twice.
 It is also not in the pasted brief; it is an addition, and worth naming as a
 choice rather than a requirement.
+
+---
+
+### Q3 — Product photographs
+
+V9 gave products an `icon` — one emoji, instant to render, backed up with
+everything else by `pg_dump`. It is not enough, and the menu already shows why:
+
+    U+2615   Coffee, Hot coffee, Milk coffee
+    U+1F375  Lime tea, Steeped tea
+
+Five of nineteen dishes cannot be told apart by their picture. The tile also
+carries the dish name, so nothing is unidentifiable — but a picture that is
+identical across three products has stopped doing the job a picture is for.
+
+**Scope:** `image_path` *beside* `icon`, not instead of it. The emoji shows
+while the photograph loads and stands in for any product without one, so a
+missing or broken image degrades to what the screen does today rather than to
+an empty box.
+
+**What it actually costs**, listed because none of it is visible in "add an
+upload button":
+
+- Validation on content type **and** magic bytes. A `.jpg` extension on
+  something that is not a JPEG is the oldest hole there is.
+- Storage under UUID filenames, never the uploader's — a filename is caller
+  input, and `../` is part of the alphabet.
+- A resize step. The POS draws eighteen tiles at about 128px; phone photographs
+  are megabytes each, and a till on a slow connection would feel it.
+- A decision on whether photographs sit behind the access token or are public.
+- Deletion that removes the file with the product, or orphans accumulate
+  forever.
+- **Backup.** This is the one to weigh hardest. The whole backup story today is
+  a single `pg_dump`. Adding a directory makes it two things that must stay in
+  step, and a restore from the dump alone would come back with every picture
+  missing and nothing saying so.
+
+Roughly 3–4 days, and someone has to photograph nineteen dishes — the part no
+code does.
+
+**Why it waits.** Nothing here is blocked by other work; it is behind Phase 1
+because P4 fixes counts that are *wrong today* and cannot be backfilled, while
+this makes a working screen nicer. That is the whole ordering principle in §1,
+applied to a feature that is genuinely wanted.
 
 ---
 
