@@ -248,7 +248,8 @@
     "dishes": "Items",
     "paymentMethod": "Payment",
     "allStatus": "All statuses",
-    "noOrders": "No orders in this range"
+    "noOrders": "No orders in this range",
+    "split": "Split"
   },
   "products": {
     "title": "Product list",
@@ -428,7 +429,9 @@
     "invoiceCount": "{count} invoices",
     "noDataInRange": "No data in this range",
     "revenueByHour": "Sales by hour",
-    "hourNote": "The hour payment was taken, summed over the selected range. Useful for rostering and prep."
+    "hourNote": "The hour payment was taken, summed over the selected range. Useful for rostering and prep.",
+    "estimatedMargin": "Cost and margin before today are estimated: {lines} sold lines never recorded what they cost, so today's product cost is used instead.",
+    "estimatedRow": "Estimated — this bill's lines never recorded their cost"
   },
   "settings": {
     "title": "System settings",

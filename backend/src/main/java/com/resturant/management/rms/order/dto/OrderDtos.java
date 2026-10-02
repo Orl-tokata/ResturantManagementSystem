@@ -2,6 +2,7 @@ package com.resturant.management.rms.order.dto;
 
 import com.resturant.management.rms.order.OrderStatus;
 import com.resturant.management.rms.order.PaymentMethod;
+import com.resturant.management.rms.order.PaymentStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
@@ -77,11 +78,67 @@ public final class OrderDtos {
     ) {}
 
     /** Body of {@code POST /api/orders/{id}/pay}. */
+    /**
+     * Settling a bill, in either of two shapes.
+     *
+     * <p>A single tender — which is every sale the POS takes today — is
+     * {@code paymentMethod} and {@code amountTendered}, unchanged. A split is
+     * {@code payments}: what was taken by each method, which is what
+     * {@code sale_payment} exists for.
+     *
+     * <p>Two shapes is a cost, paid here deliberately. The alternative was to
+     * make every caller send a one-element list for the case that is almost all
+     * of them, and the service sees only one shape either way because
+     * {@link #tenders()} is the only way in.
+     */
     public record PayRequest(
-            @NotNull(message = "{valid.required}") PaymentMethod paymentMethod,
+            PaymentMethod paymentMethod,
             /** Cash handed over. Required for CASH so change can be worked out. */
             @PositiveOrZero(message = "{valid.notNegative}") BigDecimal amountTendered,
+            @Valid List<TenderRequest> payments,
             @PositiveOrZero(message = "{valid.notNegative}") BigDecimal discount
+    ) {
+        /**
+         * One of the two shapes, not both and not neither. Without this a
+         * request carrying a method *and* a list would quietly settle twice.
+         */
+        @AssertTrue(message = "{valid.payment.oneShape}")
+        public boolean isExactlyOneShape() {
+            return (paymentMethod != null) ^ (payments != null && !payments.isEmpty());
+        }
+
+        /** What the service works with, whichever shape arrived. */
+        public List<TenderRequest> tenders() {
+            if (payments != null && !payments.isEmpty()) return payments;
+            return List.of(new TenderRequest(paymentMethod, null, amountTendered, null));
+        }
+    }
+
+    /**
+     * One tender inside a split.
+     *
+     * @param amount what this covers. Null means "the rest of the bill", which
+     *               is what a single tender always means and saves a cashier
+     *               re-typing a total the till already knows.
+     */
+    public record TenderRequest(
+            @NotNull(message = "{valid.required}") PaymentMethod method,
+            @Positive(message = "{valid.positive}") BigDecimal amount,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal tendered,
+            @Size(max = 100) String reference
+    ) {}
+
+    /** One payment against a bill, as a receipt or a report sees it. */
+    public record PaymentResponse(
+            Long id,
+            PaymentMethod method,
+            BigDecimal amount,
+            BigDecimal amountKhr,
+            BigDecimal tendered,
+            BigDecimal changeAmount,
+            String reference,
+            PaymentStatus status,
+            LocalDateTime createdAt
     ) {}
 
     /** The four tiles above the order-history table. */
@@ -117,6 +174,15 @@ public final class OrderDtos {
             BigDecimal vatAmount,
             BigDecimal total,
             BigDecimal totalKhr,
+            /** The rate totalKhr was worked out at, stamped when it was. */
+            BigDecimal fxRateKhr,
+            /**
+             * Every payment against this bill, including a code that was shown
+             * and never paid. The three fields below are derived from it for
+             * the screens that show one line.
+             */
+            List<PaymentResponse> payments,
+            /** The method, when there is exactly one — null when a bill was split. */
             PaymentMethod paymentMethod,
             BigDecimal amountTendered,
             BigDecimal changeAmount,

@@ -68,6 +68,12 @@ export interface SalesReport {
   hourly: HourlyPoint[];
   byCategory: CategoryRevenue[];
   bestSellers: BestSeller[];
+  /**
+   * Sold lines in this range whose cost was filled in afterwards rather than
+   * recorded at the time. Above zero means the margin shown is an estimate,
+   * and the screen has to say so.
+   */
+  estimatedCostLines: number;
 }
 
 export interface SalesRow {
@@ -79,6 +85,8 @@ export interface SalesRow {
   total: number;
   cost: number;
   profit: number;
+  /** True when a line on this bill never recorded its own cost. */
+  costEstimated: boolean;
   paymentMethod: string;
 }
 

@@ -101,7 +101,8 @@ public class ReportService {
 
         return new SalesReport(start, end, revenue, cost, profit, margin, invoices, average,
                 dailySeries(start, end), hourlySeries(start, end),
-                categoryBreakdown(start, end), bestSellers(start, end, 10));
+                categoryBreakdown(start, end), bestSellers(start, end, 10),
+                itemRepository.countEstimatedBetween(startOf(start), endOf(end)));
     }
 
     @Transactional(readOnly = true)
@@ -114,12 +115,16 @@ public class ReportService {
         if (orders.isEmpty()) return List.of();
 
         // One extra query for all the costs, rather than one per row.
-        Map<Long, BigDecimal> costs = itemRepository
-                .costByOrder(orders.stream().map(Order::getId).toList())
-                .stream()
+        List<Object[]> costRows = itemRepository.costByOrder(
+                orders.stream().map(Order::getId).toList());
+        Map<Long, BigDecimal> costs = costRows.stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> scale((BigDecimal) row[1])));
+        Map<Long, Boolean> estimated = costRows.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Number) row[2]).longValue() > 0));
 
         return orders.stream().map(o -> {
             BigDecimal cost = costs.getOrDefault(o.getId(), BigDecimal.ZERO);
@@ -132,7 +137,11 @@ public class ReportService {
                     o.getTotal(),
                     cost,
                     scale(o.getTotal().subtract(cost)),
-                    o.getPaymentMethod() != null ? o.getPaymentMethod().name() : "");
+                    estimated.getOrDefault(o.getId(), false),
+                    // Blank when a bill was split: a single-method column
+                    // cannot describe two payments, and naming one of them
+                    // would put money under the wrong heading.
+                    o.singleMethod() != null ? o.singleMethod().name() : "");
         }).toList();
     }
 
@@ -142,13 +151,17 @@ public class ReportService {
         StringBuilder csv = new StringBuilder();
         // BOM so Excel opens the Khmer names in the right encoding.
         csv.append('﻿');
-        csv.append("Date,Invoice,Table,Cashier,Items,Total,Cost,Profit,Payment\n");
+        csv.append("Date,Invoice,Table,Cashier,Items,Total,Cost,Profit,Cost basis,Payment\n");
 
         for (SalesRow r : salesRows(from, to)) {
             csv.append(join(
                     String.valueOf(r.date()), r.invoiceNo(), r.tableName(), r.cashierName(),
                     String.valueOf(r.itemCount()), String.valueOf(r.total()),
-                    String.valueOf(r.cost()), String.valueOf(r.profit()), r.paymentMethod()));
+                    String.valueOf(r.cost()), String.valueOf(r.profit()),
+                    // Spelled out rather than a bare true/false: a spreadsheet
+                    // column of TRUEs does not say what is true about them.
+                    r.costEstimated() ? "estimated" : "recorded",
+                    r.paymentMethod()));
             csv.append('\n');
         }
         return csv.toString();

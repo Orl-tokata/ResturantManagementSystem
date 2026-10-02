@@ -44,6 +44,25 @@ public class OrderItem {
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
+    /**
+     * What the dish cost us, copied at the moment of ordering for the same
+     * reason {@code unitPrice} is: the margin on a sale is the margin that was
+     * made, and repricing an ingredient next month must not rewrite it.
+     */
+    @Builder.Default
+    @Column(name = "unit_cost", nullable = false, precision = 12, scale = 2)
+    private BigDecimal unitCost = BigDecimal.ZERO;
+
+    /**
+     * True when {@code unitCost} was filled in afterwards rather than recorded
+     * at the time \u2014 every line sold before V13, which got today's cost
+     * because the real one was never written down. The reports label those
+     * margins estimated instead of presenting them as measured.
+     */
+    @Builder.Default
+    @Column(name = "cost_estimated", nullable = false)
+    private boolean costEstimated = false;
+
     @Column(name = "line_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal lineTotal;
 

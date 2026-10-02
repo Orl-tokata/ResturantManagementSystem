@@ -116,7 +116,13 @@ export default function CashierHistoryPage() {
       key: "method",
       header: t("paymentMethod"),
       hideOnMobile: true,
-      render: (r) => (r.paymentMethod ? tPay(r.paymentMethod) : "—"),
+      // A settled bill with no single method was split across two or more.
+      render: (r) =>
+        r.paymentMethod
+          ? tPay(r.paymentMethod)
+          : r.payments.filter((p) => p.status === "CAPTURED").length > 1
+            ? t("split")
+            : "—",
     },
     {
       key: "status",

@@ -43,6 +43,7 @@ public class OrderService {
     private static final int MONEY_SCALE = 2;
 
     private final OrderRepository orderRepository;
+    private final SalePaymentRepository paymentRepository;
     private final StockLedger stockLedger;
     private final ProductRepository productRepository;
     private final DiningTableRepository tableRepository;
@@ -125,6 +126,12 @@ public class OrderService {
                     .productName(product.getName())
                     .qty(line.qty())
                     .unitPrice(product.getPrice())
+                    // Copied now, for the same reason the price is: the margin
+                    // on this sale is the margin that was made, and repricing
+                    // the dish next month must not rewrite it. Recorded, so
+                    // not estimated.
+                    .unitCost(product.getCost() == null ? BigDecimal.ZERO : product.getCost())
+                    .costEstimated(false)
                     .note(line.note())
                     .build();
             item.recalculate();
@@ -163,35 +170,107 @@ public class OrderService {
         }
         recalculate(order);
 
-        BigDecimal total = order.getTotal();
-        BigDecimal tendered = request.amountTendered();
-
-        // Cash is the only method where the amount handed over is meaningful;
-        // card and QR settle the exact total.
-        if (request.paymentMethod() == PaymentMethod.CASH) {
-            if (tendered == null) {
-                throw new BadRequestException("error.order.tenderedRequired");
-            }
-            if (tendered.compareTo(total) < 0) {
-                throw new BadRequestException("error.order.tenderedShort", tendered, total);
-            }
-        } else {
-            tendered = total;
-        }
-
-        order.setPaymentMethod(request.paymentMethod());
-        order.setAmountTendered(tendered);
-        order.setChangeAmount(tendered.subtract(total).setScale(MONEY_SCALE, RoundingMode.HALF_UP));
-        order.setStatus(OrderStatus.PAID);
-        order.setPaidAt(LocalDateTime.now());
-
-        decrementStock(order);
-        freeTable(order);
+        capture(order, request.tenders());
+        close(order);
 
         Order saved = orderRepository.save(order);
-        log.info("Paid {} — {} {} (change {})",
-                saved.getInvoiceNo(), saved.getPaymentMethod(), saved.getTotal(), saved.getChangeAmount());
+        log.info("Paid {} — {} by {}", saved.getInvoiceNo(), saved.getTotal(),
+                saved.capturedPayments().stream().map(p -> p.getMethod().name()).toList());
         return toResponse(saved);
+    }
+
+    /**
+     * Turns what the cashier took into payment rows, and insists they add up.
+     *
+     * <p>The tenders must cover the bill exactly. Under it is not a settled
+     * bill — that is a partial payment, which nothing in the system can
+     * represent yet and which silently marking PAID would hide. Over it is not
+     * a payment either: money above the total is change, and change comes off
+     * the cash line.
+     */
+    private void capture(Order order, List<TenderRequest> tenders) {
+        BigDecimal outstanding = order.getTotal().subtract(order.paidAmount());
+        LocalDateTime now = LocalDateTime.now();
+
+        // Built first and attached at the end. A bill that was not covered
+        // must leave no trace of the attempt on the aggregate, and the way to
+        // be sure of that is not to touch it until the arithmetic is known to
+        // work — the surrounding transaction would undo it, but relying on a
+        // rollback to hide a half-settled bill is a weaker guarantee than
+        // never building one.
+        List<SalePayment> captured = new java.util.ArrayList<>();
+
+        for (TenderRequest t : tenders) {
+            // Null means the rest of the bill, which is what a single tender
+            // always means — see TenderRequest.
+            BigDecimal amount = t.amount() == null
+                    ? outstanding
+                    : t.amount().setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+
+            if (amount.signum() <= 0) {
+                throw new BadRequestException("error.order.paymentNotPositive");
+            }
+            if (amount.compareTo(outstanding) > 0) {
+                throw new BadRequestException("error.order.paymentTooLarge", amount, outstanding);
+            }
+
+            BigDecimal tendered = null;
+            BigDecimal change = null;
+
+            // Cash is the only method where the amount handed over is
+            // meaningful, and the only one that can give change back. A card
+            // for $20 of a $50 bill is a payment of $20, not $20 tendered.
+            if (t.method() == PaymentMethod.CASH) {
+                tendered = t.tendered();
+                if (tendered == null) {
+                    throw new BadRequestException("error.order.tenderedRequired");
+                }
+                if (tendered.compareTo(amount) < 0) {
+                    throw new BadRequestException("error.order.tenderedShort", tendered, amount);
+                }
+                change = tendered.subtract(amount).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+            }
+
+            captured.add(SalePayment.builder()
+                    .method(t.method())
+                    .amount(amount)
+                    .amountKhr(toKhr(order, amount))
+                    .tendered(tendered)
+                    .changeAmount(change)
+                    .reference(Strings.blankToNull(t.reference()))
+                    .status(PaymentStatus.CAPTURED)
+                    .createdAt(now)
+                    .build());
+
+            outstanding = outstanding.subtract(amount);
+        }
+
+        if (outstanding.signum() > 0) {
+            throw new BadRequestException("error.order.paymentShort",
+                    order.getTotal().subtract(outstanding), order.getTotal());
+        }
+
+        captured.forEach(order::addPayment);
+    }
+
+    /** Marks a covered bill settled: stock leaves, the table is released. */
+    private void close(Order order) {
+        order.setStatus(OrderStatus.PAID);
+        order.setPaidAt(LocalDateTime.now());
+        decrementStock(order);
+        freeTable(order);
+    }
+
+    /**
+     * Riel has no minor unit, so a converted figure is a whole number.
+     *
+     * <p>At the bill's own rate, not today's: the payments on a bill have to
+     * add up to it in both currencies, and reading the live setting here would
+     * break that the moment the rate moved between a split's two tenders.
+     */
+    private BigDecimal toKhr(Order order, BigDecimal usd) {
+        BigDecimal rate = order.getFxRateKhr() != null ? order.getFxRateKhr() : settings.khrRate();
+        return usd.multiply(rate).setScale(0, RoundingMode.HALF_UP);
     }
 
     /**
@@ -376,8 +455,21 @@ public class OrderService {
         order.setKhqrMd5(qr.md5());
         order.setKhqrPayload(qr.payload());
         order.setKhqrExpiresAt(now.plus(khqrProperties.expiry()));
-        order.setPaymentMethod(PaymentMethod.KHQR);
         order.setStatus(OrderStatus.AWAITING_PAYMENT);
+
+        // Any earlier code for this bill is now unreachable: its md5 is gone
+        // from the order, so nothing can ever match it to money. That is a
+        // failed attempt, and recording it is the point — "three codes shown,
+        // one paid" had no answer at all before this table existed.
+        failPending(order, "replaced by a new code");
+        order.addPayment(SalePayment.builder()
+                .method(PaymentMethod.KHQR)
+                .amount(order.getTotal())
+                .amountKhr(order.getTotalKhr())
+                .khqrMd5(qr.md5())
+                .status(PaymentStatus.PENDING)
+                .createdAt(now)
+                .build());
         orderRepository.save(order);
 
         log.info("KHQR shown for {} — {} {} (md5 {})",
@@ -439,30 +531,70 @@ public class OrderService {
         order.setKhqrMd5(null);
         order.setKhqrPayload(null);
         order.setKhqrExpiresAt(null);
-        order.setPaymentMethod(null);
         order.setStatus(OrderStatus.OPEN);
+        failPending(order, "abandoned by the cashier");
         return toResponse(orderRepository.save(order));
     }
 
     /** Closes a bill that Bakong has confirmed. */
     private void settleKhqr(Order order, String payer, String reference) {
-        order.setPaymentMethod(PaymentMethod.KHQR);
-        // Nothing was handed over and nothing is owed back; recording the total
-        // as tendered keeps the arithmetic consistent with a cash sale.
-        order.setAmountTendered(order.getTotal());
-        order.setChangeAmount(BigDecimal.ZERO);
-        order.setStatus(OrderStatus.PAID);
-        order.setPaidAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+
+        // The pending row becomes the payment. created_at moves to now because
+        // the column is when the money arrived, not when the code was drawn,
+        // and a drawer is counted by the former.
+        SalePayment pending = pendingKhqr(order);
+        if (pending != null) {
+            pending.setStatus(PaymentStatus.CAPTURED);
+            pending.setReference(Strings.blankToNull(reference));
+            pending.setAmount(order.getTotal());
+            pending.setAmountKhr(order.getTotalKhr());
+            pending.setCreatedAt(now);
+        } else {
+            // A code generated before V12 has no pending row to promote. The
+            // money still arrived, so it still needs a payment.
+            order.addPayment(SalePayment.builder()
+                    .method(PaymentMethod.KHQR)
+                    .amount(order.getTotal())
+                    .amountKhr(order.getTotalKhr())
+                    .khqrMd5(order.getKhqrMd5())
+                    .reference(Strings.blankToNull(reference))
+                    .status(PaymentStatus.CAPTURED)
+                    .createdAt(now)
+                    .build());
+        }
+
         order.setKhqrPayer(payer);
         order.setKhqrReference(reference);
         order.setKhqrExpiresAt(null);
 
-        decrementStock(order);
-        freeTable(order);
+        close(order);
         orderRepository.save(order);
 
         log.info("KHQR settled for {} — {} paid by {} (ref {})",
                 order.getInvoiceNo(), order.getTotal(), payer, reference);
+    }
+
+    /** The code currently on screen for this bill, if one was recorded. */
+    private SalePayment pendingKhqr(Order order) {
+        return order.getPayments().stream()
+                .filter(p -> p.getStatus() == PaymentStatus.PENDING)
+                .reduce((first, second) -> second)
+                .orElse(null);
+    }
+
+    /**
+     * Closes off an outstanding code that produced no money.
+     *
+     * <p>FAILED rather than deleting the row: the attempt happened, and a till
+     * that showed four codes to settle one sale is worth being able to see.
+     */
+    private void failPending(Order order, String why) {
+        SalePayment pending = pendingKhqr(order);
+        if (pending == null) return;
+        pending.setStatus(PaymentStatus.FAILED);
+        pending.setReference(why);
+        log.info("KHQR attempt on {} ended without payment — {}", order.getInvoiceNo(), why);
     }
 
     private KhqrMerchant merchant() {
@@ -484,6 +616,20 @@ public class OrderService {
     Order find(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("entity.order", id));
+    }
+
+    /**
+     * Adds one field up across the captured payments, or null when none of them
+     * carried it. A card sale has no tender, and a zero there would read as
+     * "nothing was handed over" rather than "the question does not apply".
+     */
+    private BigDecimal sum(List<SalePayment> payments,
+                           java.util.function.Function<SalePayment, BigDecimal> field) {
+        List<BigDecimal> values = payments.stream()
+                .map(field)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        return values.isEmpty() ? null : values.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private Order findEditable(Long id) {
@@ -535,15 +681,31 @@ public class OrderService {
 
         BigDecimal total = taxable.add(vat).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
 
+        BigDecimal khrRate = settings.khrRate();
+
         order.setSubtotal(subtotal);
         order.setDiscount(discount);
         order.setVatAmount(vat);
         order.setTotal(total);
         // Riel has no minor unit, so the converted figure is a whole number.
-        order.setTotalKhr(total.multiply(settings.khrRate()).setScale(0, RoundingMode.HALF_UP));
+        order.setTotalKhr(total.multiply(khrRate).setScale(0, RoundingMode.HALF_UP));
+
+        // The rate goes on the bill beside the figure it produced. The setting
+        // can be corrected tomorrow; what this receipt was converted at cannot
+        // change afterwards, and dividing total_khr by total to find out is
+        // not the same as having recorded it.
+        order.setFxRateKhr(khrRate);
     }
 
     OrderResponse toResponse(Order o) {
+        List<PaymentResponse> payments = o.getPayments().stream()
+                .map(p -> new PaymentResponse(
+                        p.getId(), p.getMethod(), p.getAmount(), p.getAmountKhr(),
+                        p.getTendered(), p.getChangeAmount(), p.getReference(),
+                        p.getStatus(), p.getCreatedAt()))
+                .toList();
+        List<SalePayment> captured = o.capturedPayments();
+
         List<OrderItemResponse> items = o.getItems().stream()
                 .map(i -> new OrderItemResponse(
                         i.getId(),
@@ -560,8 +722,14 @@ public class OrderService {
                 o.getCashier() != null ? o.getCashier().getUserNm() : null,
                 o.getGuestCount(), items,
                 o.getSubtotal(), o.getDiscount(), o.getVatRate(), o.getVatAmount(),
-                o.getTotal(), o.getTotalKhr(),
-                o.getPaymentMethod(), o.getAmountTendered(), o.getChangeAmount(),
+                o.getTotal(), o.getTotalKhr(), o.getFxRateKhr(),
+                payments,
+                // Derived, not stored: a screen that shows one payment line
+                // gets one, and a split bill shows no single method rather than
+                // picking a winner out of two.
+                o.singleMethod(),
+                sum(captured, SalePayment::getTendered),
+                sum(captured, SalePayment::getChangeAmount),
                 o.getStatus(), o.getRegDtm(), o.getPaidAt());
     }
 }

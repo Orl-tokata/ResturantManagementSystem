@@ -170,21 +170,62 @@ timeout settles the same bill rather than a second one — the case P0c built th
 mechanism for, and the first place needing a *stable* key rather than the
 interceptor's per-request one.
 
-### P2 — Money integrity · ~5 days
+### P2 — Money integrity · **done**, except the contract step
 
-V9, V10 (partial), V11. `sale_payment`; `orders.fx_rate_khr` stamped at
-settlement; `fx_rate` table; `order_item.unit_cost`.
+V12 and V13, not V9–V11: those numbers went to work that shipped first.
 
-**Two data-carrying migrations.** V9 must write a `sale_payment` row for every
-paid order before dropping `payment_method`. Back up again.
+**V12 — payments became rows.** `sale_payment`, one per tender, with every
+paid order's three columns copied into one. A bill can now be settled by more
+than one method; a KHQR code that was shown and never paid leaves a FAILED row
+instead of no trace; and P7 has something to write a refund against.
 
-**V10 backfills `unit_cost` from today's `product.cost`, and for historical
-lines that is wrong** — a cost never recorded cannot be recovered. Label
-pre-cutover margin as *estimated* in the reports UI and say so in the migration
-comment. A silently plausible wrong number is worse than a labelled gap, and
-this project has already been bitten once by a silent substitution.
+A card no longer records the total as tendered and zero as change. Those
+figures existed to fill columns that applied only to cash, and a drawer count
+that believed them was counting card sales as cash.
 
-*Risk:* high. Money, and irreversible history.
+**V13 — the rate and the cost stopped being today's numbers.**
+`orders.fx_rate_khr` is stamped beside the riel total it produced, `fx_rate`
+keeps the dated history behind the settings screen, and `order_item.unit_cost`
+is copied at the moment of ordering exactly as `unit_price` always was.
+
+The margin report had been multiplying historical quantities by
+`product.cost` *as it is now*, through an inner join — so repricing an
+ingredient rewrote last year's profit, and deleting a product erased its sales
+from the cost side while leaving them in revenue, inventing margin out of
+nothing. Both are fixed by reading the line's own cost.
+
+**The backfill is a guess, and says so.** Every line sold before V13 carries
+today's cost, because a cost that was never recorded cannot be recovered. Those
+lines are flagged `cost_estimated`, the reports count them, and the screen
+labels the figure an estimate rather than presenting it as measured — which
+is what §4's "silently plausible wrong number" warning asked for.
+
+The rate backfill is not a guess: `total_khr` was `total × rate` and both were
+stored, so the rate divides back out exactly. Recovery, not assumption.
+
+**Not done: dropping the three columns.** The plan said to drop
+`payment_method`, `amount_tendered` and `change_amount` in the same migration
+that replaced them. V12 leaves them. Dropping them in the deploy that
+introduces their replacement makes it one-way — the previous build cannot
+start against the new schema, so a bad release has no way back — and nothing
+is gained, because what makes two sources of truth dangerous is two readers,
+and the entity no longer maps those columns at all. They are frozen history
+that nothing reads. The contract migration is deliberately not written yet;
+it should run against a database whose `sale_payment` rows somebody has looked
+at.
+
+> V12's own comment says the contract step "is V13". It is not — V13 went to
+> the rate and the cost, and the contract step has no number yet. The comment
+> is wrong and has to stay wrong: V12 was applied before V13 was written, and
+> Flyway checksums an applied migration, so editing the file would stop the
+> application starting. This project has already lost time to a V4 checksum
+> mismatch. The rule is that an applied migration is frozen, including its
+> comments.
+
+*Risk was:* high. Money, and irreversible history. What made it survivable was
+that both backfills are checkable: 192 paid orders, each with one payment
+summing to its total, and a rate that divides back out of a figure already
+stored.
 
 ### P3 — Shift and cash · ~4 days
 
@@ -254,7 +295,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P0 Foundations | 3 |
 | P1 Multi-branch | 4 |
 | P5 POS consolidation | 3 · **done** |
-| P2 Money integrity | 5 |
+| P2 Money integrity | 5 · **done** |
 | P3 Shift and cash | 4 |
 | P4 Stock ledger | 4 · **done** |
 | P6 Customers | 4 |
@@ -385,7 +426,7 @@ Four jobs today: `backend` (H2 + smoke), `postgres` (Testcontainers),
 |---|---|
 | P0 | idempotency replay test; envelope `code` asserted |
 | P1 | **a job that runs migrations against a dump of the real database** |
-| P2 | V9 data migration verified — every paid order gets exactly one payment |
+| P2 | **done** — `PaymentControllerTest`, `KhqrPaymentTest`, `MoneyHistoryTest`; the V12 backfill asserts itself with a NOT NULL |
 | P3 | concurrent shift-open test proving the partial index holds |
 | P4 | **done** — `StockLedgerTest` reconciles the stored figure against the ledger |
 
@@ -402,8 +443,8 @@ database.
 | Risk | Mitigation |
 |---|---|
 | P1 breaks a query that silently returns another branch's rows | Every repository method gets a branch-scoped test. There is no safe partial rollout |
-| P2 loses payment data | Back up; V9 verified by count, not by inspection |
-| V10 estimated margins mistaken for real | Label in the UI, not only in a comment |
+| ~~P2 loses payment data~~ | **held.** V12 backfilled every paid order and asserts it with a NOT NULL; the columns it replaced are still there |
+| ~~V13 estimated margins mistaken for real~~ | **held.** `cost_estimated` per line, counted by the report and labelled above the figures |
 | The shift gate gets worked around | Two taps, or it fails. Watch it in use in week one |
 | Scope grows mid-package | The package list is the contract. New ideas go to Phase 2 |
 | Estimates slip and Phase 1 never lands | P0–P5 alone is a coherent release. Ship there if needed |

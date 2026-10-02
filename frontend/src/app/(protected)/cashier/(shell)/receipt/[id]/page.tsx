@@ -203,18 +203,33 @@ export default function ReceiptPage() {
         </div>
         <Row label={bi("common.khr")} value={`${order.totalKhr.toLocaleString()} ៛`} />
 
+        {/*
+          * A line per payment, because a bill can be settled by more than one.
+          * It used to print the method against the amount tendered, which on a
+          * card read "CARD  $0.00": the server had recorded the total as
+          * tendered to fill a column, and the receipt printed the fiction.
+          *
+          * Tendered and change appear only when cash was involved. They are the
+          * cash line's figures, and on a card sale the question does not apply.
+          */}
         {order.status === "PAID" && (
           <>
             <Dashes />
-            <Row
-              label={
-                order.paymentMethod
-                  ? bi(`enum.paymentMethod.${order.paymentMethod}`)
-                  : "—"
-              }
-              value={formatUsd(order.amountTendered ?? 0)}
-            />
-            <Row label={bi("payment.change")} value={formatUsd(order.changeAmount ?? 0)} />
+            {order.payments
+              .filter((p) => p.status === "CAPTURED")
+              .map((p) => (
+                <Row
+                  key={p.id}
+                  label={bi(`enum.paymentMethod.${p.method}`)}
+                  value={formatUsd(p.amount)}
+                />
+              ))}
+            {order.amountTendered != null && (
+              <Row label={bi("payment.tendered")} value={formatUsd(order.amountTendered)} />
+            )}
+            {order.changeAmount != null && (
+              <Row label={bi("payment.change")} value={formatUsd(order.changeAmount)} />
+            )}
           </>
         )}
 

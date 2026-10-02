@@ -290,10 +290,13 @@ class ReportControllerTest {
 		String csv = res.getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
 
 		assertThat(csv).doesNotContain("\"status\":200");        // not wrapped in ApiResponse
-		assertThat(csv).contains("Date,Invoice,Table,Cashier,Items,Total,Cost,Profit,Payment");
+		assertThat(csv).contains("Date,Invoice,Table,Cashier,Items,Total,Cost,Profit,Cost basis,Payment");
 		assertThat(csv).contains("INV-");
 		assertThat(csv).contains("9.90");
 		assertThat(csv).contains("CASH");
+		// Sold in this test, so the line recorded its own cost. Spelled out
+		// because a spreadsheet column of TRUEs says nothing about what is true.
+		assertThat(csv).contains("recorded");
 		assertThat(csv.lines().count()).isEqualTo(2);            // header + one row
 	}
 

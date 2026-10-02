@@ -66,7 +66,15 @@ public final class ReportDtos {
             List<DailyPoint> daily,
             List<HourlyPoint> hourly,
             List<CategoryRevenue> byCategory,
-            List<BestSeller> bestSellers
+            List<BestSeller> bestSellers,
+            /**
+             * How many sold lines in this range carry a cost that was filled
+             * in by V13 rather than recorded at the time. Any number above
+             * zero means the margin here is an estimate, and the screen says
+             * so — a plausible wrong number presented as measured is worse
+             * than a labelled gap.
+             */
+            long estimatedCostLines
     ) {}
 
     /** One row of the sales detail table, and one line of the CSV export. */
@@ -79,6 +87,8 @@ public final class ReportDtos {
             BigDecimal total,
             BigDecimal cost,
             BigDecimal profit,
+            /** True when any line on this bill never recorded its own cost. */
+            boolean costEstimated,
             String paymentMethod
     ) {}
 }

@@ -5,6 +5,7 @@ import com.resturant.management.rms.dining.DiningTable;
 import com.resturant.management.rms.user.UserInfm;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -72,15 +73,32 @@ public class Order extends BaseAuditEntity {
     @Column(name = "total_khr", nullable = false, precision = 14, scale = 0)
     private BigDecimal totalKhr = BigDecimal.ZERO;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", length = 20)
-    private PaymentMethod paymentMethod;
+    /**
+     * The rate {@code totalKhr} was worked out at.
+     *
+     * <p>Stamped because the setting it comes from can be corrected afterwards,
+     * and a receipt someone is holding must not change when it is. The dated
+     * {@code fx_rate} table is the history; this is what a reprint reads.
+     */
+    @Column(name = "fx_rate_khr", precision = 14, scale = 4)
+    private BigDecimal fxRateKhr;
 
-    @Column(name = "amount_tendered", precision = 12, scale = 2)
-    private BigDecimal amountTendered;
-
-    @Column(name = "change_amount", precision = 12, scale = 2)
-    private BigDecimal changeAmount;
+    /**
+     * How the bill was settled — one row for a single tender, several for a
+     * split, and a failed row for a code that was shown and abandoned.
+     *
+     * <p>This replaced {@code payment_method}, {@code amount_tendered} and
+     * {@code change_amount}, which are still columns on the table until V13
+     * drops them and which nothing reads any more (V12).
+     *
+     * <p>{@code BatchSize} because the history screen maps a page of twenty
+     * orders at a time: without it that is twenty extra queries, with it one.
+     */
+    @Builder.Default
+    @BatchSize(size = 50)
+    @OrderBy("id ASC")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SalePayment> payments = new ArrayList<>();
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -127,5 +145,43 @@ public class Order extends BaseAuditEntity {
     public void clearItems() {
         items.forEach(i -> i.setOrder(null));
         items.clear();
+    }
+
+    public void addPayment(SalePayment payment) {
+        payments.add(payment);
+        payment.setOrder(this);
+    }
+
+    /* ---- Derived from the payments, never stored ------------------------ */
+
+    /** Only money that arrived. A pending or abandoned code is not payment. */
+    public List<SalePayment> capturedPayments() {
+        return payments.stream().filter(SalePayment::isCaptured).toList();
+    }
+
+    /** What has actually been collected against this bill. */
+    public BigDecimal paidAmount() {
+        return capturedPayments().stream()
+                .map(SalePayment::getAmount)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Whether the captured payments cover the bill — ERD §3.3's rule, and
+     * what makes a split settle only once the last tender lands.
+     */
+    public boolean isCovered() {
+        return total != null && paidAmount().compareTo(total) >= 0;
+    }
+
+    /**
+     * The one method this bill was settled by, or null when it was split (or
+     * not settled at all). A screen showing one method must not pick a winner
+     * out of two.
+     */
+    public PaymentMethod singleMethod() {
+        List<SalePayment> captured = capturedPayments();
+        return captured.size() == 1 ? captured.get(0).getMethod() : null;
     }
 }

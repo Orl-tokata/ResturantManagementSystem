@@ -452,6 +452,13 @@ audit_log, idempotency_key, fx_rate, app_setting — referenced by id, not by FK
 Flyway is at V5. These are V6 onwards, and the order is not arbitrary —
 each depends on the one before.
 
+> **The numbers below are a sketch, and reality has already diverged.** Work
+> ships in whatever order it is asked for, and a migration number is claimed
+> the moment one is applied: V6 went to idempotency, V7 to the audit log, V8 to
+> account lockout, V9 and V10 to product icons and photographs, V11 to the
+> stock ledger, V12 to `sale_payment` and V13 to the rate and the cost. Read
+> this table as the dependency graph it is, not as a numbering.
+
 | | Migration | Depends on |
 |---|---|---|
 | V6 | `company`, `branch`, backfill `branch_id` everywhere | — |
@@ -466,10 +473,14 @@ each depends on the one before.
 | V15 | `sale_return`, `sale_return_item` | V9, V10, V12 |
 | V16 | `supplier_ledger`; `supplier.balance` derived | V6 |
 
-**V9 and V10 carry data, not just structure.** V9 must read each paid order's
-`payment_method` and write a `sale_payment` row before dropping the column;
-V10 must backfill `unit_cost` from `product.cost`, which will be *wrong* for
-historical lines — there is no way to recover a cost that was never recorded.
+**The payment and cost migrations carry data, not just structure.** Both
+shipped: `sale_payment` as V12, `unit_cost` as V13. V12 wrote a payment row for
+every paid order and asserts that it missed none; the columns it replaced are
+still on `orders`, unread, because dropping them is a separate and
+irreversible step. V13 backfilled `unit_cost` from `product.cost`, which is
+*wrong* for historical lines — there is no way to recover a cost that was
+never recorded — so those lines carry `cost_estimated` and the reports say
+so.
 
 > Say so in the migration comment and in the reports UI: margin before the
 > V10 cutover is an estimate. Silently plausible wrong numbers are worse than

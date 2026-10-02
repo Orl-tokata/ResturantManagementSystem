@@ -17,6 +17,30 @@ export interface OrderItem {
   note: string | null;
 }
 
+export type PaymentStatus = "PENDING" | "CAPTURED" | "FAILED" | "REFUNDED";
+
+/**
+ * One payment against a bill.
+ *
+ * <p>A bill has a list of these rather than a method and a tender, so it can
+ * be settled by more than one method and so a QR code that was shown and never
+ * paid still leaves a row — FAILED, not absent.
+ *
+ * <p>The optional fields are optional, not `| null`: the server omits null
+ * columns, so they arrive as `undefined`. Only cash carries a tender.
+ */
+export interface Payment {
+  id: number;
+  method: PaymentMethod;
+  amount: number;
+  amountKhr?: number;
+  tendered?: number;
+  changeAmount?: number;
+  reference?: string;
+  status: PaymentStatus;
+  createdAt: string;
+}
+
 export interface Order {
   id: number;
   invoiceNo: string;
@@ -32,9 +56,18 @@ export interface Order {
   vatAmount: number;
   total: number;
   totalKhr: number;
-  paymentMethod: PaymentMethod | null;
-  amountTendered: number | null;
-  changeAmount: number | null;
+  /** The rate totalKhr was worked out at, stamped when the bill was. */
+  fxRateKhr?: number;
+  /** Every attempt, settled or not, oldest first. */
+  payments: Payment[];
+  /**
+   * Derived by the server from the captured payments, and absent rather than
+   * null when they do not answer the question: no method on a split bill,
+   * because naming one of two would be a guess, and no tender on a card.
+   */
+  paymentMethod?: PaymentMethod;
+  amountTendered?: number;
+  changeAmount?: number;
   status: OrderStatus;
   createdAt: string | null;
   paidAt: string | null;

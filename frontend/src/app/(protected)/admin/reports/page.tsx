@@ -141,7 +141,18 @@ export default function ReportsPage() {
     { key: "cashier", header: tPos("cashier"), hideOnMobile: true, render: (s) => s.cashierName || "—" },
     { key: "items", header: tH("dishes"), numeric: true, render: (s) => s.itemCount },
     { key: "total", header: tc("total"), numeric: true, render: (s) => formatUsd(s.total) },
-    { key: "cost", header: tc("cost"), numeric: true, hideOnMobile: true, render: (s) => formatUsd(s.cost) },
+    {
+      key: "cost",
+      header: tc("cost"),
+      numeric: true,
+      hideOnMobile: true,
+      render: (s) => (
+        <span title={s.costEstimated ? t("estimatedRow") : undefined}>
+          {formatUsd(s.cost)}
+          {s.costEstimated && <span className="ml-1 text-ink-400">~</span>}
+        </span>
+      ),
+    },
     {
       key: "profit",
       header: t("profit"),
@@ -210,6 +221,17 @@ export default function ReportsPage() {
         }
       />
       </div>
+
+      {/*
+        * Said once, above the figures it applies to. Every line sold before
+        * V13 carries today's cost rather than the one it was sold at, because
+        * a cost that was never written down cannot be recovered — so the
+        * margin for those lines is an estimate, and presenting it as measured
+        * would be the more confident lie.
+        */}
+      {(r?.estimatedCostLines ?? 0) > 0 && (
+        <Alert tone="warn">{t("estimatedMargin", { lines: r!.estimatedCostLines })}</Alert>
+      )}
 
       <StatGrid>
         <StatTile tone={1} label={t("revenue")} value={formatUsd(r?.revenue ?? 0)} />

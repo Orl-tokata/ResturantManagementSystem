@@ -46,19 +46,42 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<Object[]> revenueByCategory(@Param("from") LocalDateTime from,
                                      @Param("to") LocalDateTime to);
 
-    /** Cost of goods sold across the range, from each product's cost price. */
+    /**
+     * Cost of goods sold across the range, from the cost each line recorded.
+     *
+     * <p>It used to read {@code product.cost} through a join, which was wrong
+     * twice over: the figure was whatever the product costs *now*, so
+     * repricing an ingredient rewrote last year's profit; and the join was an
+     * inner one, so a line whose product had since been deleted dropped out of
+     * the cost while its revenue stayed, inventing margin out of nothing.
+     */
     @Query("""
-           SELECT COALESCE(SUM(i.qty * p.cost), 0)
-           FROM OrderItem i JOIN i.product p
+           SELECT COALESCE(SUM(i.qty * i.unitCost), 0)
+           FROM OrderItem i
            WHERE i.order.status = 'PAID' AND i.order.paidAt BETWEEN :from AND :to
            """)
     java.math.BigDecimal sumCostBetween(@Param("from") LocalDateTime from,
                                         @Param("to") LocalDateTime to);
 
-    /** Per-order cost — {@code [orderId, cost]} — for the detail table. */
+    /** How many lines in the range carry a cost that was filled in afterwards. */
     @Query("""
-           SELECT i.order.id, COALESCE(SUM(i.qty * p.cost), 0)
-           FROM OrderItem i JOIN i.product p
+           SELECT COUNT(i)
+           FROM OrderItem i
+           WHERE i.order.status = 'PAID' AND i.order.paidAt BETWEEN :from AND :to
+             AND i.costEstimated = TRUE
+           """)
+    long countEstimatedBetween(@Param("from") LocalDateTime from,
+                               @Param("to") LocalDateTime to);
+
+    /**
+     * Per-order cost and whether any of it was guessed —
+     * {@code [orderId, cost, estimatedLines]} — for the detail table.
+     */
+    @Query("""
+           SELECT i.order.id,
+                  COALESCE(SUM(i.qty * i.unitCost), 0),
+                  SUM(CASE WHEN i.costEstimated = TRUE THEN 1 ELSE 0 END)
+           FROM OrderItem i
            WHERE i.order.id IN :orderIds
            GROUP BY i.order.id
            """)
