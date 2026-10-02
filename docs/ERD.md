@@ -161,6 +161,16 @@ tills, one login, two floats — otherwise perfectly possible.
 > weaker. **Recommend moving `dev` to PostgreSQL** — the H2 fallback has
 > already cost this project two migration bugs that PostgreSQL would have
 > caught, and the environments diverging is itself the risk.
+>
+> **What shipped (V14): a third option this entry did not see.** There is no
+> Docker on the development machine, so the `dev` profile could not move
+> without making the suite unrunnable. Instead `open_user_ref` carries the
+> cashier's id while a shift is open and NULL afterwards, under a plain
+> `UNIQUE`: many NULLs are allowed and two equal values are not, on both
+> engines. The constraint stays in the database, where this entry wanted it,
+> and is exercised by the local suite as well as by CI — which the partial
+> index never would have been. There is no `branch_id` yet, so the rule is one
+> open shift per cashier until P1 lands.
 
 ```sql
 CREATE TABLE cash_movement (

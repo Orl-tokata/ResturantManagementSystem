@@ -47,7 +47,22 @@ class MoneyHistoryTest {
     void signIn() throws Exception {
         admin = token("admin");
         cashier = token("cashier");
+        openShift(cashier);
     }
+
+    /**
+     * The P3 gate: a bill cannot be settled unless the cashier has a drawer
+     * open. A shift already open answers 400, which is the right answer and
+     * nothing here needs a second one.
+     */
+    private void openShift(String bearer) throws Exception {
+        mvc.perform(post("/api/shifts")
+                .header("Authorization", bearer)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"openingFloat":200.00}"""));
+    }
+
 
     private String token(String username) throws Exception {
         MvcResult res = mvc.perform(post("/api/auth/login")

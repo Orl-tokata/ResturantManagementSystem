@@ -70,11 +70,14 @@ facts, none of which this document knew:
 
 So the change would have delivered nothing and broken the local test loop.
 
-**It becomes forced at P3.** The partial unique index that makes the
-one-open-shift rule real (ERD §3.2) is PostgreSQL-only, and H2 rejects it in
-the *migration* — so the whole suite fails at Flyway, completely rather than
-gradually. That is the moment to decide, and by then whether Docker is
-available will be known.
+**It became forced at P3, and the answer was neither.** The partial unique
+index that makes the one-open-shift rule real (ERD §3.2) is PostgreSQL-only,
+and H2 rejects it in the *migration*, so the suite would have failed at Flyway
+before a single test ran. Docker was still absent when P3 arrived, so moving
+the default test task to real PostgreSQL would have left the suite unrunnable
+here. V14 expresses the same constraint as a nullable unique column that both
+engines enforce identically — see P3. The `dev` profile stays on H2, and the
+constraint is tested on both.
 
 *Risk:* low. (d) touches every write path, so it was landed alone.
 
@@ -227,13 +230,47 @@ that both backfills are checkable: 192 paid orders, each with one payment
 summing to its total, and a rate that divides back out of a figure already
 stored.
 
-### P3 — Shift and cash · ~4 days
+### P3 — Shift and cash · **done**
 
-V8. `cash_shift`, `cash_movement`, the partial unique index, six endpoints,
-`/cashier/shift`, and the **gate** — no open shift, no POS.
+V14, not V8 — that number went to account lockout. `cash_shift`,
+`cash_movement`, six endpoints, `/cashier/shift`, and the gate.
 
-*Risk:* medium. The gate changes the daily routine of every cashier, so it
-needs to be two taps or it will be worked around. Watch this one in use.
+A sale now belongs to a session. Cash settlements write a `SALE` movement into
+the cashier's drawer; card and QR do not, because they do not put notes in a
+till and counting them there would make every count wrong by the day's card
+takings. `expected_cash` is the float plus every movement, derived on each read
+while the shift is open and stored at close — from that moment it is what the
+count was measured against, and a movement corrected later must not rewrite a
+variance somebody has signed.
+
+**The partial index, resolved.** P0a deferred this decision to here on the
+grounds that by now it would be known whether Docker was available for a
+Testcontainers suite. It is not. The options left were a vendor-split migration
+— one index for PostgreSQL, another for H2 — or a portable formulation, and
+the split was rejected because it makes the constraint that matters most the
+one thing the local suite never exercises.
+
+So `open_user_ref` holds the cashier's id while a shift is open and NULL once
+it closes, under a plain `UNIQUE`. Both engines allow many NULLs in a unique
+index and neither allows two equal values, which is the partial index's
+behaviour in one portable column; `ck_shift_open_key` ties the key, the status
+and `closed_at` together so the column cannot drift from the fact it encodes.
+`ShiftControllerTest` asserts both halves — a second open shift refused, and a
+cashier able to open a third after closing two — so the rule is proved on H2
+locally and on real PostgreSQL in CI rather than assumed on either.
+
+**The gate is in the service, not only the screen.** Settling a bill and
+showing a KHQR code both refuse without an open shift. `ShiftGate` redirects
+the POS screens as well, so a cashier finds out before they have rung up an
+order rather than with a customer holding out a note — but the redirect is the
+courtesy and the 400 is the rule.
+
+Opening costs two taps: the float is pre-filled, and Start returns to whatever
+the gate interrupted.
+
+*Risk was:* medium, for the routine change. What it actually cost was every
+test that settles a bill: 40 of them failed the moment the gate landed, which
+is the gate working. They open a drawer now, like a real till.
 
 ### P4 — Stock ledger · **done**
 
@@ -296,7 +333,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P1 Multi-branch | 4 |
 | P5 POS consolidation | 3 · **done** |
 | P2 Money integrity | 5 · **done** |
-| P3 Shift and cash | 4 |
+| P3 Shift and cash | 4 · **done** |
 | P4 Stock ledger | 4 · **done** |
 | P6 Customers | 4 |
 | P8 Variants | 5 |
@@ -427,7 +464,7 @@ Four jobs today: `backend` (H2 + smoke), `postgres` (Testcontainers),
 | P0 | idempotency replay test; envelope `code` asserted |
 | P1 | **a job that runs migrations against a dump of the real database** |
 | P2 | **done** — `PaymentControllerTest`, `KhqrPaymentTest`, `MoneyHistoryTest`; the V12 backfill asserts itself with a NOT NULL |
-| P3 | concurrent shift-open test proving the partial index holds |
+| P3 | **done** — `ShiftControllerTest` proves the constraint itself, not the check in front of it |
 | P4 | **done** — `StockLedgerTest` reconciles the stored figure against the ledger |
 
 **The P1 addition matters most.** CI currently proves migrations work on an
@@ -445,7 +482,7 @@ database.
 | P1 breaks a query that silently returns another branch's rows | Every repository method gets a branch-scoped test. There is no safe partial rollout |
 | ~~P2 loses payment data~~ | **held.** V12 backfilled every paid order and asserts it with a NOT NULL; the columns it replaced are still there |
 | ~~V13 estimated margins mistaken for real~~ | **held.** `cost_estimated` per line, counted by the report and labelled above the figures |
-| The shift gate gets worked around | Two taps, or it fails. Watch it in use in week one |
+| The shift gate gets worked around | **Two taps, as asked:** pre-filled float, and Start returns to the interrupted screen. Still worth watching in week one |
 | Scope grows mid-package | The package list is the contract. New ideas go to Phase 2 |
 | Estimates slip and Phase 1 never lands | P0–P5 alone is a coherent release. Ship there if needed |
 

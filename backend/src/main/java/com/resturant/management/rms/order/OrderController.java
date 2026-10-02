@@ -98,8 +98,10 @@ public class OrderController {
             description = "One transaction: mark PAID, record tender and change, decrement stock, "
                         + "free the table. Cash requires amountTendered ≥ total.")
     public ApiResponse<OrderResponse> pay(@PathVariable Long id,
-                                          @Valid @RequestBody PayRequest request) {
-        return ApiResponse.ok("Payment accepted", orderService.pay(id, request));
+                                          @Valid @RequestBody PayRequest request,
+                                          @AuthenticationPrincipal UserDetails principal) {
+        return ApiResponse.ok("Payment accepted",
+                orderService.pay(id, request, principal.getUsername()));
     }
 
     @GetMapping("/payment-methods")
@@ -117,8 +119,9 @@ public class OrderController {
             description = "Parks the order in AWAITING_PAYMENT and returns the payload to draw. "
                         + "Calling it again while a code is live returns the same one, so a "
                         + "refreshed till cannot orphan a customer who already scanned.")
-    public ApiResponse<KhqrResponse> khqr(@PathVariable Long id) {
-        return ApiResponse.ok(orderService.startKhqrPayment(id));
+    public ApiResponse<KhqrResponse> khqr(@PathVariable Long id,
+                                          @AuthenticationPrincipal UserDetails principal) {
+        return ApiResponse.ok(orderService.startKhqrPayment(id, principal.getUsername()));
     }
 
     @GetMapping("/{id}/khqr")

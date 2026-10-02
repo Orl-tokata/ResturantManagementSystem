@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Clock } from "@/components/layout/Clock";
+import { ShiftGate } from "@/components/shift/ShiftGate";
 import { Alert, Button, SearchBar } from "@/components/ui";
 import { PaymentPanel } from "@/components/pos/PaymentPanel";
 import { get, post, put, type PageResponse } from "@/lib/api";
@@ -562,7 +563,12 @@ export default function CashierOrderPage() {
         </div>
       }
     >
-      <PosScreen />
+      {/* No open shift, no POS — docs/SCREENS.md §3.1. The backend refuses the
+          payment anyway; this is so the cashier learns it before the customer
+          is standing there with a note in their hand. */}
+      <ShiftGate>
+        <PosScreen />
+      </ShiftGate>
     </Suspense>
   );
 }

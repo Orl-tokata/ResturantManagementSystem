@@ -23,7 +23,8 @@
     "logout": "Log out",
     "audit": "Audit log",
     "users": "Accounts",
-    "order": "Order"
+    "order": "Order",
+    "shift": "Shift"
   },
   "common": {
     "save": "Save",
@@ -80,7 +81,9 @@
     "showingNone": "Showing 0 of 0",
     "rowsPerPage": "Rows",
     "allRows": "All",
-    "role": "Role"
+    "role": "Role",
+    "amount": "Amount",
+    "type": "Type"
   },
   "auth": {
     "loginTitle": "Restaurant Management System",
@@ -531,6 +534,14 @@
       "DRINK": "Drink",
       "RICE": "Rice",
       "OTHER": "Other"
+    },
+    "cashMovement": {
+      "SALE": "Cash sale",
+      "REFUND": "Refund",
+      "PAY_IN": "Cash in",
+      "PAY_OUT": "Cash out",
+      "FLOAT": "Float added",
+      "DROP": "To the safe"
     }
   },
   "weekday": {
@@ -582,7 +593,10 @@
     "createAccount": "Could not create the login",
     "khqrFailed": "Could not start the KHQR payment",
     "unlock": "Could not unlock that account",
-    "uploadImage": "Could not save that photograph"
+    "uploadImage": "Could not save that photograph",
+    "openShift": "Could not start the shift",
+    "closeShift": "Could not close the shift",
+    "recordCash": "Could not record that"
   },
   "a11y": {
     "edit": "Edit {name}",
@@ -651,5 +665,33 @@
     "drink": "Drinks",
     "sweet": "Sweets & fruit",
     "other": "Other"
+  },
+  "shift": {
+    "title": "Shift",
+    "startTitle": "Start your shift",
+    "startHelp": "Count the cash in the drawer and enter it. Every sale from now on belongs to this shift.",
+    "openingFloat": "Starting cash",
+    "start": "Start shift",
+    "close": "Close shift",
+    "closeTitle": "Close your shift",
+    "closeHelp": "Count what is in the drawer now. The till works out the rest.",
+    "declared": "Counted in the drawer",
+    "expected": "Should be there",
+    "short": "Short by",
+    "over": "Over by",
+    "balanced": "Balanced",
+    "varianceHint": "Required when the drawer does not balance",
+    "variancePlaceholder": "What happened?",
+    "cashSales": "Cash sales",
+    "openedAt": "Opened",
+    "closedAt": "Closed",
+    "recordCash": "Cash in / out",
+    "cashRecorded": "Recorded",
+    "reasonHint": "Say what it was for — this is what the figure means at the end of the day",
+    "reasonPlaceholder": "Paid the ice delivery",
+    "noMovements": "Nothing has moved yet",
+    "zReport": "Shift report",
+    "movementCount": "{count} movements",
+    "by": "By"
   }
 }

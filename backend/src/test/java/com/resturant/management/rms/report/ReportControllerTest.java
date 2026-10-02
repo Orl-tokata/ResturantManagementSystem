@@ -53,7 +53,26 @@ class ReportControllerTest {
 	}
 
 	/** Sells 2 × fried rice (price 4.50, cost 2.10) → revenue 9.90, cost 4.20. */
+
+	/**
+	 * The P3 gate: a bill cannot be settled unless the cashier has a drawer
+	 * open. Called before anything that pays, because that is now what a till
+	 * does — the alternative was to weaken the gate so the tests could keep
+	 * skipping the step that makes every cash report true.
+	 *
+	 * <p>Not asserted on: a shift already open answers 400, which is the right
+	 * answer and nothing here needs a second one.
+	 */
+	private void openShift(String bearer) throws Exception {
+		mvc.perform(post("/api/shifts")
+				.header("Authorization", bearer)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"openingFloat":200.00}"""));
+	}
+
 	private void sell(long tableId) throws Exception {
+		openShift(cashier);
 		MvcResult opened = mvc.perform(post("/api/orders").header("Idempotency-Key", UUID.randomUUID().toString()).header("Authorization", cashier)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"tableId\":%d}".formatted(tableId)))

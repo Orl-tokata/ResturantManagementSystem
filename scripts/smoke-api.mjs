@@ -291,6 +291,25 @@ async function main() {
      a smoke sale from a real one; otherwise it would have to delete every
      order and hope none of them mattered. */
   const posTok = await login(USER, "Passw0rdY");
+
+  /* ---- shifts: the drawer this POS session belongs to -------------------
+     A bill cannot be settled without one, so this comes before the orders
+     and not after them. That ordering is the gate, stated as a script. */
+  await call("no shift open yet", "GET", "/shifts/current", { tok: posTok });
+  const shift = await call("open the drawer", "POST", "/shifts", {
+    tok: posTok, body: { openingFloat: 100 }, expect: [201],
+  });
+  await call("current shift", "GET", "/shifts/current", { tok: posTok });
+  await call("a second one is refused", "POST", "/shifts", {
+    tok: posTok, body: { openingFloat: 50 }, expect: [400],
+  });
+  await call("cash out of the drawer", "POST", `/shifts/${shift?.id}/movements`, {
+    tok: posTok, body: { type: "PAY_OUT", amount: 5, reason: "smoke test" }, expect: [201],
+  });
+  await call("a sale cannot be typed in", "POST", `/shifts/${shift?.id}/movements`, {
+    tok: posTok, body: { type: "SALE", amount: 5, reason: "smoke test" }, expect: [400],
+  });
+
   await call("list orders", "GET", "/orders", { tok: posTok });
   await call("order summary", "GET", "/orders/summary", { tok: posTok });
   const order = await call("open a bill", "POST", "/orders", { tok: posTok, body: { tableId: 5 } });
@@ -303,6 +322,17 @@ async function main() {
     tok: posTok, body: { paymentMethod: "CASH", amountTendered: 50 },
   });
   await call("fetch receipt", "GET", `/orders/${order?.id}/receipt`, { tok: posTok });
+
+  // The Z-report, read before the count so the figure to declare is known.
+  const zReport = await call("the Z-report", "GET", `/shifts/${shift?.id}`, { tok: posTok });
+  const expected = zReport?.shift?.expectedCash ?? 0;
+  await call("close against a short drawer", "POST", `/shifts/${shift?.id}/close`, {
+    tok: posTok, body: { declaredCash: Number(expected) - 1 }, expect: [400],
+  });
+  await call("close the drawer", "POST", `/shifts/${shift?.id}/close`, {
+    tok: posTok, body: { declaredCash: expected },
+  });
+  await call("shift history", "GET", "/shifts", { tok: adminTok });
   const order2 = await call("open a second bill", "POST", "/orders", { tok: posTok, body: { tableId: 6 } });
   await call("cancel order", "POST", `/orders/${order2?.id}/cancel`, { tok: posTok });
 

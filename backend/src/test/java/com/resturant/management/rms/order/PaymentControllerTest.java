@@ -38,6 +38,7 @@ class PaymentControllerTest {
 				.andReturn();
 		token = json.readTree(res.getResponse().getContentAsString())
 				.path("data").path("accessToken").asText();
+		openShift("Bearer " + token);
 	}
 
 	/** Opens a bill at the given table with 2 × fried rice = 9.00 → total 9.90. */
@@ -58,6 +59,24 @@ class PaymentControllerTest {
 								{"items":[{"productId":1,"qty":2}]}"""))
 				.andExpect(status().isOk());
 		return id;
+	}
+
+
+	/**
+	 * The P3 gate: a bill cannot be settled unless the cashier has a drawer
+	 * open. Called before anything that pays, because that is now what a till
+	 * does — the alternative was to weaken the gate so the tests could keep
+	 * skipping the step that makes every cash report true.
+	 *
+	 * <p>Not asserted on: a shift already open answers 400, which is the right
+	 * answer and nothing here needs a second one.
+	 */
+	private void openShift(String bearer) throws Exception {
+		mvc.perform(post("/api/shifts")
+				.header("Authorization", bearer)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"openingFloat":200.00}"""));
 	}
 
 	private JsonNode pay(long id, String body) throws Exception {

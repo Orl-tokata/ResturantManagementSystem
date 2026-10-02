@@ -12,6 +12,7 @@ import {
   StatTile,
   Toolbar,
 } from "@/components/ui";
+import { ShiftGate } from "@/components/shift/ShiftGate";
 import { get, type PageResponse } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import {
@@ -26,6 +27,14 @@ const CARD_TONE: Record<DiningTable["status"], string> = {
 };
 
 export default function CashierTablesPage() {
+  return (
+    <ShiftGate>
+      <TablePicker />
+    </ShiftGate>
+  );
+}
+
+function TablePicker() {
   const t = useTranslations("tables");
   const tc = useTranslations("common");
   const tZone = useTranslations("enum.zone");

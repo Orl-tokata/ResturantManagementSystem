@@ -17,6 +17,7 @@ import com.resturant.management.rms.khqr.KhqrMerchant;
 import com.resturant.management.rms.khqr.KhqrProperties;
 import com.resturant.management.rms.order.dto.OrderDtos.*;
 import com.resturant.management.rms.setting.SettingService;
+import com.resturant.management.rms.shift.ShiftService;
 import com.resturant.management.rms.user.UserInfm;
 import com.resturant.management.rms.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final SalePaymentRepository paymentRepository;
+    private final ShiftService shifts;
     private final StockLedger stockLedger;
     private final ProductRepository productRepository;
     private final DiningTableRepository tableRepository;
@@ -158,19 +160,24 @@ public class OrderService {
      * marked paid with stock untouched, or a table stuck occupied.
      */
     @Transactional
-    public OrderResponse pay(Long orderId, PayRequest request) {
+    public OrderResponse pay(Long orderId, PayRequest request, String username) {
         Order order = findEditable(orderId);
 
         if (order.getItems().isEmpty()) {
             throw new BadRequestException("error.order.emptyBill");
         }
 
+        // The gate. Settling a bill with nobody's drawer open makes every cash
+        // report a guess about which session the money belonged to, so it is
+        // refused here and not only by the screen that redirects.
+        shifts.requireOpenShift(username);
+
         if (request.discount() != null) {
             order.setDiscount(request.discount());
         }
         recalculate(order);
 
-        capture(order, request.tenders());
+        capture(order, request.tenders(), username);
         close(order);
 
         Order saved = orderRepository.save(order);
@@ -188,7 +195,7 @@ public class OrderService {
      * a payment either: money above the total is change, and change comes off
      * the cash line.
      */
-    private void capture(Order order, List<TenderRequest> tenders) {
+    private void capture(Order order, List<TenderRequest> tenders, String username) {
         BigDecimal outstanding = order.getTotal().subtract(order.paidAmount());
         LocalDateTime now = LocalDateTime.now();
 
@@ -251,6 +258,14 @@ public class OrderService {
         }
 
         captured.forEach(order::addPayment);
+
+        // Only cash reaches a drawer. A card settles somewhere else entirely,
+        // and counting it at the till would make every count wrong by the
+        // day's card takings.
+        captured.stream()
+                .filter(p -> p.getMethod() == PaymentMethod.CASH)
+                .forEach(p -> shifts.recordSale(
+                        username, p.getAmount(), order.getId(), order.getInvoiceNo()));
     }
 
     /** Marks a covered bill settled: stock leaves, the table is released. */
@@ -414,10 +429,15 @@ public class OrderService {
      * the old one, leaving a real payment that this order can never match.
      */
     @Transactional
-    public KhqrResponse startKhqrPayment(Long orderId) {
+    public KhqrResponse startKhqrPayment(Long orderId, String username) {
         if (!khqrProperties.canGenerate()) {
             throw new BadRequestException("error.order.khqrUnavailable");
         }
+
+        // Gated at the point the code is shown rather than when the bank
+        // answers: a customer who scans must not be told afterwards that the
+        // till was not ready for their money.
+        shifts.requireOpenShift(username);
 
         Order order = find(orderId);
         if (order.getStatus() == OrderStatus.PAID) {

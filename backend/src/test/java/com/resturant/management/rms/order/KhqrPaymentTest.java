@@ -64,7 +64,22 @@ class KhqrPaymentTest {
                 .andReturn();
         token = json.readTree(res.getResponse().getContentAsString())
                 .path("data").path("accessToken").asText();
+        openShift("Bearer " + token);
     }
+
+    /**
+     * The P3 gate: a bill cannot be settled unless the cashier has a drawer
+     * open. A shift already open answers 400, which is the right answer and
+     * nothing here needs a second one.
+     */
+    private void openShift(String bearer) throws Exception {
+        mvc.perform(post("/api/shifts")
+                .header("Authorization", bearer)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"openingFloat":200.00}"""));
+    }
+
 
     /** A bill of 2 × fried rice = 9.00, 9.90 with VAT. */
     private long bill(long tableId) throws Exception {

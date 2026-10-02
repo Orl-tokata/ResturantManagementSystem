@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Settings,
   ShieldCheck,
+  Wallet,
   Tags,
   TrendingUp,
   Truck,
@@ -58,6 +59,7 @@ export const ADMIN_MENU: MenuItem[] = [
  */
 export const CASHIER_MENU: MenuItem[] = [
   { href: "/cashier", icon: Home, key: "home" },
+  { href: "/cashier/shift", icon: Wallet, key: "shift" },
   { href: "/cashier/tables", icon: ShoppingCart, key: "order" },
   { href: "/cashier/receipt", icon: Receipt, key: "receipt" },
   { href: "/cashier/history", icon: Clock, key: "history" },
