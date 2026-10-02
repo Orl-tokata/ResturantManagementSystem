@@ -10,6 +10,7 @@ import { Clock } from "@/components/layout/Clock";
 import { ShiftGate } from "@/components/shift/ShiftGate";
 import { Alert, Button, SearchBar } from "@/components/ui";
 import { CustomerChip } from "@/components/pos/CustomerChip";
+import { LineChooser } from "@/components/pos/LineChooser";
 import { PaymentPanel } from "@/components/pos/PaymentPanel";
 import { get, post, put, type PageResponse } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
@@ -18,7 +19,8 @@ import { pickName } from "@/i18n/name";
 import { formatKhr, formatUsd } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import type { Category, DiningTable, Product } from "@/types/master";
-import type { CartLine, Order } from "@/types/order";
+import { cartLineKey, type CartLine, type Order } from "@/types/order";
+import type { Variant } from "@/types/catalog-extras";
 import { ProductImage } from "@/components/ui/ProductImage";
 
 function PosScreen() {
@@ -38,6 +40,8 @@ function PosScreen() {
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
+  /** The dish whose sizes and questions are being asked about, if any. */
+  const [choosing, setChoosing] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   /* Settling happens here rather than on a screen of its own — SCREENS.md 2.1. */
@@ -144,8 +148,17 @@ function PosScreen() {
     setSeededFor(bill.id);
     setCart(
       bill.items.map((i) => ({
+        key: cartLineKey(
+          i.productId ?? 0,
+          i.variantId,
+          (i.modifiers ?? []).map((m) => m.modifierId ?? 0),
+        ),
         productId: i.productId ?? 0,
         productName: i.productName,
+        variantId: i.variantId,
+        variantName: i.variantName,
+        modifierIds: (i.modifiers ?? []).map((m) => m.modifierId ?? 0),
+        modifierNames: (i.modifiers ?? []).map((m) => m.name),
         unitPrice: i.unitPrice,
         qty: i.qty,
         note: i.note ?? undefined,
@@ -162,7 +175,15 @@ function PosScreen() {
     // follows it has not necessarily landed yet.
     mutationFn: ({ orderId, lines }: { orderId: number; lines: CartLine[] }) =>
       put<Order>(`/orders/${orderId}/items`, {
-        items: lines.map((l) => ({ productId: l.productId, qty: l.qty, note: l.note })),
+        items: lines.map((l) => ({
+          productId: l.productId,
+          qty: l.qty,
+          variantId: l.variantId,
+          // Ids only. The server reads every price from the menu; one that
+          // arrived from here would be a price the till chose.
+          modifierIds: l.modifierIds,
+          note: l.note,
+        })),
       }),
     onSuccess: (updated) => {
       qc.setQueryData(["order", "table", tableId], updated);
@@ -220,32 +241,71 @@ function PosScreen() {
 
   /* ---- Cart operations ------------------------------------------------ */
 
+  /**
+   * A tap on a tile.
+   *
+   * <p>Straight into the basket for the ordinary dish, and into the chooser
+   * for one that has sizes or questions. The flag comes down with the product
+   * so the common case costs no round trip.
+   */
   function addProduct(p: Product) {
+    if (p.hasOptions) {
+      setChoosing(p);
+      return;
+    }
+    addLine({ product: p, modifiers: [], unitPrice: p.price });
+  }
+
+  function addLine({
+    product,
+    variant,
+    modifiers,
+    unitPrice,
+  }: {
+    product: Product;
+    variant?: Variant;
+    modifiers: { id: number; name: string }[];
+    unitPrice: number;
+  }) {
+    const modifierIds = modifiers.map((m) => m.id);
+    const key = cartLineKey(product.id, variant?.id, modifierIds);
+
     setCart((lines) => {
-      const found = lines.find((l) => l.productId === p.id);
+      const found = lines.find((l) => l.key === key);
       if (found) {
-        return lines.map((l) => (l.productId === p.id ? { ...l, qty: l.qty + 1 } : l));
+        return lines.map((l) => (l.key === key ? { ...l, qty: l.qty + 1 } : l));
       }
       return [
         ...lines,
-        { productId: p.id, productName: p.name, unitPrice: p.price, qty: 1 },
+        {
+          key,
+          productId: product.id,
+          productName: product.name,
+          variantId: variant?.id,
+          variantName: variant?.name,
+          modifierIds,
+          modifierNames: modifiers.map((m) => m.name),
+          unitPrice,
+          qty: 1,
+        },
       ];
     });
     setDirty(true);
+    setChoosing(null);
   }
 
-  function changeQty(productId: number, delta: number) {
+  function changeQty(key: string, delta: number) {
     setCart((lines) =>
       lines
-        .map((l) => (l.productId === productId ? { ...l, qty: l.qty + delta } : l))
+        .map((l) => (l.key === key ? { ...l, qty: l.qty + delta } : l))
         // Decrementing to zero removes the line, which is what a cashier expects.
         .filter((l) => l.qty > 0),
     );
     setDirty(true);
   }
 
-  function removeLine(productId: number) {
-    setCart((lines) => lines.filter((l) => l.productId !== productId));
+  function removeLine(key: string) {
+    setCart((lines) => lines.filter((l) => l.key !== key));
     setDirty(true);
   }
 
@@ -336,6 +396,16 @@ function PosScreen() {
         <div className="px-3 pt-2">
           <Alert tone="error">{apiError(order.error, "openBill")}</Alert>
         </div>
+      )}
+
+      {choosing && (
+        <LineChooser
+          product={choosing}
+          onCancel={() => setChoosing(null)}
+          onAdd={({ variant, modifiers, unitPrice }) =>
+            addLine({ product: choosing, variant, modifiers, unitPrice })
+          }
+        />
       )}
 
       {/* ---- body ---- */}
@@ -443,9 +513,24 @@ function PosScreen() {
               <table className="w-full text-xs">
                 <tbody>
                   {cart.map((l) => (
-                    <tr key={l.productId} className="border-b border-dashed border-ink-300">
+                    <tr key={l.key} className="border-b border-dashed border-ink-300">
                       <td className="px-2 py-2">
-                        <div className="font-semibold">{l.productName}</div>
+                        <div className="font-semibold">
+                          {l.productName}
+                          {l.variantName && (
+                            <span className="ml-1 font-normal text-ink-500">
+                              ({l.variantName})
+                            </span>
+                          )}
+                        </div>
+                        {/* What was asked for, under the dish it was asked
+                            about \u2014 the kitchen reads this line, not the
+                            modal it was chosen in. */}
+                        {l.modifierNames.length > 0 && (
+                          <div className="text-[11px] text-teal-700">
+                            {l.modifierNames.join(", ")}
+                          </div>
+                        )}
                         <div className="text-ink-500">{formatUsd(l.unitPrice)}</div>
                       </td>
                       <td className="px-1 py-2">
@@ -453,7 +538,7 @@ function PosScreen() {
                           <button
                             type="button"
                             aria-label={tA11y("decrease", { name: l.productName })}
-                            onClick={() => changeQty(l.productId, -1)}
+                            onClick={() => changeQty(l.key, -1)}
                             className="grid h-6 w-6 place-items-center rounded border border-ink-300 bg-white"
                           >
                             <Minus size={12} />
@@ -464,7 +549,7 @@ function PosScreen() {
                           <button
                             type="button"
                             aria-label={tA11y("increase", { name: l.productName })}
-                            onClick={() => changeQty(l.productId, 1)}
+                            onClick={() => changeQty(l.key, 1)}
                             className="grid h-6 w-6 place-items-center rounded border border-ink-300 bg-white"
                           >
                             <Plus size={12} />
@@ -478,7 +563,7 @@ function PosScreen() {
                         <button
                           type="button"
                           aria-label={tA11y("remove", { name: l.productName })}
-                          onClick={() => removeLine(l.productId)}
+                          onClick={() => removeLine(l.key)}
                           className="text-danger-soft"
                         >
                           <Trash2 size={13} />

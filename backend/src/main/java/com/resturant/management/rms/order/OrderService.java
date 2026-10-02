@@ -1,6 +1,12 @@
 package com.resturant.management.rms.order;
 
+import com.resturant.management.rms.catalog.Modifier;
+import com.resturant.management.rms.catalog.ModifierGroup;
+import com.resturant.management.rms.catalog.Modifier;
+import com.resturant.management.rms.catalog.ModifierGroup;
 import com.resturant.management.rms.catalog.Product;
+import com.resturant.management.rms.catalog.ProductVariant;
+import com.resturant.management.rms.catalog.ProductVariant;
 import com.resturant.management.rms.stock.MovementType;
 import com.resturant.management.rms.stock.StockLedger;
 import com.resturant.management.rms.catalog.ProductRepository;
@@ -36,6 +42,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -50,6 +58,7 @@ public class OrderService {
     private final CustomerService customers;
     private final StockLedger stockLedger;
     private final ProductRepository productRepository;
+    private final com.resturant.management.rms.catalog.ProductVariantRepository variantRepository;
     private final DiningTableRepository tableRepository;
     private final UserRepository userRepository;
     private final SettingService settings;
@@ -128,19 +137,50 @@ public class OrderService {
             Product product = productRepository.findById(line.productId())
                     .orElseThrow(() -> NotFoundException.of("entity.product", line.productId()));
 
+            /*
+             * A size replaces the dish's price rather than adjusting it, and
+             * the modifiers move it from there. All three figures are read
+             * from the menu here; the request carries ids and nothing else,
+             * because a price that arrived in a request is a price the client
+             * chose (ARCHITECTURE §5).
+             */
+            ProductVariant variant = variantOf(product, line.variantId());
+            List<Modifier> chosen = modifiersOf(product, line.modifierIds());
+
+            BigDecimal unitPrice = variant != null ? variant.getPrice() : product.getPrice();
+            for (Modifier modifier : chosen) {
+                unitPrice = unitPrice.add(modifier.getPriceDelta());
+            }
+            if (unitPrice.signum() < 0) {
+                // Deltas can be negative; a line that costs less than nothing
+                // is somebody's pricing mistake, not a sale.
+                throw new BadRequestException("error.order.negativeLine", product.getName());
+            }
+
             OrderItem item = OrderItem.builder()
                     .product(product)
                     .productName(product.getName())
+                    .variant(variant)
+                    .variantName(variant != null ? variant.getName() : null)
                     .qty(line.qty())
-                    .unitPrice(product.getPrice())
+                    .unitPrice(unitPrice)
                     // Copied now, for the same reason the price is: the margin
                     // on this sale is the margin that was made, and repricing
                     // the dish next month must not rewrite it. Recorded, so
                     // not estimated.
-                    .unitCost(product.getCost() == null ? BigDecimal.ZERO : product.getCost())
+                    .unitCost(costOf(product, variant))
                     .costEstimated(false)
                     .note(line.note())
                     .build();
+
+            for (Modifier modifier : chosen) {
+                item.addModifier(OrderItemModifier.builder()
+                        .modifier(modifier)
+                        .modifierName(modifier.getName())
+                        .priceDelta(modifier.getPriceDelta())
+                        .build());
+            }
+
             item.recalculate();
             order.addItem(item);
         }
@@ -298,6 +338,81 @@ public class OrderService {
         Order order = findEditable(orderId);
         order.setCustomer(customerId == null ? null : customers.find(customerId));
         return toResponse(orderRepository.save(order));
+    }
+
+    /**
+     * The size asked for, checked against the dish it was asked for on.
+     *
+     * <p>A variant carries no branch of its own \u2014 it belongs to a product,
+     * and the product was loaded through the branch filter. Insisting the two
+     * match is therefore also what stops a variant from another shop being
+     * sold here.
+     */
+    private ProductVariant variantOf(Product product, Long variantId) {
+        if (variantId == null) return null;
+
+        ProductVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> NotFoundException.of("entity.variant", variantId));
+        if (!variant.getProduct().getId().equals(product.getId())) {
+            throw new BadRequestException("error.order.variantNotOnProduct",
+                    variant.getName(), product.getName());
+        }
+        return variant;
+    }
+
+    /**
+     * The modifiers asked for, checked against the questions this dish asks.
+     *
+     * <p>Anything else is refused rather than ignored: a line priced with a
+     * modifier the kitchen will never see is a bill the customer did not agree
+     * to.
+     */
+    private List<Modifier> modifiersOf(Product product, List<Long> modifierIds) {
+        /*
+         * No early return for an empty list, and that was the bug: "answer
+         * nothing" is exactly when a required question has to be enforced, so
+         * skipping the checks below when the field was absent let a line
+         * ignore a mandatory choice by leaving it out of the request.
+         */
+        List<Long> ids = modifierIds == null ? List.<Long>of() : modifierIds;
+
+        Map<Long, Modifier> offered = new java.util.HashMap<>();
+        for (ModifierGroup group : product.getModifierGroups()) {
+            for (Modifier modifier : group.getModifiers()) {
+                offered.put(modifier.getId(), modifier);
+            }
+        }
+
+        List<Modifier> chosen = new java.util.ArrayList<>();
+        for (Long id : ids) {
+            Modifier modifier = offered.get(id);
+            if (modifier == null) {
+                throw new BadRequestException("error.order.modifierNotOffered", product.getName());
+            }
+            chosen.add(modifier);
+        }
+
+        // How many of each group were chosen, against what the group allows.
+        Map<Long, Long> perGroup = chosen.stream().collect(
+                java.util.stream.Collectors.groupingBy(m -> m.getGroup().getId(),
+                        java.util.stream.Collectors.counting()));
+
+        for (ModifierGroup group : product.getModifierGroups()) {
+            long count = perGroup.getOrDefault(group.getId(), 0L);
+            if (count < group.getMinSelect() || count > group.getMaxSelect()) {
+                throw new BadRequestException("error.order.modifierCount",
+                        group.getName(), group.getMinSelect(), group.getMaxSelect());
+            }
+        }
+        return chosen;
+    }
+
+    /** A size has its own cost; without one the dish's stands. */
+    private BigDecimal costOf(Product product, ProductVariant variant) {
+        if (variant != null && variant.getCost() != null && variant.getCost().signum() > 0) {
+            return variant.getCost();
+        }
+        return product.getCost() == null ? BigDecimal.ZERO : product.getCost();
     }
 
     /**
@@ -755,8 +870,18 @@ public class OrderService {
                 .map(i -> new OrderItemResponse(
                         i.getId(),
                         i.getProduct() != null ? i.getProduct().getId() : null,
-                        i.getProductName(), i.getQty(), i.getUnitPrice(),
-                        i.getLineTotal(), i.getNote()))
+                        i.getProductName(),
+                        i.getVariant() != null ? i.getVariant().getId() : null,
+                        i.getVariantName(),
+                        i.getQty(), i.getUnitPrice(), i.getLineTotal(),
+                        i.getModifiers().stream()
+                                .map(m -> new OrderItemModifierResponse(
+                                        m.getId(),
+                                        m.getModifier() != null ? m.getModifier().getId() : null,
+                                        m.getModifierName(),
+                                        m.getPriceDelta()))
+                                .toList(),
+                        i.getNote()))
                 .toList();
 
         return new OrderResponse(

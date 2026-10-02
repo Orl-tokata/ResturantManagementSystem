@@ -65,6 +65,15 @@ public final class OrderDtos {
             @NotNull(message = "{valid.required}")
             @Positive(message = "{valid.positive}")
             BigDecimal qty,
+            /** Which size, when the dish has sizes. Null means the dish itself. */
+            Long variantId,
+            /**
+             * What was asked for on this line. Ids only: the price of each is
+             * read from the menu here, never sent by the client —
+             * ARCHITECTURE §5 says the server recalculates everything, and a
+             * price that arrived in a request is a price somebody could choose.
+             */
+            List<Long> modifierIds,
             @Size(max = 255) String note
     ) {}
 
@@ -82,10 +91,22 @@ public final class OrderDtos {
             Long id,
             Long productId,
             String productName,
+            Long variantId,
+            /** The size's name, as it was when this was ordered. */
+            String variantName,
             BigDecimal qty,
+            /** Includes the variant's price and every modifier's delta. */
             BigDecimal unitPrice,
             BigDecimal lineTotal,
+            List<OrderItemModifierResponse> modifiers,
             String note
+    ) {}
+
+    public record OrderItemModifierResponse(
+            Long id,
+            Long modifierId,
+            String name,
+            BigDecimal priceDelta
     ) {}
 
     /** Body of {@code POST /api/orders/{id}/pay}. */

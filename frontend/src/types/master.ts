@@ -39,6 +39,13 @@ export interface Product {
   imageFile: string | null;
   description: string | null;
   status: RecordStatus;
+  /**
+   * Whether tapping this on the till has to ask something first — a size, or
+   * a question like "sugar level". A flag rather than the detail: the POS
+   * draws every dish and most of them ask nothing, so sending the sizes and
+   * questions would be paying for them on every tile.
+   */
+  hasOptions: boolean;
 }
 
 export interface ProductRequest {

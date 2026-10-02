@@ -291,6 +291,31 @@ async function main() {
      An order records who took it, so that is what lets the cleanup script tell
      a smoke sale from a real one; otherwise it would have to delete every
      order and hope none of them mattered. */
+  /* ---- variants and modifiers -------------------------------------------
+     A size is priced in its own right; a modifier moves a line's price. The
+     server works both out from ids, so the only thing a client can choose is
+     which. */
+  const DISH = 1;   // the seeded fried rice, which outlives this script
+  const size = await call("add a size", "POST", `/products/${DISH}/variants`, {
+    tok: adminTok, body: { name: "Large", price: 9.5 }, expect: [201],
+  });
+  await call("the product's sizes", "GET", `/products/${DISH}/variants`, { tok: adminTok });
+  const question = await call("a question with two answers", "POST", "/modifier-groups", {
+    tok: adminTok, expect: [201],
+    body: {
+      name: `Smoke extras ${Date.now() % 100000}`, minSelect: 0, maxSelect: 1,
+      modifiers: [{ name: "Extra", priceDelta: 1 }, { name: "None", priceDelta: 0 }],
+    },
+  });
+  await call("asking for more than is offered", "POST", "/modifier-groups", {
+    tok: adminTok, expect: [400],
+    body: { name: "Impossible", minSelect: 0, maxSelect: 5,
+            modifiers: [{ name: "Only one", priceDelta: 0 }] },
+  });
+  await call("ask it about this dish", "POST",
+    `/products/${DISH}/modifier-groups/${question?.id}`, { tok: adminTok });
+  await call("what it asks", "GET", `/products/${DISH}/modifier-groups`, { tok: adminTok });
+
   /* ---- branches: which shop every one of those rows belongs to -----------
      The badge is all P1 shows; what matters is that the branch rides in the
      token. A cashier is refused the move, which is the half of the rule that
@@ -352,6 +377,18 @@ async function main() {
   await call("name the customer on the bill", "PUT", `/orders/${order?.id}/customer`, {
     tok: posTok, body: { customerId: buyer?.id },
   });
+  // A line with a size and a choice: 9.50 for the large, plus 1.00 for the
+  // extra, and the server is what decides that.
+  await call("a line with a size and a choice", "PUT", `/orders/${order?.id}/items`, {
+    tok: posTok,
+    body: { items: [{ productId: 1, qty: 1, variantId: size?.id,
+                      modifierIds: [question?.modifiers?.[0]?.id] }] },
+  });
+  await call("a choice the dish does not offer", "PUT", `/orders/${order?.id}/items`, {
+    tok: posTok, expect: [400],
+    body: { items: [{ productId: 2, qty: 1, modifierIds: [question?.modifiers?.[0]?.id] }] },
+  });
+
   await call("set order items", "PUT", `/orders/${order?.id}/items`, {
     tok: posTok, body: { items: [{ productId: 1, qty: 2 }, { productId: 11, qty: 1 }] },
   });
@@ -427,6 +464,9 @@ async function main() {
   });
 
   await call("cancel the idempotency bill", "POST", `/orders/${firstTry?.id}/cancel`, { tok: posTok });
+  await call("stop asking it", "DELETE", "/modifier-groups/" + question?.id, { tok: adminTok });
+  await call("take the size away", "DELETE", `/products/1/variants/${size?.id}`, { tok: adminTok });
+
   await call("a protected write with no key is refused", "POST", "/orders",
     { tok: posTok, body: { tableId: 8 }, idem: "", expect: [400] });
 

@@ -8,6 +8,8 @@ import lombok.*;
 import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 // stockQty moves on every sale line — it belongs in the movement ledger
 // docs/PLAN.md P4 introduces, not in a log kept for price and menu edits.
@@ -82,4 +84,36 @@ public class Product extends BaseAuditEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private RecordStatus status = RecordStatus.ACTIVE;
+
+    /**
+     * Sizes of this dish. Empty for most of the menu, which is the ordinary
+     * case: a plate of fried rice is one thing.
+     *
+     * <p>Inside the product rather than on a screen of their own — SCREENS §4
+     * is explicit that a separate variant manager means two places to look for
+     * one product's price.
+     */
+    @Builder.Default
+    @OrderBy("sortOrder ASC, id ASC")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariant> variants = new ArrayList<>();
+
+    /**
+     * The questions asked when this is ordered.
+     *
+     * <p>A link, not ownership: the same "sugar level" group is attached to
+     * every drink that asks it.
+     */
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(name = "product_modifier_group",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id"))
+    @OrderBy("sortOrder ASC, id ASC")
+    private List<ModifierGroup> modifierGroups = new ArrayList<>();
+
+    public void addVariant(ProductVariant variant) {
+        variants.add(variant);
+        variant.setProduct(this);
+    }
 }

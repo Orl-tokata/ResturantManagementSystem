@@ -434,7 +434,45 @@ Two things found by running it rather than by reading it:
 those two bugs means a constraint this plan twice described as the real
 guarantee was not quite carrying it.
 
-### P8 — Variants and modifiers · ~5 days
+### P8 — Variants and modifiers · **done**
+
+V18. `product_variant`, `modifier_group`, `modifier`,
+`product_modifier_group`, `order_item_modifier`, and `variant_id` on the sold
+line. The eight endpoints of API §6.5 bar the barcode lookup, a chooser on the
+till, sizes inside the product form and a screen for the questions.
+
+ARCHITECTURE §1.2's distinction is the whole design: a **variant** is a
+distinct sellable thing with its own price, a **modifier** is a property of one
+line. Expressing the second as the first is what multiplies a menu — four
+sizes times no-ice times extra-spicy is thirty-two rows for one coffee, and
+somebody has to price all of them.
+
+**Every price is read from the menu, never from the request.** A line sends
+ids: a product, a size, a list of choices. The server looks all three up and
+adds them. ARCHITECTURE §5 asks for this, and here it is load-bearing — a
+modifier's delta is a number a client would otherwise be choosing.
+
+**The basket is keyed by the line, not the product.** A large coffee with no
+sugar and a small with two are the same product and must not merge; two taps of
+the same configuration still stack.
+
+**Sizes live inside the product form**, which SCREENS §4 insists on: a separate
+variant manager means two places to look for one product's price. Modifier
+groups get a screen of their own for the opposite reason — they are shared, so
+editing "sugar level" inside one drink would change it for every drink from a
+place that does not say so.
+
+One thing it turned up: **the required-question check never ran when nothing
+was chosen**, which is exactly when it matters. An early return for an empty
+list meant a line could ignore a compulsory choice by leaving the field out of
+the request entirely.
+
+**Not built:** `GET /products/barcode/{code}`. The column and its index exist;
+the lookup needs the POS search box to recognise scanner input, which is a
+change to that box rather than to the catalog — and ARCHITECTURE §1.3 is clear
+that dishes have no barcode, so it buys little until there is packaged stock to
+scan.
+
 ### P9 — Promotions · ~4 days — percent and fixed only
 ### P10 — Navigation regroup · ~2 days
 
@@ -453,7 +491,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P3 Shift and cash | 4 · **done** |
 | P4 Stock ledger | 4 · **done** |
 | P6 Customers | 4 · **done** |
-| P8 Variants | 5 |
+| P8 Variants | 5 · **done** |
 | P9 Promotions | 4 |
 | P7 Returns | 5 · **done** |
 | P10 Navigation | 2 |

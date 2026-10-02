@@ -21,6 +21,7 @@ import {
   Toolbar,
   useToast,
 } from "@/components/ui";
+import { VariantEditor } from "@/components/catalog/VariantEditor";
 import { useAll, useList, useRemove, useSave } from "@/hooks/useCrud";
 import { useApiError } from "@/lib/use-api-error";
 import { pickName } from "@/i18n/name";
@@ -456,6 +457,11 @@ export default function ProductsPage() {
             onChange={(e) => setDraft({ ...draft, description: e.target.value })}
           />
         </Field>
+
+        {/* Sizes belong in the product's own form — SCREENS §4. Only once it
+            exists: there is nothing to hang a size on until the dish has an
+            id, which is the same reason the photograph waits. */}
+        {editingId != null && <VariantEditor productId={editingId} />}
       </Modal>
 
       <ConfirmDialog

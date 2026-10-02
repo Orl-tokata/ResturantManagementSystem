@@ -107,6 +107,7 @@ public class ProductService {
                 p.getId(), p.getName(), p.getNameEn(),
                 p.getCategory().getId(), p.getCategory().getName(),
                 p.getPrice(), p.getCost(), p.getStockQty(),
-                p.getIcon(), p.getImageFile(), p.getDescription(), p.getStatus());
+                p.getIcon(), p.getImageFile(), p.getDescription(), p.getStatus(),
+                !p.getVariants().isEmpty() || !p.getModifierGroups().isEmpty());
     }
 }

@@ -26,7 +26,8 @@
     "order": "Order",
     "shift": "Shift",
     "customers": "Customers",
-    "returns": "Returns"
+    "returns": "Returns",
+    "modifiers": "Modifiers"
   },
   "common": {
     "save": "Save",
@@ -182,7 +183,11 @@
     "cashier": "Cashier",
     "table": "Table",
     "notStarted": "New bill",
-    "leave": "Leave"
+    "leave": "Leave",
+    "size": "Size",
+    "addFor": "Add · {price}",
+    "chooseRange": "choose {min}–{max}",
+    "stillToAnswer": "Still to choose: {names}"
   },
   "tables": {
     "title": "Table list",
@@ -614,7 +619,11 @@
     "lookupCustomer": "Could not look that number up",
     "setCustomer": "Could not set the customer on this bill",
     "createReturn": "Could not give the money back",
-    "loadSale": "Could not load that sale"
+    "loadSale": "Could not load that sale",
+    "saveVariant": "Could not save the size",
+    "deleteVariant": "Could not remove the size",
+    "saveModifierGroup": "Could not save the question",
+    "deleteModifierGroup": "Could not delete the question"
   },
   "a11y": {
     "edit": "Edit {name}",
@@ -777,5 +786,36 @@
   "branch": {
     "current": "Working in {name}",
     "unknown": "No branch"
+  },
+  "variants": {
+    "title": "Sizes",
+    "help": "A size is priced in its own right, not as an addition. Leave this empty for a dish that comes one way.",
+    "name": "Size",
+    "namePlaceholder": "Large",
+    "removeSize": "Remove {name}"
+  },
+  "modifiers": {
+    "title": "Modifiers",
+    "add": "Add a question",
+    "details": "Question",
+    "help": "Questions the till asks when a dish is ordered. They are shared: attach the same one to every drink that asks it.",
+    "none": "No questions yet",
+    "nameHint": "What the cashier is asking",
+    "namePlaceholder": "Sugar level",
+    "minSelect": "Fewest",
+    "maxSelect": "Most",
+    "minHint": "1 or more makes it compulsory",
+    "range": "{min}–{max}",
+    "mustChoose": "Must choose",
+    "optional": "Optional",
+    "answers": "Answers",
+    "addAnswer": "Add an answer",
+    "answerPlaceholder": "No sugar",
+    "answerName": "Answer {n}",
+    "answerPrice": "Answer {n} price",
+    "removeAnswer": "Remove answer {n}",
+    "free": "free",
+    "deltaHint": "A price can be negative: leaving something out may cost less.",
+    "deleteNote": "Bills that used it keep the names they were ordered under."
   }
 }

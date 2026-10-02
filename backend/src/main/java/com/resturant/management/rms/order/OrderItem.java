@@ -1,10 +1,13 @@
 package com.resturant.management.rms.order;
 
 import com.resturant.management.rms.catalog.Product;
+import com.resturant.management.rms.catalog.ProductVariant;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A single line on a bill.
@@ -66,8 +69,39 @@ public class OrderItem {
     @Column(name = "line_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal lineTotal;
 
+    /**
+     * The size that was sold, when the dish has sizes.
+     *
+     * <p>{@code unitPrice} already records what was charged, so the money is
+     * safe without this. What it adds is which of them it was: otherwise a
+     * reprint says "Coffee" for a large one and a report cannot tell the two
+     * apart. The name is copied for the same reason the product's is.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id")
+    private ProductVariant variant;
+
+    @Column(name = "variant_name", length = 100)
+    private String variantName;
+
+    /**
+     * What was asked for on this line.
+     *
+     * <p>Their price deltas are already inside {@code unitPrice} — they are
+     * part of what the line cost, not an adjustment applied afterwards — so
+     * these rows are the record of what was asked, not a second sum.
+     */
+    @Builder.Default
+    @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItemModifier> modifiers = new ArrayList<>();
+
     @Column(name = "note", length = 255)
     private String note;
+
+    public void addModifier(OrderItemModifier modifier) {
+        modifiers.add(modifier);
+        modifier.setOrderItem(this);
+    }
 
     /** Recomputes {@code lineTotal} from qty × unitPrice. */
     public void recalculate() {

@@ -7,13 +7,26 @@
 export type OrderStatus = "OPEN" | "AWAITING_PAYMENT" | "PAID" | "CANCELLED";
 export type PaymentMethod = "CASH" | "CARD" | "KHQR" | "TRANSFER";
 
+export interface OrderItemModifier {
+  id: number;
+  /** Null once the modifier is taken off the menu; the name survives. */
+  modifierId?: number;
+  name: string;
+  priceDelta: number;
+}
+
 export interface OrderItem {
   id: number | null;
   productId: number | null;
   productName: string;
+  /** The size that was sold, when the dish has sizes. */
+  variantId?: number;
+  variantName?: string;
   qty: number;
+  /** Already includes the size's price and every modifier's delta. */
   unitPrice: number;
   lineTotal: number;
+  modifiers: OrderItemModifier[];
   note: string | null;
 }
 
@@ -76,13 +89,34 @@ export interface Order {
   paidAt: string | null;
 }
 
-/** One line of the local basket, before it is sent to the server. */
+/**
+ * One line of the local basket, before it is sent to the server.
+ *
+ * <p>`key` identifies the line, not `productId`: a large coffee with no sugar
+ * and a small one with two are the same product and must not merge into one
+ * row. It is built from the product, the size and the choices, so two taps of
+ * the same configuration still stack the way a till should.
+ */
 export interface CartLine {
+  key: string;
   productId: number;
   productName: string;
+  variantId?: number;
+  variantName?: string;
+  modifierIds: number[];
+  modifierNames: string[];
   unitPrice: number;
   qty: number;
   note?: string;
+}
+
+/** What makes one basket line distinct from another. */
+export function cartLineKey(
+  productId: number,
+  variantId: number | undefined,
+  modifierIds: number[],
+): string {
+  return [productId, variantId ?? "", [...modifierIds].sort((a, b) => a - b).join(".")].join(":");
 }
 
 /** Every method, in the order a till offers them. */

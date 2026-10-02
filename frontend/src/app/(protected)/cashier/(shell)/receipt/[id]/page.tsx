@@ -184,7 +184,20 @@ export default function ReceiptPage() {
             {order.items.map((item, i) => (
               <tr key={item.id ?? i}>
                 <td className="py-0.5 align-top">
-                  <div className="font-bold">{item.productName}</div>
+                  <div className="font-bold">
+                    {item.productName}
+                    {item.variantName && (
+                      <span className="font-normal"> ({item.variantName})</span>
+                    )}
+                  </div>
+                  {/* What was asked for, under the dish. A customer checking a
+                      slip is looking for "no chilli" as much as for the price,
+                      and the kitchen copy is the same document. */}
+                  {item.modifiers.length > 0 && (
+                    <div className="pl-2 text-ink-500">
+                      {item.modifiers.map((m) => m.name).join(", ")}
+                    </div>
+                  )}
                   <div className="pl-2 font-[family-name:var(--font-num)] tabular-nums text-ink-500">
                     {item.qty} × {formatUsd(item.unitPrice)}
                   </div>

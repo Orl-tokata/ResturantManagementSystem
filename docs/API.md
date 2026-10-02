@@ -218,7 +218,7 @@ paging metadata is the wrong shape for a field a cashier tabs through.
 > unique on purpose (ERD §3.4) and a couple sharing a number is ordinary, so
 > the till shows both rather than guessing.
 
-### 6.5 Catalog extensions — 8
+### 6.5 Catalog extensions — 8 · **built (P8), bar the barcode lookup**
 
 ```
 GET|POST         /api/products/{id}/variants

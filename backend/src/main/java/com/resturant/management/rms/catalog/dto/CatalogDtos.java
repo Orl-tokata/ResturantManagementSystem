@@ -69,6 +69,86 @@ public final class CatalogDtos {
              */
             String imageFile,
             String description,
-            RecordStatus status
+            RecordStatus status,
+            /**
+             * Whether tapping this on the till has to ask something first.
+             *
+             * <p>A flag rather than the sizes and questions themselves: the
+             * POS draws a grid of every dish and most of them ask nothing, so
+             * sending the detail would be paying for it on every tile. The
+             * chooser fetches what it needs when it opens.
+             */
+            boolean hasOptions
+    ) {}
+
+    /* ---- Variants and modifiers (API §6.5) -------------------------------- */
+
+    public record VariantRequest(
+            @NotBlank(message = "{valid.required}") @Size(max = 100) String name,
+            @Size(max = 100) String nameEn,
+            @NotNull(message = "{valid.required}")
+            @PositiveOrZero(message = "{valid.notNegative}")
+            BigDecimal price,
+            @PositiveOrZero(message = "{valid.notNegative}") BigDecimal cost,
+            @Size(max = 50) String sku,
+            @Size(max = 50) String barcode,
+            Integer sortOrder
+    ) {}
+
+    public record VariantResponse(
+            Long id,
+            Long productId,
+            String name,
+            String nameEn,
+            BigDecimal price,
+            BigDecimal cost,
+            String sku,
+            String barcode,
+            Integer sortOrder
+    ) {}
+
+    public record ModifierRequest(
+            @NotBlank(message = "{valid.required}") @Size(max = 100) String name,
+            @Size(max = 100) String nameEn,
+            /** Signed: free, dearer, or a reduction for leaving something out. */
+            BigDecimal priceDelta,
+            Integer sortOrder
+    ) {}
+
+    /**
+     * A question and its answers, saved together.
+     *
+     * <p>One call rather than a group endpoint and a modifier endpoint: a
+     * group is meaningless without its options, and editing them apart means a
+     * half-saved question that the POS would still have to render.
+     */
+    public record ModifierGroupRequest(
+            @NotBlank(message = "{valid.required}") @Size(max = 100) String name,
+            @Size(max = 100) String nameEn,
+            @PositiveOrZero(message = "{valid.notNegative}") Integer minSelect,
+            @Positive(message = "{valid.positive}") Integer maxSelect,
+            Integer sortOrder,
+            @NotEmpty(message = "{valid.atLeastOneLine}")
+            @jakarta.validation.Valid java.util.List<ModifierRequest> modifiers
+    ) {}
+
+    public record ModifierResponse(
+            Long id,
+            String name,
+            String nameEn,
+            BigDecimal priceDelta,
+            Integer sortOrder
+    ) {}
+
+    public record ModifierGroupResponse(
+            Long id,
+            String name,
+            String nameEn,
+            Integer minSelect,
+            Integer maxSelect,
+            Integer sortOrder,
+            /** True when the customer has to answer before the line is valid. */
+            boolean required,
+            java.util.List<ModifierResponse> modifiers
     ) {}
 }

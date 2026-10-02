@@ -292,7 +292,7 @@ CREATE TABLE promotion (
 `BUY_X_GET_Y` is in the CHECK but not in Phase 1 (SCREENS §3.5). The
 constraint allows it so the enum does not need a second migration later.
 
-### 3.6 Variants and modifiers
+### 3.6 Variants and modifiers · **built (V18)**
 
 ```sql
 CREATE TABLE product_variant (
