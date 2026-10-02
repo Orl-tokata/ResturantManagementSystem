@@ -57,7 +57,7 @@ scheme; the message key *is* the code.
 
 ---
 
-## 3. Branch scoping — server-derived, never a parameter
+## 3. Branch scoping — server-derived, never a parameter · **built (P1)**
 
 Every new endpoint is branch-scoped. The branch comes from **the
 authenticated user**, not the request.
@@ -85,6 +85,16 @@ the token, and no endpoint needs to think about it.
 `ADMIN` may pass `?branchId=` on **reporting endpoints only**, checked against
 membership — an owner comparing two shops is a real need, and reports are
 read-only.
+
+> **Built as V17.** The claim is `brn` and the scoping is a Hibernate
+> `@TenantId` filter, so no endpoint takes a branch and none can forget one.
+> `GET /api/auth/branches` answers §6.7's `/api/branches/mine` — it is a
+> question about the caller, so it lives with the other auth reads.
+>
+> The reporting `?branchId=` is **not** built. Reports read through the same
+> filter as everything else, which means an owner compares shops by switching
+> between them. Building the exception needs the membership check it describes,
+> and that needs `/api/branches` from §6.7.
 
 ---
 

@@ -291,7 +291,22 @@ async function main() {
      An order records who took it, so that is what lets the cleanup script tell
      a smoke sale from a real one; otherwise it would have to delete every
      order and hope none of them mattered. */
+  /* ---- branches: which shop every one of those rows belongs to -----------
+     The badge is all P1 shows; what matters is that the branch rides in the
+     token. A cashier is refused the move, which is the half of the rule that
+     would be invisible if only the happy path were exercised. */
+  await call("the branches I may work in", "GET", "/auth/branches", { tok: adminTok });
+  await call("switching to my own branch", "POST", "/auth/switch-branch", {
+    tok: adminTok, body: { branchId: 1 },
+  });
+  await call("switching to a branch that is not there", "POST", "/auth/switch-branch", {
+    tok: adminTok, body: { branchId: 999999 }, expect: [404],
+  });
+
   const posTok = await login(USER, "Passw0rdY");
+  await call("a cashier may not change shop", "POST", "/auth/switch-branch", {
+    tok: posTok, body: { branchId: 1 }, expect: [403],
+  });
 
   /* ---- shifts: the drawer this POS session belongs to -------------------
      A bill cannot be settled without one, so this comes before the orders

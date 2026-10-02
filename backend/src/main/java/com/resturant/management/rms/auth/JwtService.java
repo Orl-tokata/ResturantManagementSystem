@@ -27,6 +27,8 @@ public class JwtService {
 
     private static final String CLAIM_TYPE = "typ";
     private static final String CLAIM_ROLE = "role";
+    /** Which shop. Signed, so it cannot be edited into another one. */
+    private static final String CLAIM_BRANCH = "brn";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
 
@@ -64,8 +66,23 @@ public class JwtService {
 
     /* ---- Issuing --------------------------------------------------------- */
 
-    public String generateAccessToken(String username, String role) {
-        return build(username, Map.of(CLAIM_TYPE, TYPE_ACCESS, CLAIM_ROLE, role), accessExpirationMs);
+    /**
+     * @param branchId which shop this session is working in. Signed, because
+     *                 API §3 is explicit that it must not be a parameter: a
+     *                 client-supplied branch is the privilege-escalation bug
+     *                 this system already shipped once with roles, wearing a
+     *                 different hat.
+     */
+    public String generateAccessToken(String username, String role, Long branchId) {
+        return build(username,
+                Map.of(CLAIM_TYPE, TYPE_ACCESS, CLAIM_ROLE, role, CLAIM_BRANCH, branchId),
+                accessExpirationMs);
+    }
+
+    /** The branch this token was minted for, or null on one issued before V17. */
+    public Long extractBranchId(String token) {
+        Number branchId = parse(token).get(CLAIM_BRANCH, Number.class);
+        return branchId == null ? null : branchId.longValue();
     }
 
     public String generateRefreshToken(String username) {

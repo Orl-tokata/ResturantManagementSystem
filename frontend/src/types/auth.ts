@@ -1,4 +1,6 @@
-export type Role = "ADMIN" | "CASHIER" | "WAITER" | "CHEF";
+// MANAGER arrived with V17; the role CHECK refused it until then, so it
+// existed in @PreAuthorize and nowhere else.
+export type Role = "ADMIN" | "MANAGER" | "CASHIER" | "WAITER" | "CHEF";
 
 export interface User {
   id: number;
@@ -9,6 +11,18 @@ export interface User {
   role: Role;
   locked: boolean;
   lastLoginAt: string | null;
+  /** The shop this session is working in. Comes from the signed token. */
+  branchId?: number;
+  branchName?: string;
+}
+
+/** One shop a user may work in, for the badge's menu. */
+export interface BranchSummary {
+  id: number;
+  code: string;
+  name: string;
+  nameEn?: string;
+  current: boolean;
 }
 
 /**
@@ -43,6 +57,9 @@ export interface VerifyOtpResponse {
 /** Where each role lands after signing in. */
 export const HOME_BY_ROLE: Record<Role, string> = {
   ADMIN: "/admin",
+  // A manager runs a shop rather than a till, so they land where the figures
+  // are, like an admin.
+  MANAGER: "/admin",
   CASHIER: "/cashier/order",
   WAITER: "/cashier/order",
   CHEF: "/cashier/order",

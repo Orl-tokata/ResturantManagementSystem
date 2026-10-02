@@ -1,6 +1,8 @@
 package com.resturant.management.rms.auth;
 
 import com.resturant.management.rms.auth.dto.AuthDtos.*;
+
+import java.util.List;
 import com.resturant.management.rms.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -111,6 +113,34 @@ public class AuthController {
     @Operation(summary = "Current user", description = "Backs the sidebar's name and role.")
     public ResponseEntity<ApiResponse<UserResponse>> me(@AuthenticationPrincipal UserDetails principal) {
         return ResponseEntity.ok(ApiResponse.ok(authService.currentUser(principal.getUsername())));
+    }
+
+    @GetMapping("/branches")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "The shops you may work in",
+            description = "One, unless you are senior enough to move between them. The one "
+                        + "you are in is flagged.")
+    public ResponseEntity<ApiResponse<List<BranchResponse>>> branches(
+            @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.branchesFor(principal.getUsername())));
+    }
+
+    /**
+     * API §3: switching branch is an auth operation, not a query parameter.
+     * The server checks the move and signs the answer, so every request after
+     * it is scoped by something the client cannot edit.
+     */
+    @PostMapping("/switch-branch")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Work in another shop",
+            description = "Returns a new access token carrying the new branch. ADMIN and "
+                        + "MANAGER only — a cashier belongs to a till and a till belongs to "
+                        + "a shop.")
+    public ResponseEntity<ApiResponse<AuthResponse>> switchBranch(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody SwitchBranchRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok("Branch switched",
+                authService.switchBranch(principal.getUsername(), request.branchId())));
     }
 
     @PutMapping("/me")

@@ -30,7 +30,7 @@ class JwtServiceTest {
 	@DisplayName("an access token round-trips its subject and role")
 	void roundTrip() {
 		JwtService jwt = service();
-		String token = jwt.generateAccessToken("admin", "ADMIN");
+		String token = jwt.generateAccessToken("admin", "ADMIN", 1L);
 
 		assertThat(jwt.extractUsername(token)).isEqualTo("admin");
 		assertThat(jwt.isAccessToken(token)).isTrue();
@@ -54,7 +54,7 @@ class JwtServiceTest {
 	void expiredToken() {
 		// Negative TTL puts the expiry in the past immediately.
 		JwtService jwt = service(-1000, -1000);
-		String token = jwt.generateAccessToken("admin", "ADMIN");
+		String token = jwt.generateAccessToken("admin", "ADMIN", 1L);
 
 		assertThat(jwt.isValid(token, true)).isFalse();
 	}
@@ -63,7 +63,7 @@ class JwtServiceTest {
 	@DisplayName("a tampered payload fails signature verification")
 	void tamperedToken() {
 		JwtService jwt = service();
-		String token = jwt.generateAccessToken("cashier", "CASHIER");
+		String token = jwt.generateAccessToken("cashier", "CASHIER", 1L);
 
 		// Flip a character in the payload segment.
 		String[] parts = token.split("\\.");
@@ -82,7 +82,7 @@ class JwtServiceTest {
 				"a-completely-different-secret-also-longer-than-thirty-two", 3_600_000, 86_400_000);
 		theirs.init();
 
-		String forged = theirs.generateAccessToken("admin", "ADMIN");
+		String forged = theirs.generateAccessToken("admin", "ADMIN", 1L);
 		assertThat(mine.isValid(forged, true)).isFalse();
 	}
 

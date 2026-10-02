@@ -132,19 +132,58 @@ existing tests failed until they sent one. That is the correct direction —
 protection a client can forget to ask for is not protection — but it means the
 frontend and `smoke-api.mjs` had to move in the same commit.
 
-### P1 — Multi-branch · ~4 days · **highest retrofit risk**
+### P1 — Multi-branch · **done** · built last, not first
 
-V6, V7. `company` and `branch` tables; `branch_id` on nine tables, `NOT NULL`,
-backfilled to branch 1; `MANAGER` added to both role CHECKs; branch claim in
-the JWT; `POST /api/auth/switch-branch`.
+V17. `company` and `branch`; `branch_id` on ten tables, `NOT NULL`, backfilled
+to branch 1; `MANAGER` in both role CHECKs; the branch claim in the JWT;
+`POST /api/auth/switch-branch` and `GET /api/auth/branches`.
 
-**Back up the database first.** 172 real orders.
+**This was meant to be first and was done last**, which is the most expensive
+order available. The argument for doing it first was that it touches every
+query and gets dearer with every row; by the time it was built there were 192
+settled bills, a stock ledger, a cash ledger, a customer ledger and a returns
+table to carry across rather than a handful of rows. The argument was right.
 
-*Risk:* high — it touches every query. But it is strictly cheaper now than at
-any future point, which is the entire argument for doing it first.
+**Scoping is a Hibernate tenant filter, not a parameter on every method.**
+`@TenantId` on each scoped entity, a resolver reading a thread-local that the
+JWT filter sets from the signed claim. Hibernate then writes the branch on
+insert and adds it to the WHERE clause of every query it builds, including
+`findById`.
+
+The alternative was a `branchId` argument through thirty-two repository
+methods, and the risk table's own words were "there is no safe partial
+rollout". A filter that cannot be forgotten is worth the indirection, and the
+only queries it does not cover are the four `nextval` calls for document
+numbers, which have no rows to scope.
+
+**The branch is in the token and nowhere else**, which is API §3's whole
+point. Switching shop mints a new token after the server checks the move;
+ADMIN and MANAGER only, because a cashier belongs to a till and a till belongs
+to a shop.
+
+Three things it turned up:
+
+- **The one-open-shift key had to widen.** V14's unique key was the cashier;
+  with branches that would stop somebody covering two shops from opening the
+  second till. It is now (branch, cashier) — the pair ERD §3.2's partial index
+  named all along.
+- **`register` had no branch to give a new account**, so creating one violated
+  the new NOT NULL and the handler turned that into a bare 409. New accounts
+  belong to the shop the admin creating them is working in.
+- **The isolation test proved nothing until it stopped being
+  `@Transactional`.** Hibernate resolves the tenant when a session opens, so a
+  transaction the test started before setting the branch fixed every query in
+  it to the branch the test began in: rows written "in the second shop" went to
+  the first, the second shop read the first's menu, and all of it looked like
+  the code working.
 
 *Visible result:* a branch badge in the header. That is all, and it is correct
-that it is all.
+that it is all — it becomes a switcher only when there is somewhere else to
+go.
+
+**Not included:** `/api/branches` CRUD, which is API §6.7 and a different
+package. Until it ships a second branch is created with SQL, so the switcher is
+covered by a component test rather than in a browser.
 
 ### P5 — POS consolidation · **done**
 
@@ -408,7 +447,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | Package | Days |
 |---|---|
 | P0 Foundations | 3 |
-| P1 Multi-branch | 4 |
+| P1 Multi-branch | 4 · **done** |
 | P5 POS consolidation | 3 · **done** |
 | P2 Money integrity | 5 · **done** |
 | P3 Shift and cash | 4 · **done** |
@@ -557,7 +596,7 @@ database.
 
 | Risk | Mitigation |
 |---|---|
-| P1 breaks a query that silently returns another branch's rows | Every repository method gets a branch-scoped test. There is no safe partial rollout |
+| ~~P1 breaks a query that silently returns another branch's rows~~ | **held, differently.** No repository method takes a branch, so none can forget one: the filter is in the mapping, and `BranchIsolationTest` proves it from both sides |
 | ~~P2 loses payment data~~ | **held.** V12 backfilled every paid order and asserts it with a NOT NULL; the columns it replaced are still there |
 | ~~V13 estimated margins mistaken for real~~ | **held.** `cost_estimated` per line, counted by the report and labelled above the figures |
 | The shift gate gets worked around | **Two taps, as asked:** pre-filled float, and Start returns to the interrupted screen. Still worth watching in week one |

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { BranchBadge } from "@/components/layout/BranchBadge";
 import { Clock } from "@/components/layout/Clock";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -88,6 +89,8 @@ export function AppShell({
           </div>
 
           <div className="flex shrink-0 items-center gap-2.5 text-xs">
+            {/* P1's whole visible result — see BranchBadge. */}
+            <BranchBadge />
             <LanguageSwitcher />
             <span className="hidden lg:inline">
               <Clock mode="full" />

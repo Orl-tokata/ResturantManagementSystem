@@ -4,6 +4,7 @@ import com.resturant.management.rms.user.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -75,7 +76,33 @@ public final class AuthDtos {
             String phone,
             Role role,
             boolean locked,
-            LocalDateTime lastLoginAt
+            LocalDateTime lastLoginAt,
+            /** The shop this session is working in, for the badge in the header. */
+            Long branchId,
+            String branchName
+    ) {}
+
+    /**
+     * Moving to another shop.
+     *
+     * <p>An auth operation rather than a query parameter, which is API §3's
+     * whole point: the server checks the move is allowed and then signs the
+     * result, so every request after it is scoped by something the client
+     * cannot edit.
+     */
+    @Schema(name = "SwitchBranchRequest")
+    public record SwitchBranchRequest(
+            @NotNull(message = "{valid.required}") Long branchId
+    ) {}
+
+    /** One shop a user may work in. */
+    @Schema(name = "BranchResponse")
+    public record BranchResponse(
+            Long id,
+            String code,
+            String name,
+            String nameEn,
+            boolean current
     ) {}
 
     /** Self-service profile edit. Role and username are deliberately absent. */

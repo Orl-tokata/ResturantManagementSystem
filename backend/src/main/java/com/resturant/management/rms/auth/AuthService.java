@@ -1,7 +1,12 @@
 package com.resturant.management.rms.auth;
 
 import com.resturant.management.rms.auth.dto.AuthDtos.*;
+import com.resturant.management.rms.branch.Branch;
+import com.resturant.management.rms.branch.BranchContext;
+import com.resturant.management.rms.branch.BranchRepository;
 import com.resturant.management.rms.common.exception.BadRequestException;
+import com.resturant.management.rms.common.exception.ForbiddenException;
+import com.resturant.management.rms.common.exception.NotFoundException;
 import com.resturant.management.rms.common.exception.UnauthorizedException;
 import com.resturant.management.rms.common.exception.ConflictException;
 import com.resturant.management.rms.user.Role;
@@ -21,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -37,6 +43,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final MailService mailService;
+    private final BranchRepository branchRepository;
 
     @Value("${app.security.default-biz-key:RMS}")
     private String defaultBizKey;
@@ -74,6 +81,11 @@ public class AuthService {
                 .eml(request.email())
                 .tel(request.phone())
                 .role(request.role() != null ? request.role() : Role.CASHIER)
+                // The shop the admin creating them is working in. Not a field
+                // on the request: who may work where is not a thing the person
+                // being created gets to say, and an admin who wants somebody
+                // in another branch switches to it first.
+                .branchId(BranchContext.get())
                 .lockYn("N")
                 .loginFailedCnt(0)
                 .actYn("Y")
@@ -138,7 +150,8 @@ public class AuthService {
         user.setLstLgnDtm(LocalDateTime.now());
         userRepository.save(user);
 
-        String access = jwtService.generateAccessToken(user.getUserId(), user.getRole().name());
+        String access = jwtService.generateAccessToken(
+                user.getUserId(), user.getRole().name(), user.getBranchId());
         String refresh = jwtService.generateRefreshToken(user.getUserId());
 
         return new LoginResult(
@@ -167,8 +180,70 @@ public class AuthService {
             throw new UnauthorizedException("error.auth.accountInactive");
         }
 
-        String access = jwtService.generateAccessToken(user.getUserId(), user.getRole().name());
+        /*
+         * The branch comes from the user's record, not from the expiring token
+         * being refreshed. Somebody who switched shop an hour ago keeps the
+         * shop they switched to only until their session ends, which is the
+         * conservative reading: a refresh is a continuation of an identity,
+         * and the identity's home branch is what is written down.
+         */
+        String access = jwtService.generateAccessToken(
+                user.getUserId(), user.getRole().name(), user.getBranchId());
         return AuthResponse.of(access, jwtService.getAccessExpirationSeconds(), toResponse(user));
+    }
+
+    /* ===================================================================== */
+    /* Switching branch                                                      */
+    /* ===================================================================== */
+
+    /**
+     * Mints a token for another shop.
+     *
+     * <p>Membership is checked here and the answer is signed, which is the
+     * difference between this and a {@code ?branchId=} parameter: the
+     * parameter would be a request to be trusted, and this is a decision the
+     * server made.
+     *
+     * <p>Only ADMIN and MANAGER may move. A cashier belongs to a till, and a
+     * till belongs to a shop.
+     */
+    @Transactional(readOnly = true)
+    public AuthResponse switchBranch(String username, Long branchId) {
+        UserInfm user = userRepository.findByUserId(username)
+                .orElseThrow(() -> new UnauthorizedException("error.auth.refreshStale"));
+
+        if (user.getRole() != Role.ADMIN && user.getRole() != Role.MANAGER) {
+            throw new ForbiddenException("error.branch.notPermitted");
+        }
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> NotFoundException.of("entity.branch", branchId));
+        if (!"Y".equals(branch.getActYn())) {
+            throw new BadRequestException("error.branch.inactive", branch.getName());
+        }
+
+        String access = jwtService.generateAccessToken(
+                user.getUserId(), user.getRole().name(), branch.getId());
+
+        log.info("{} switched to branch {} ({})", username, branch.getCode(), branch.getName());
+        return AuthResponse.of(access, jwtService.getAccessExpirationSeconds(),
+                toResponse(user, branch));
+    }
+
+    /** The shops this user may work in. One, unless they are senior enough to move. */
+    @Transactional(readOnly = true)
+    public List<BranchResponse> branchesFor(String username) {
+        UserInfm user = userRepository.findByUserId(username)
+                .orElseThrow(() -> new UnauthorizedException("error.auth.refreshStale"));
+
+        List<Branch> branches = user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER
+                ? branchRepository.findByActYnOrderByCodeAsc("Y")
+                : branchRepository.findById(user.getBranchId()).stream().toList();
+
+        Long current = BranchContext.get();
+        return branches.stream()
+                .map(b -> new BranchResponse(b.getId(), b.getCode(), b.getName(), b.getNameEn(),
+                        b.getId().equals(current)))
+                .toList();
     }
 
     /* ===================================================================== */
@@ -302,9 +377,15 @@ public class AuthService {
     }
 
     private UserResponse toResponse(UserInfm u) {
+        return toResponse(u, branchRepository.findById(u.getBranchId()).orElse(null));
+    }
+
+    private UserResponse toResponse(UserInfm u, Branch branch) {
         return new UserResponse(
                 u.getId(), u.getUserId(), u.getUserNm(), u.getEml(), u.getTel(),
-                u.getRole(), u.isLocked(), u.getLstLgnDtm());
+                u.getRole(), u.isLocked(), u.getLstLgnDtm(),
+                branch != null ? branch.getId() : u.getBranchId(),
+                branch != null ? branch.getName() : null);
     }
 
     private String generateBizKey() {

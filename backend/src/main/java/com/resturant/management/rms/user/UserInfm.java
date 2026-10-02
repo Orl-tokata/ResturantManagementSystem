@@ -67,6 +67,17 @@ public class UserInfm implements UserDetails {
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
+    /**
+     * Where this person works, and the branch their token is minted with.
+     *
+     * <p>A plain column rather than {@code @TenantId}: signing in has to find
+     * the user before there is any branch to scope by, and a tenant filter on
+     * this table would make the lookup depend on the answer it is looking
+     * for.
+     */
+    @Column(name = "branch_id", nullable = false)
+    private Long branchId;
+
     @Builder.Default
     @Column(name = "lock_yn", nullable = false, length = 1)
     private String lockYn = "N";

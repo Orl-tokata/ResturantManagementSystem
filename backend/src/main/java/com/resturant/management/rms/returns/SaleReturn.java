@@ -7,6 +7,7 @@ import com.resturant.management.rms.shift.CashShift;
 import com.resturant.management.rms.user.UserInfm;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -32,6 +33,19 @@ public class SaleReturn extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /**
+     * Which shop this belongs to.
+     *
+     * <p>Written by Hibernate from the signed token, never from the request,
+     * and added to the WHERE clause of every query against this entity — see
+     * {@code BranchTenantResolver}. Nothing in a service or repository sets or
+     * reads it, which is the whole point of it being here rather than in
+     * thirty-two method signatures.
+     */
+    @TenantId
+    @Column(name = "branch_id", nullable = false)
+    private Long branchId;
 
     @Column(name = "return_no", nullable = false, unique = true, length = 20)
     private String returnNo;

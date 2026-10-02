@@ -1,5 +1,6 @@
 package com.resturant.management.rms.shift;
 
+import com.resturant.management.rms.branch.BranchContext;
 import com.resturant.management.rms.common.Strings;
 import com.resturant.management.rms.common.exception.BadRequestException;
 import com.resturant.management.rms.common.exception.NotFoundException;
@@ -51,7 +52,10 @@ public class ShiftService {
             throw new BadRequestException("error.shift.alreadyOpen");
         }
 
-        CashShift shift = CashShift.open(user, scale(request.openingFloat()));
+        // The branch comes from the request's signed claim, like every other
+        // scoped write; the entity needs it explicitly because the key the
+        // one-open-shift rule hangs on is built from it.
+        CashShift shift = CashShift.open(user, BranchContext.get(), scale(request.openingFloat()));
         shift.setNote(Strings.blankToNull(request.note()));
 
         try {

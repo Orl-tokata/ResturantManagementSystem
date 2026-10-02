@@ -75,6 +75,9 @@ public class DataInitializer implements CommandLineRunner {
 
     private UserInfm createUser(String userId, String name, Role role, String email, String bizSuffix) {
         UserInfm user = UserInfm.builder()
+                // The shop V17 created and backfilled everything to. These
+                // accounts exist before anyone has thought about branches.
+                .branchId(com.resturant.management.rms.branch.BranchContext.DEFAULT_BRANCH)
                 .bizKey(DEFAULT_BIZ_KEY.substring(0, 3) + bizSuffix)
                 .userId(userId)
                 .userNm(name)

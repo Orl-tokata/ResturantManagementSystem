@@ -134,9 +134,9 @@ class ShiftControllerTest {
     @DisplayName("the database refuses a second open shift, not just the service")
     void databaseRefusesTwoOpenShifts() {
         UserInfm user = users.findByUserId("cashier").orElseThrow();
-        shifts.saveAndFlush(CashShift.open(user, new BigDecimal("100.00")));
+        shifts.saveAndFlush(CashShift.open(user, 1L, new BigDecimal("100.00")));
 
-        assertThatThrownBy(() -> shifts.saveAndFlush(CashShift.open(user, new BigDecimal("50.00"))))
+        assertThatThrownBy(() -> shifts.saveAndFlush(CashShift.open(user, 1L, new BigDecimal("50.00"))))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

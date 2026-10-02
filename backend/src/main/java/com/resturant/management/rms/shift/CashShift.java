@@ -4,6 +4,7 @@ import com.resturant.management.rms.common.BaseAuditEntity;
 import com.resturant.management.rms.user.UserInfm;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,12 +33,35 @@ public class CashShift extends BaseAuditEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Which shop this belongs to.
+     *
+     * <p>Written by Hibernate from the signed token, never from the request,
+     * and added to the WHERE clause of every query against this entity — see
+     * {@code BranchTenantResolver}. Nothing in a service or repository sets or
+     * reads it, which is the whole point of it being here rather than in
+     * thirty-two method signatures.
+     */
+    @TenantId
+    @Column(name = "branch_id", nullable = false)
+    private Long branchId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_ref", nullable = false)
     private UserInfm user;
 
     @Column(name = "open_user_ref")
     private Long openUserRef;
+
+    /**
+     * The branch half of the one-open-shift key, null once the shift closes.
+     *
+     * <p>V14's key was the cashier alone, which with branches would stop
+     * somebody covering two shops from opening the second till. V17 widens it
+     * to (branch, cashier) — the pair ERD §3.2's partial index names.
+     */
+    @Column(name = "open_branch_id")
+    private Long openBranchId;
 
     @Column(name = "opened_at", nullable = false)
     private LocalDateTime openedAt;
@@ -76,10 +100,12 @@ public class CashShift extends BaseAuditEntity {
     private ShiftStatus status = ShiftStatus.OPEN;
 
     /** Starts a session. The float is what was counted into the drawer. */
-    public static CashShift open(UserInfm user, BigDecimal openingFloat) {
+    public static CashShift open(UserInfm user, Long branchId, BigDecimal openingFloat) {
         CashShift shift = new CashShift();
         shift.user = user;
+        shift.branchId = branchId;
         shift.openUserRef = user.getId();
+        shift.openBranchId = branchId;
         shift.openedAt = LocalDateTime.now();
         shift.openingFloat = openingFloat;
         shift.status = ShiftStatus.OPEN;
@@ -99,8 +125,10 @@ public class CashShift extends BaseAuditEntity {
         this.closedAt = LocalDateTime.now();
         this.status = ShiftStatus.CLOSED;
         // Releases the cashier to open another. The unique constraint is on
-        // this column, so forgetting it would lock them out permanently.
+        // these two columns, so forgetting either would lock them out
+        // permanently.
         this.openUserRef = null;
+        this.openBranchId = null;
     }
 
     public boolean isOpen() {

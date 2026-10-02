@@ -479,6 +479,7 @@
     },
     "role": {
       "ADMIN": "Admin",
+      "MANAGER": "Manager",
       "CASHIER": "Cashier",
       "WAITER": "Waiter",
       "CHEF": "Chef"
@@ -772,5 +773,9 @@
     "viewSale": "The sale",
     "backToSale": "Back to the sale",
     "returnThis": "Return"
+  },
+  "branch": {
+    "current": "Working in {name}",
+    "unknown": "No branch"
   }
 }
