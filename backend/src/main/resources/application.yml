@@ -131,6 +131,21 @@ app:
     # restaurant so a reset code does not look like mail from a stranger.
     from-name: ${MAIL_FROM_NAME:Restaurant Management System}
 
+  # ---------------------------------------------------------------------------
+  # The first accounts, created on an empty database
+  #
+  # The defaults are at rms.local, which is a reserved domain: it has no mail
+  # server and cannot be given one, so an administrator left on it can never
+  # reset their own password and will only find that out from a bounce landing
+  # in whichever mailbox MAIL_USERNAME belongs to.
+  #
+  # Set these before the first start of a real installation. Afterwards they do
+  # nothing - the accounts already exist, and the address is changed on the
+  # profile screen or in users_infm.
+  # ---------------------------------------------------------------------------
+  initial-admin-email: ${ADMIN_EMAIL:admin@rms.local}
+  initial-cashier-email: ${CASHIER_EMAIL:cashier@rms.local}
+
   uploads:
     # Where product photographs are written. Relative to the working directory
     # by default, which keeps a developer's machine self-contained; set an

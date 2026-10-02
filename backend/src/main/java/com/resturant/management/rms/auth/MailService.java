@@ -1,5 +1,6 @@
 package com.resturant.management.rms.auth;
 
+import com.resturant.management.rms.common.EmailAddress;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,12 @@ import java.util.Map;
  * <p>When no SMTP username is configured the code is logged instead of sent, so
  * the reset flow is still testable on a developer machine without wiring up a
  * mail account. That fallback is deliberately loud.
+ *
+ * <p>The same happens for an address at a reserved domain. Sending one costs a
+ * bounce that arrives somewhere nobody is looking, half an hour later; logging
+ * it says what is wrong at the moment it goes wrong, and leaves the reset
+ * completable by whoever can read the server log — which, for an address like
+ * {@code admin@rms.local}, is the only person it could ever have been.
  */
 @Slf4j
 @Service
@@ -69,6 +76,22 @@ public class MailService {
                      Set MAIL_USERNAME / MAIL_PASSWORD to enable real delivery.
                     ================================================================
                     """, to, code);
+            return;
+        }
+
+        if (EmailAddress.isUndeliverable(to)) {
+            log.warn("""
+
+                    ================================================================
+                     UNDELIVERABLE ADDRESS - password reset code not sent by email.
+                       to   : {}
+                       code : {}
+                     '{}' is a reserved domain. It has no MX record and never
+                     will, so this message would only produce a bounce.
+                     Give this account a real address:
+                       UPDATE users_infm SET eml = '...' WHERE eml = '{}';
+                    ================================================================
+                    """, to, code, EmailAddress.domainOf(to), to);
             return;
         }
 

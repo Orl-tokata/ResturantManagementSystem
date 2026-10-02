@@ -7,6 +7,7 @@ import com.resturant.management.rms.user.UserInfm;
 import com.resturant.management.rms.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,19 @@ public class DataInitializer implements CommandLineRunner {
 
     private static final String DEFAULT_BIZ_KEY = "RMS001";
 
+    /**
+     * Where the first admin's password resets go.
+     *
+     * <p>Configurable because the default cannot receive mail: every fresh
+     * install otherwise starts with an administrator who can never reset their
+     * own password, and finds that out from a bounce.
+     */
+    @Value("${app.initial-admin-email:admin@rms.local}")
+    private String adminEmail;
+
+    @Value("${app.initial-cashier-email:cashier@rms.local}")
+    private String cashierEmail;
+
     private final UserRepository userRepository;
     private final StaffRepository staffRepository;
     private final PasswordEncoder passwordEncoder;
@@ -41,8 +55,8 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        UserInfm admin = createUser("admin", "Administrator", Role.ADMIN, "admin@rms.local", "A001");
-        UserInfm cashier = createUser("cashier", "Sok Dara", Role.CASHIER, "cashier@rms.local", "C001");
+        UserInfm admin = createUser("admin", "Administrator", Role.ADMIN, adminEmail, "A001");
+        UserInfm cashier = createUser("cashier", "Sok Dara", Role.CASHIER, cashierEmail, "C001");
 
         // Link the seeded staff rows to their login accounts where they match.
         staffRepository.findByStaffCode("EMP-001").ifPresent(s -> link(s, admin));
