@@ -59,6 +59,7 @@ const results = [];
  */
 const IDEMPOTENT = [
   /^\/orders$/,
+  /^\/returns$/,
   /^\/orders\/[^/]+\/pay$/,
   /^\/orders\/[^/]+\/cancel$/,
   /^\/stock\/[^/]+\/adjust$/,
@@ -351,6 +352,32 @@ async function main() {
     console.log("  ! settling the bill did not earn any points");
     process.exitCode = 1;
   }
+
+  /* ---- returns: money going back ----------------------------------------
+     Against the bill just settled, which is the only way in: a refund that
+     does not point at a sale is a way to empty the drawer. */
+  const returnable = await call("what is still returnable", "GET",
+    `/orders/${order?.id}/returnable`, { tok: posTok });
+  const line = returnable?.lines?.[0];
+  const refunded = await call("give one back", "POST", "/returns", {
+    tok: posTok, expect: [201],
+    body: {
+      orderId: order?.id,
+      lines: [{ orderItemId: line?.orderItemId, qty: 1 }],
+      reason: "smoke test",
+    },
+  });
+  await call("more than remains is refused", "POST", "/returns", {
+    tok: posTok, expect: [409],
+    body: {
+      orderId: order?.id,
+      lines: [{ orderItemId: line?.orderItemId, qty: 99 }],
+      reason: "smoke test",
+    },
+  });
+  await call("the refund slip", "GET", `/returns/${refunded?.id}`, { tok: posTok });
+  await call("returns against this bill", "GET", `/returns?orderId=${order?.id}`,
+    { tok: posTok });
 
   // The Z-report, read before the count so the figure to declare is known.
   const zReport = await call("the Z-report", "GET", `/shifts/${shift?.id}`, { tok: posTok });

@@ -98,6 +98,9 @@ const IDEMPOTENT_ROUTES: RegExp[] = [
   /^\/orders\/[^/]+\/cancel$/,
   /^\/stock\/[^/]+\/adjust$/,
   /^\/purchases\/[^/]+\/receive$/,
+  // A refund is money leaving. A tap repeated on bad Wi-Fi must not take it
+  // out of the drawer twice.
+  /^\/returns$/,
 ];
 
 /** Exported for its own test: the route list is where a mistake would hide. */

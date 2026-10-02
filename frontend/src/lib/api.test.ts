@@ -5,7 +5,7 @@ import { needsIdempotencyKey, newIdempotencyKey } from "./api";
 /**
  * The route list mirrors IdempotencyFilter.REQUIRED on the backend. If the two
  * drift, the symptom is a 400 the user cannot do anything about — so the cases
- * below are the exact five, stated once more in a place that fails loudly.
+ * below are the exact six, stated once more in a place that fails loudly.
  */
 describe("needsIdempotencyKey", () => {
   it.each([
@@ -14,6 +14,7 @@ describe("needsIdempotencyKey", () => {
     "/orders/42/cancel",
     "/stock/7/adjust",
     "/purchases/3/receive",
+    "/returns",
   ])("requires a key for POST %s", (url) => {
     expect(needsIdempotencyKey("post", url)).toBe(true);
   });

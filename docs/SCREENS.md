@@ -153,7 +153,7 @@ the till. Detail: purchase history, points ledger, notes.
 
 At the POS this is a search-by-phone in the order panel, not a page.
 
-### 3.4 Returns
+### 3.4 Returns · **built (P7)**
 
 | | |
 |---|---|

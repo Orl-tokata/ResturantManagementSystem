@@ -36,4 +36,13 @@ public interface LoyaltyRepository extends JpaRepository<LoyaltyTransaction, Lon
     List<Object[]> balancesOf(@Param("ids") List<Long> ids);
 
     boolean existsByOrderIdAndType(Long orderId, LoyaltyType type);
+
+    /** What this bill gave out, for a return to take a share back. */
+    @Query("""
+           SELECT COALESCE(SUM(t.points), 0)
+           FROM LoyaltyTransaction t
+           WHERE t.order.id = :orderId
+             AND t.type = com.resturant.management.rms.customer.LoyaltyType.EARN
+           """)
+    BigDecimal earnedFor(@Param("orderId") Long orderId);
 }

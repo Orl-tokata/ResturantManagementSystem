@@ -249,10 +249,14 @@ class CustomerControllerTest {
         Customer customer = customers.findById(id).orElseThrow();
         Order order = orders.findById(orderId).orElseThrow();
 
+        // Built the way the service builds one, key and all — otherwise what
+        // refuses it is the CHECK that insists an EARN carries a key, and the
+        // uniqueness this test is about never gets exercised.
         assertThatThrownBy(() -> loyalty.saveAndFlush(LoyaltyTransaction.builder()
                 .customer(customer)
                 .order(order)
                 .type(LoyaltyType.EARN)
+                .earnOrderId(order.getId())
                 .points(new java.math.BigDecimal("9.90"))
                 .createdAt(java.time.LocalDateTime.now())
                 .build()))

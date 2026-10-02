@@ -40,6 +40,7 @@ public class StockLedger {
     /** What caused a movement, for the {@code refType} column. */
     public static final String REF_ORDER = "ORDER";
     public static final String REF_PURCHASE = "PURCHASE";
+    public static final String REF_RETURN = "RETURN";
 
     @Transactional
     public StockMovement recordProduct(Product product, MovementType type, BigDecimal qty,

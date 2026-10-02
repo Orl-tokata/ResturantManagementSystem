@@ -41,6 +41,18 @@ public class LoyaltyTransaction {
     @Column(name = "type", nullable = false, length = 20)
     private LoyaltyType type;
 
+    /**
+     * The bill's id on an EARN row, null on every other kind.
+     *
+     * <p>Not a duplicate of {@code order} for its own sake: it is the
+     * one-earn-per-bill rule. A unique index on it allows many nulls and no
+     * two equal values, which is "a bill earns once and may be returned as
+     * often as it has lines" expressed portably — see V16, and V14 for the
+     * same shape.
+     */
+    @Column(name = "earn_order_id")
+    private Long earnOrderId;
+
     /** Positive adds, negative takes away. */
     @Column(name = "points", nullable = false, precision = 12, scale = 2)
     private BigDecimal points;

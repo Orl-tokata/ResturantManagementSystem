@@ -167,7 +167,7 @@ between an audit trail and a hole in one.
 The existing three KHQR endpoints are unchanged and now write a `sale_payment`
 row on confirmation instead of stamping the order.
 
-### 6.3 Returns — 4
+### 6.3 Returns — 4 · **built (P7)**
 
 | | |
 |---|---|

@@ -40,6 +40,7 @@ export default function ReceiptPage() {
   const tc = useTranslations("common");
   const tH = useTranslations("history");
   const tCh = useTranslations("cashierHome");
+  const tR = useTranslations("returns");
   const apiError = useApiError();
 
   /*
@@ -109,6 +110,15 @@ export default function ReceiptPage() {
           </Link>
         </div>
         <div className="flex gap-2">
+          {/* Only from a settled bill, and only from the bill itself. A blank
+              refund form is a way to take money out of the drawer; starting
+              from the sale means every refund points at something that was
+              actually sold — SCREENS §3.4. */}
+          {order.status === "PAID" && (
+            <Link href={`/cashier/returns/${order.id}`}>
+              <Button variant="light">{tR("returnThis")}</Button>
+            </Link>
+          )}
           <Button variant="light" onClick={() => window.print()}>
             <Printer size={15} /> {tc("print")}
           </Button>

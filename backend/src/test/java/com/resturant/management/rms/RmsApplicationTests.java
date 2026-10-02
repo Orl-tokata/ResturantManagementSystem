@@ -52,9 +52,10 @@ class RmsApplicationTests {
 		assertThat(staff.count()).isEqualTo(7);
 		assertThat(suppliers.count()).isEqualTo(5);
 		assertThat(stockItems.count()).isEqualTo(10);
-		// 15 from V3, plus the two V15 added: what a point is worth, and the
-		// prefix for a customer code.
-		assertThat(settings.count()).isEqualTo(17);
+		// 15 from V3, plus two from V15 (what a point is worth, the customer
+		// code prefix) and two from V16 (the approval threshold and the
+		// return number prefix).
+		assertThat(settings.count()).isEqualTo(19);
 	}
 
 	@Test

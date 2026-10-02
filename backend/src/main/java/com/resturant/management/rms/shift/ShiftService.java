@@ -175,6 +175,28 @@ public class ShiftService {
                 .build());
     }
 
+    /**
+     * Takes a refund out of the drawer.
+     *
+     * <p>The shift is passed in rather than looked up: the return has already
+     * insisted on one and holds a reference to it, and finding it again here
+     * would be a second answer to a question already settled.
+     */
+    @Transactional
+    public void recordRefund(CashShift shift, BigDecimal amount,
+                             String returnNo, Long returnId, String username) {
+        movements.save(CashMovement.builder()
+                .shift(shift)
+                .type(CashMovementType.REFUND)
+                .amount(scale(amount))
+                .reason(returnNo)
+                .refType(CashMovement.REF_RETURN)
+                .refId(returnId)
+                .createdBy(username)
+                .createdAt(LocalDateTime.now())
+                .build());
+    }
+
     /* ===================================================================== */
     /* The gate                                                              */
     /* ===================================================================== */

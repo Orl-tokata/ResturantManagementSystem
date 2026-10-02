@@ -25,7 +25,8 @@
     "users": "Accounts",
     "order": "Order",
     "shift": "Shift",
-    "customers": "Customers"
+    "customers": "Customers",
+    "returns": "Returns"
   },
   "common": {
     "save": "Save",
@@ -84,7 +85,8 @@
     "allRows": "All",
     "role": "Role",
     "amount": "Amount",
-    "type": "Type"
+    "type": "Type",
+    "done": "Done"
   },
   "auth": {
     "loginTitle": "Restaurant Management System",
@@ -609,7 +611,9 @@
     "deleteCustomer": "Could not delete the customer",
     "adjustLoyalty": "Could not adjust the points",
     "lookupCustomer": "Could not look that number up",
-    "setCustomer": "Could not set the customer on this bill"
+    "setCustomer": "Could not set the customer on this bill",
+    "createReturn": "Could not give the money back",
+    "loadSale": "Could not load that sale"
   },
   "a11y": {
     "edit": "Edit {name}",
@@ -742,5 +746,31 @@
     "noneWithThatPhone": "Nobody has that number. Register them?",
     "namePlaceholder": "Their name",
     "register": "Register"
+  },
+  "returns": {
+    "title": "Return",
+    "against": "Against",
+    "sold": "Sold",
+    "alreadyReturned": "Already back",
+    "remaining": "Still returnable",
+    "giveBack": "Give back",
+    "oneMore": "One more {name}",
+    "oneLess": "One less {name}",
+    "noLines": "Nothing on this bill",
+    "nothingLeft": "Everything on this bill has already been returned.",
+    "reasonHint": "Required. This is what the refund is accounted for by",
+    "reasonPlaceholder": "The fish was off",
+    "method": "Refund by",
+    "methodHint": "Defaults to however the bill was paid",
+    "sameAsSale": "Same as the sale",
+    "estimate": "About",
+    "estimateNote": "The till works out the exact figure: VAT and any discount are spread across the lines.",
+    "refund": "Give the money back",
+    "slip": "Refund slip",
+    "refunded": "Refunded",
+    "approvedBy": "Approved by",
+    "viewSale": "The sale",
+    "backToSale": "Back to the sale",
+    "returnThis": "Return"
   }
 }

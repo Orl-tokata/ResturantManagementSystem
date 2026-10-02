@@ -345,13 +345,55 @@ Redemption is not here. API §6.4 lists no endpoint for it, and spending points
 is a discount, which is P9's subject. `REDEEM`, `EXPIRE` and `REVERSE` are in
 the CHECK so that adding them is code rather than a migration.
 
-### P7 — Returns · ~5 days
+### P7 — Returns · **done**
 
-Depends on P2, P3, P4, P6 — a return writes a payment reversal, a cash
-movement, a stock movement and a loyalty reversal in one transaction. It is
-last in Phase 1 because it needs all four to exist.
+V16. `sale_return`, `sale_return_item`, the four endpoints of API §6.3, and
+`/cashier/returns/[saleId]`.
 
-*Risk:* high. Returns are how money leaves the drawer.
+It depended on P2, P3, P4 and P6, and all four turned out to be load-bearing:
+one refund writes a `REFUNDED` payment row, a `REFUND` cash movement against
+the open drawer, a `RETURN` stock movement per line, and a `REVERSE` loyalty
+entry — in one transaction, because any of them landing without the others
+leaves the books saying something untrue.
+
+**A separate document, never a negative row on the sale.** The original is a
+printed record somebody may be holding; editing it would leave the slip and the
+database disagreeing with nothing to say which came first.
+
+**The refund is a share of what was paid, not the menu price.** VAT and any
+discount are spread across the lines, so returning one dish of two on a 9.90
+bill gives back 4.95 rather than the 4.50 it was listed at. The screen shows
+the menu-price estimate and says plainly that the till works out the exact
+figure.
+
+**Over-returning is a service check, as ERD §3.7 insisted.** Three of a line of
+two is only visible as a sum across every return for that line, so
+`GET /orders/{id}/returnable` publishes what remains and `POST /returns`
+recomputes it — a number that travelled to a browser and back is a suggestion.
+Asking for more answers 409.
+
+**Approval above a threshold** (`returns.approvalThreshold`, seeded at 20),
+which records a name against the refund. Only ADMIN today; the ERD's migration
+list has MANAGER arriving in the role CHECKs with P1, and `requireApproval` is
+the line to widen then.
+
+Two things found by running it rather than by reading it:
+
+- **V15's unique index on `(order_id, type)` forbade a second partial return.**
+  It was there to stop one meal earning points twice; every return also writes
+  a REVERSE row against the order, so the second refund on a bill failed with
+  a bare 409. Every test that returned twice happened to use a bill with no
+  customer, and so wrote no REVERSE rows at all. V16 replaces it with the
+  nullable-key shape V14 already uses.
+- **Both that constraint and V14's had the same three-valued-logic hole.**
+  `CHECK ((type = 'EARN' AND earn_order_id = order_id) OR ...)` reads as
+  unknown rather than false when the key is null, and a CHECK only rejects
+  what evaluates to false — so the one row each constraint existed to forbid
+  passed straight through. Both are explicit about nullness now.
+
+*Risk was:* high. Returns are how money leaves the drawer, and the second of
+those two bugs means a constraint this plan twice described as the real
+guarantee was not quite carrying it.
 
 ### P8 — Variants and modifiers · ~5 days
 ### P9 — Promotions · ~4 days — percent and fixed only
@@ -374,7 +416,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P6 Customers | 4 · **done** |
 | P8 Variants | 5 |
 | P9 Promotions | 4 |
-| P7 Returns | 5 |
+| P7 Returns | 5 · **done** |
 | P10 Navigation | 2 |
 | **Total** | **43 days** |
 

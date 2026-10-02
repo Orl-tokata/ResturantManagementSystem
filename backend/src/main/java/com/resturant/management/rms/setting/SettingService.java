@@ -26,6 +26,8 @@ public class SettingService {
     public static final String INVOICE_PREFIX = "sales.invoicePrefix";
     public static final String PURCHASE_PREFIX = "sales.purchasePrefix";
     public static final String POINTS_PER_USD = "loyalty.pointsPerUsd";
+    public static final String RETURN_APPROVAL_THRESHOLD = "returns.approvalThreshold";
+    public static final String RETURN_PREFIX = "sales.returnPrefix";
     public static final String CUSTOMER_PREFIX = "customer.codePrefix";
     public static final String ALLOW_DISCOUNT = "option.allowDiscount";
     public static final String REQUIRE_TABLE = "option.requireTable";

@@ -18,6 +18,7 @@ public class CashMovement {
 
     /** What caused it, for {@code refType}. */
     public static final String REF_ORDER = "ORDER";
+    public static final String REF_RETURN = "RETURN";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

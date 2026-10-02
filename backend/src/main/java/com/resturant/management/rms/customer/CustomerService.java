@@ -182,11 +182,52 @@ public class CustomerService {
                 .customer(customer)
                 .order(order)
                 .type(LoyaltyType.EARN)
+                .earnOrderId(order.getId())
                 .points(points)
                 .note(order.getInvoiceNo())
                 .createdBy(order.getModId())
                 .createdAt(LocalDateTime.now())
                 .build());
+    }
+
+    /**
+     * Takes back the share of a meal's points that was refunded.
+     *
+     * <p>Proportional to what the bill earned rather than recalculated from
+     * the refund: the rate may have moved since, and the customer should lose
+     * exactly the fraction of what they were given, not what that money would
+     * earn today.
+     *
+     * <p>Silent when the bill earned nothing — an anonymous sale, or one
+     * settled while earning was switched off.
+     */
+    @Transactional
+    public void reverseEarned(Order order, BigDecimal refunded, String by) {
+        Customer customer = order.getCustomer();
+        if (customer == null || refunded == null || refunded.signum() <= 0) return;
+
+        BigDecimal earned = loyalty.earnedFor(order.getId());
+        if (earned.signum() <= 0) return;
+
+        BigDecimal total = order.getTotal();
+        if (total == null || total.signum() <= 0) return;
+
+        // Capped: a refund can never take back more than the meal gave.
+        BigDecimal share = refunded.min(total).divide(total, 6, RoundingMode.HALF_UP);
+        BigDecimal points = scale(earned.multiply(share));
+        if (points.signum() <= 0) return;
+
+        loyalty.save(LoyaltyTransaction.builder()
+                .customer(customer)
+                .order(order)
+                .type(LoyaltyType.REVERSE)
+                .points(points.negate())
+                .note(order.getInvoiceNo())
+                .createdBy(by)
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        log.info("Reversed {} points for {} on {}", points, customer.getCode(), order.getInvoiceNo());
     }
 
     /* ===================================================================== */

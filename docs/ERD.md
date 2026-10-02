@@ -378,6 +378,11 @@ original sale is a printed, signed historical record and must not mutate.
 across two documents needs a sum across returns. That is a service-layer check,
 and naming it here means it will not be forgotten.
 
+> **Built as V16**, and naming it here did work: `GET /orders/{id}/returnable`
+> publishes what remains and `POST /returns` recomputes it before writing. No
+> `branch_id` yet, and `shift_id` is null when no drawer was involved — a card
+> refund does not touch the till.
+
 ### 3.8 Audit and idempotency
 
 ```sql

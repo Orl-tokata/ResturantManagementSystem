@@ -60,6 +60,7 @@ public class IdempotencyFilter extends OncePerRequestFilter {
             "POST /api/orders",
             "POST /api/orders/*/pay",
             "POST /api/orders/*/cancel",
+            "POST /api/returns",
             "POST /api/stock/*/adjust",
             "POST /api/purchases/*/receive");
 

@@ -85,6 +85,9 @@ export interface CartLine {
   note?: string;
 }
 
+/** Every method, in the order a till offers them. */
+export const PAYMENT_METHODS: PaymentMethod[] = ["CASH", "CARD", "KHQR", "TRANSFER"];
+
 export const PAYMENT_ICON: Record<PaymentMethod, string> = {
   CASH: "💵",
   CARD: "💳",
