@@ -4,6 +4,7 @@ import com.resturant.management.rms.catalog.Product;
 import com.resturant.management.rms.stock.MovementType;
 import com.resturant.management.rms.stock.StockLedger;
 import com.resturant.management.rms.catalog.ProductRepository;
+import com.resturant.management.rms.customer.CustomerService;
 import com.resturant.management.rms.common.Strings;
 import com.resturant.management.rms.common.exception.BadRequestException;
 import com.resturant.management.rms.common.exception.NotFoundException;
@@ -46,6 +47,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final SalePaymentRepository paymentRepository;
     private final ShiftService shifts;
+    private final CustomerService customers;
     private final StockLedger stockLedger;
     private final ProductRepository productRepository;
     private final DiningTableRepository tableRepository;
@@ -88,6 +90,9 @@ public class OrderService {
                 .table(table)
                 .cashier(cashier)
                 .guestCount(request.guestCount())
+                .customer(request.customerId() == null
+                        ? null
+                        : customers.find(request.customerId()))
                 .vatRate(settings.vatRate())
                 .status(OrderStatus.OPEN)
                 .build();
@@ -268,12 +273,31 @@ public class OrderService {
                         username, p.getAmount(), order.getId(), order.getInvoiceNo()));
     }
 
-    /** Marks a covered bill settled: stock leaves, the table is released. */
+    /** Marks a covered bill settled: stock leaves, points land, the table is released. */
     private void close(Order order) {
         order.setStatus(OrderStatus.PAID);
         order.setPaidAt(LocalDateTime.now());
         decrementStock(order);
+        // Inside the settle transaction, so a bill that fails to save does not
+        // leave points behind for a meal nobody paid for.
+        customers.earn(order);
         freeTable(order);
+    }
+
+    /**
+     * Names the customer on an open bill, or clears it.
+     *
+     * <p>API §6.4 does not list this; it lists {@code customerId} on
+     * {@code POST /orders}. That shape assumes the customer is known when the
+     * bill opens, and at a table they are not — the question gets asked when
+     * the bill is being paid. Without this the only way to attach one would be
+     * to cancel the bill and start again.
+     */
+    @Transactional
+    public OrderResponse setCustomer(Long orderId, Long customerId) {
+        Order order = findEditable(orderId);
+        order.setCustomer(customerId == null ? null : customers.find(customerId));
+        return toResponse(orderRepository.save(order));
     }
 
     /**
@@ -352,10 +376,11 @@ public class OrderService {
      * would silently drop every bill taken on the last day of the range.
      */
     @Transactional(readOnly = true)
-    public Page<OrderResponse> history(String query, OrderStatus status,
+    public Page<OrderResponse> history(String query, OrderStatus status, Long customerId,
                                        LocalDate from, LocalDate to, Pageable pageable) {
         return orderRepository
-                .search(Strings.blankToNull(query), status, startOf(from), endOf(to), pageable)
+                .search(Strings.blankToNull(query), status, customerId,
+                        startOf(from), endOf(to), pageable)
                 .map(this::toResponse);
     }
 
@@ -740,6 +765,8 @@ public class OrderService {
                 o.getTable() != null ? o.getTable().getName() : null,
                 o.getCashier() != null ? o.getCashier().getId() : null,
                 o.getCashier() != null ? o.getCashier().getUserNm() : null,
+                o.getCustomer() != null ? o.getCustomer().getId() : null,
+                o.getCustomer() != null ? o.getCustomer().getName() : null,
                 o.getGuestCount(), items,
                 o.getSubtotal(), o.getDiscount(), o.getVatRate(), o.getVatAmount(),
                 o.getTotal(), o.getTotalKhr(), o.getFxRateKhr(),

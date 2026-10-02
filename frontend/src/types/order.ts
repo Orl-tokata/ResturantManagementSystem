@@ -48,6 +48,9 @@ export interface Order {
   tableName: string | null;
   cashierId: number | null;
   cashierName: string | null;
+  /** Absent on a walk-in, which is most bills. */
+  customerId?: number;
+  customerName?: string;
   guestCount: number | null;
   items: OrderItem[];
   subtotal: number;

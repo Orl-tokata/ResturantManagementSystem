@@ -17,6 +17,23 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByInvoiceNo(String invoiceNo);
 
+    long countByCustomerId(Long customerId);
+
+    /**
+     * Spend per customer — {@code [customerId, total, visits, lastVisit]}.
+     *
+     * <p>One query for a whole page of customers rather than three per row.
+     * Settled bills only: an open tab is not a visit yet and a cancelled one
+     * never was.
+     */
+    @Query("""
+           SELECT o.customer.id, COALESCE(SUM(o.total), 0), COUNT(o), MAX(o.paidAt)
+           FROM Order o
+           WHERE o.customer.id IN :ids AND o.status = com.resturant.management.rms.order.OrderStatus.PAID
+           GROUP BY o.customer.id
+           """)
+    List<Object[]> customerTotals(@Param("ids") List<Long> ids);
+
     List<Order> findByTableIdAndStatus(Long tableId, OrderStatus status);
 
     /** Next invoice number, handed out by the DB sequence — see V1__baseline.sql. */
@@ -26,6 +43,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("""
            SELECT o FROM Order o
            WHERE (:status IS NULL OR o.status = :status)
+             AND (CAST(:customerId AS Long) IS NULL OR o.customer.id = :customerId)
              AND (CAST(:from AS LocalDateTime) IS NULL OR o.regDtm >= :from)
              AND (CAST(:to   AS LocalDateTime) IS NULL OR o.regDtm <= :to)
              AND (:q IS NULL OR LOWER(o.invoiceNo) LIKE LOWER(CONCAT('%', CAST(:q AS String), '%')))
@@ -33,6 +51,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            """)
     Page<Order> search(@Param("q") String q,
                        @Param("status") OrderStatus status,
+                       @Param("customerId") Long customerId,
                        @Param("from") LocalDateTime from,
                        @Param("to") LocalDateTime to,
                        Pageable pageable);

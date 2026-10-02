@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Clock } from "@/components/layout/Clock";
 import { ShiftGate } from "@/components/shift/ShiftGate";
 import { Alert, Button, SearchBar } from "@/components/ui";
+import { CustomerChip } from "@/components/pos/CustomerChip";
 import { PaymentPanel } from "@/components/pos/PaymentPanel";
 import { get, post, put, type PageResponse } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
@@ -176,6 +177,21 @@ function PosScreen() {
       router.push("/cashier/tables");
     },
   });
+
+  /**
+   * Names the customer on the bill, creating it first if the cashier asked
+   * before anything was ordered.
+   *
+   * <p>The response is written straight into the cache rather than
+   * invalidated: a refetch while the basket is dirty is the shape of the bug
+   * that once wiped a cashier's taps, and the seeding block below is guarded
+   * against exactly this.
+   */
+  async function setCustomer(customerId: number | null) {
+    const b = await ensureBill();
+    const updated = await put<Order>(`/orders/${b.id}/customer`, { customerId });
+    qc.setQueryData(["order", "table", tableId], updated);
+  }
 
   /** Saves, creating the bill first if this is the first thing on it. */
   async function save() {
@@ -474,6 +490,15 @@ function PosScreen() {
               </table>
             )}
           </div>
+
+          {/* Who the bill belongs to. Above the totals because it changes what
+              the customer gets out of this meal, not what they pay for it. */}
+          <CustomerChip
+            customerId={bill?.customerId}
+            customerName={bill?.customerName}
+            onPick={setCustomer}
+            disabled={paying}
+          />
 
           {/* totals — the local estimate, for while the cashier is tapping.
               The panel below shows the server's figures instead. */}

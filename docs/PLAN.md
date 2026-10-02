@@ -308,7 +308,43 @@ Two things it turned up:
   been printing `#undefined`. The ledger's types are optional now and both
   comparisons are `== null`.
 
-### P6 — Customers and loyalty · ~4 days
+### P6 — Customers and loyalty · **done**
+
+V15, not V12. `customer`, `loyalty_transaction`, `orders.customer_id`, the
+seven endpoints of API §6.4, `/admin/customers` with a detail page, and a
+phone lookup in the order panel.
+
+**There is no points balance.** The balance is the sum of the ledger, computed
+on every read — the same argument as `expected_cash` in V14 and
+`balance_after` in V11, except that here the sum is cheap enough not to need
+even a cache. Nothing can drift because there is nothing to drift from.
+
+**Earning is part of the settle transaction**, so points cannot survive a bill
+that failed to save. A unique index on `(order_id, type)` is what stops one
+meal earning twice: the service checks first so a retry reads as a no-op, but
+the index is what holds if a later code path forgets. Paying twice would be
+permanent, because the ledger *is* the balance — there is no stored total to
+correct, only a row that should not exist.
+
+**Phone is indexed and not unique**, as ERD §3.4 insists. The lookup returns
+every match and the till shows them all; picking the first would quietly put a
+meal on the wrong account whenever a couple shares a number.
+
+Two deviations from API §6.4, both because the spec assumed the customer is
+known before the bill opens, and at a table they are not — the question gets
+asked when the bill is being paid:
+
+- `PUT /orders/{id}/customer` names or clears the customer on an open bill.
+  Without it the only way to attach one would be to cancel and start again.
+- `GET /orders` takes a `customerId` filter, which is what the detail page's
+  purchase history reads. It is written with the same `CAST(...)` idiom as the
+  date bounds beside it, because the bare form is accepted by H2 and rejected
+  by PostgreSQL — the bug that reached production once already.
+
+Redemption is not here. API §6.4 lists no endpoint for it, and spending points
+is a discount, which is P9's subject. `REDEEM`, `EXPIRE` and `REVERSE` are in
+the CHECK so that adding them is code rather than a migration.
+
 ### P7 — Returns · ~5 days
 
 Depends on P2, P3, P4, P6 — a return writes a payment reversal, a cash
@@ -335,7 +371,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P2 Money integrity | 5 · **done** |
 | P3 Shift and cash | 4 · **done** |
 | P4 Stock ledger | 4 · **done** |
-| P6 Customers | 4 |
+| P6 Customers | 4 · **done** |
 | P8 Variants | 5 |
 | P9 Promotions | 4 |
 | P7 Returns | 5 |

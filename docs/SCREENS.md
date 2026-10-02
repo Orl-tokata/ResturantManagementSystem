@@ -140,7 +140,7 @@ ARCHITECTURE §6 explains why that cannot stay.
 The "balance after" column is what makes this screen worth building. It answers
 "why is this count wrong", and today there is no answer at all.
 
-### 3.3 Customers
+### 3.3 Customers · **built (P6)**
 
 | | |
 |---|---|

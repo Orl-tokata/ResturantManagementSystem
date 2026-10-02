@@ -46,8 +46,19 @@ public final class OrderDtos {
     /** Open a bill for a table, or return the one already open there. */
     public record OpenOrderRequest(
             @NotNull(message = "{valid.required}") Long tableId,
-            @Positive(message = "{valid.min1}") Integer guestCount
+            @Positive(message = "{valid.min1}") Integer guestCount,
+            /** Optional, and usually absent: a bill is opened before anyone asks. */
+            Long customerId
     ) {}
+
+    /**
+     * Naming the customer on a bill that is already open, which is when it
+     * actually happens — a cashier asks for a phone number at the point of
+     * paying, not when the table sits down.
+     *
+     * <p>A null id clears it, for the case where the wrong one was picked.
+     */
+    public record SetCustomerRequest(Long customerId) {}
 
     public record OrderItemRequest(
             @NotNull(message = "{valid.required}") Long productId,
@@ -166,6 +177,8 @@ public final class OrderDtos {
             String tableName,
             Long cashierId,
             String cashierName,
+            Long customerId,
+            String customerName,
             Integer guestCount,
             List<OrderItemResponse> items,
             BigDecimal subtotal,

@@ -310,11 +310,32 @@ async function main() {
     tok: posTok, body: { type: "SALE", amount: 5, reason: "smoke test" }, expect: [400],
   });
 
+  /* ---- customers: who the bill belongs to ------------------------------- */
+  const buyer = await call("register a customer", "POST", "/customers", {
+    tok: adminTok,
+    body: { name: `Smoke ${Date.now() % 100000}`, phone: `012 ${Date.now() % 1000000}` },
+    expect: [201],
+  });
+  await call("list customers", "GET", "/customers?search=Smoke", { tok: adminTok });
+  await call("customer by id", "GET", `/customers/${buyer?.id}`, { tok: adminTok });
+  await call("look up by phone", "GET",
+    `/customers/lookup?phone=${encodeURIComponent(buyer?.phone ?? "")}`, { tok: posTok });
+  await call("adjust their points", "POST", `/customers/${buyer?.id}/loyalty`, {
+    tok: adminTok, body: { points: 25, reason: "smoke", note: "smoke test" }, expect: [201],
+  });
+  await call("an adjustment needs a reason", "POST", `/customers/${buyer?.id}/loyalty`, {
+    tok: adminTok, body: { points: 25 }, expect: [400],
+  });
+  await call("their points ledger", "GET", `/customers/${buyer?.id}/loyalty`, { tok: adminTok });
+
   await call("list orders", "GET", "/orders", { tok: posTok });
   await call("order summary", "GET", "/orders/summary", { tok: posTok });
   const order = await call("open a bill", "POST", "/orders", { tok: posTok, body: { tableId: 5 } });
   await call("order by id", "GET", `/orders/${order?.id}`, { tok: posTok });
   await call("open order for a table", "GET", "/orders/open?tableId=5", { tok: posTok });
+  await call("name the customer on the bill", "PUT", `/orders/${order?.id}/customer`, {
+    tok: posTok, body: { customerId: buyer?.id },
+  });
   await call("set order items", "PUT", `/orders/${order?.id}/items`, {
     tok: posTok, body: { items: [{ productId: 1, qty: 2 }, { productId: 11, qty: 1 }] },
   });
@@ -322,6 +343,14 @@ async function main() {
     tok: posTok, body: { paymentMethod: "CASH", amountTendered: 50 },
   });
   await call("fetch receipt", "GET", `/orders/${order?.id}/receipt`, { tok: posTok });
+  // The meal should have earned them points on top of the 25 adjusted above.
+  await call("their bills", "GET", `/orders?customerId=${buyer?.id}`, { tok: adminTok });
+  const earned = await call("points after the meal", "GET", `/customers/${buyer?.id}`,
+    { tok: adminTok });
+  if (Number(earned?.points ?? 0) <= 25) {
+    console.log("  ! settling the bill did not earn any points");
+    process.exitCode = 1;
+  }
 
   // The Z-report, read before the count so the figure to declare is known.
   const zReport = await call("the Z-report", "GET", `/shifts/${shift?.id}`, { tok: posTok });

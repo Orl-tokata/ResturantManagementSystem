@@ -1,6 +1,7 @@
 package com.resturant.management.rms.order;
 
 import com.resturant.management.rms.common.BaseAuditEntity;
+import com.resturant.management.rms.customer.Customer;
 import com.resturant.management.rms.dining.DiningTable;
 import com.resturant.management.rms.user.UserInfm;
 import jakarta.persistence.*;
@@ -41,6 +42,15 @@ public class Order extends BaseAuditEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cashier_id")
     private UserInfm cashier;
+
+    /**
+     * Who the bill belongs to, when anyone said. Most are null: a walk-in is
+     * the ordinary case and asking everybody for a phone number at the counter
+     * is how a loyalty scheme makes itself hated.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     @Column(name = "guest_count")
     private Integer guestCount;

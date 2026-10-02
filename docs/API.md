@@ -180,7 +180,7 @@ row on confirmation instead of stamping the order.
 across two documents (ERD §3.7). The server computes what remains; the client
 never subtracts for itself. Posting more than remains → `409 return.exceeds.sold`.
 
-### 6.4 Customers and loyalty — 7
+### 6.4 Customers and loyalty — 7 · **built (P6)**
 
 ```
 GET    /api/customers                ?q= name or phone
@@ -196,6 +196,17 @@ POST   /api/customers/{id}/loyalty   manual adjust, ADMIN
 `/lookup` is separate from `/customers?q=` because the POS case is different:
 one exact phone, one result or none, hit on every sale. A list endpoint with
 paging metadata is the wrong shape for a field a cashier tabs through.
+
+> **Two more shipped, and why.** This list assumes the customer is known when
+> the bill opens. At a table they are not: the question is asked at the point
+> of paying, by which time the bill exists. So `PUT /orders/{id}/customer`
+> names or clears them on an open bill, and `GET /orders` takes a
+> `customerId` so the detail page can show somebody's purchases without a
+> second listing endpoint.
+>
+> `/lookup` returns an **array**, not one customer. The phone column is not
+> unique on purpose (ERD §3.4) and a couple sharing a number is ordinary, so
+> the till shows both rather than guessing.
 
 ### 6.5 Catalog extensions — 8
 

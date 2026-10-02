@@ -10,6 +10,7 @@ import com.resturant.management.rms.order.dto.OrderDtos.OpenOrderRequest;
 import com.resturant.management.rms.order.dto.OrderDtos.OrderResponse;
 import com.resturant.management.rms.order.dto.OrderDtos.PayRequest;
 import com.resturant.management.rms.order.dto.OrderDtos.ReceiptResponse;
+import com.resturant.management.rms.order.dto.OrderDtos.SetCustomerRequest;
 import com.resturant.management.rms.order.dto.OrderDtos.UpdateItemsRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -53,13 +54,14 @@ public class OrderController {
     public ApiResponse<PageResponse<OrderResponse>> history(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         var pageable = Paging.of(page, size);
         return ApiResponse.ok(PageResponse.from(
-                orderService.history(search, status, from, to, pageable)));
+                orderService.history(search, status, customerId, from, to, pageable)));
     }
 
     @GetMapping("/summary")
@@ -102,6 +104,15 @@ public class OrderController {
                                           @AuthenticationPrincipal UserDetails principal) {
         return ApiResponse.ok("Payment accepted",
                 orderService.pay(id, request, principal.getUsername()));
+    }
+
+    @PutMapping("/{id}/customer")
+    @Operation(summary = "Name the customer on an open bill",
+            description = "A null id clears it. Points are earned at settlement, so this can "
+                        + "be set at any point before the bill is paid.")
+    public ApiResponse<OrderResponse> setCustomer(@PathVariable Long id,
+                                                  @RequestBody SetCustomerRequest request) {
+        return ApiResponse.ok("Customer set", orderService.setCustomer(id, request.customerId()));
     }
 
     @GetMapping("/payment-methods")

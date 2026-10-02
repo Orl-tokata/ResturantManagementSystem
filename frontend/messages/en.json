@@ -24,7 +24,8 @@
     "audit": "Audit log",
     "users": "Accounts",
     "order": "Order",
-    "shift": "Shift"
+    "shift": "Shift",
+    "customers": "Customers"
   },
   "common": {
     "save": "Save",
@@ -542,6 +543,13 @@
       "PAY_OUT": "Cash out",
       "FLOAT": "Float added",
       "DROP": "To the safe"
+    },
+    "loyaltyType": {
+      "EARN": "Earned",
+      "REDEEM": "Spent",
+      "ADJUST": "Adjusted",
+      "EXPIRE": "Expired",
+      "REVERSE": "Reversed"
     }
   },
   "weekday": {
@@ -596,7 +604,12 @@
     "uploadImage": "Could not save that photograph",
     "openShift": "Could not start the shift",
     "closeShift": "Could not close the shift",
-    "recordCash": "Could not record that"
+    "recordCash": "Could not record that",
+    "saveCustomer": "Could not save the customer",
+    "deleteCustomer": "Could not delete the customer",
+    "adjustLoyalty": "Could not adjust the points",
+    "lookupCustomer": "Could not look that number up",
+    "setCustomer": "Could not set the customer on this bill"
   },
   "a11y": {
     "edit": "Edit {name}",
@@ -693,5 +706,41 @@
     "zReport": "Shift report",
     "movementCount": "{count} movements",
     "by": "By"
+  },
+  "customers": {
+    "title": "Customers",
+    "add": "Add customer",
+    "details": "Customer",
+    "code": "Code",
+    "phone": "Phone",
+    "phoneHint": "How a cashier finds them at the till",
+    "birthDate": "Birthday",
+    "points": "Points",
+    "pointsShort": "pts",
+    "totalSpent": "Total spent",
+    "visits": "Visits",
+    "lastVisit": "Last visit",
+    "searchPlaceholder": "Name, phone or code",
+    "none": "No customers yet",
+    "errName": "A name is required",
+    "deleteNote": "A customer with bills or points cannot be deleted.",
+    "backToList": "All customers",
+    "ledger": "Points",
+    "purchases": "Purchases",
+    "noPoints": "No points yet",
+    "noPurchases": "Nothing bought yet",
+    "by": "By",
+    "adjust": "Adjust points",
+    "adjustTitle": "Adjust points",
+    "adjustHelp": "Goes on the ledger with your name against it. The balance is the sum of those entries, so this is the only way to change it.",
+    "adjustHint": "Negative takes points away",
+    "adjusted": "Points adjusted",
+    "customer": "Customer",
+    "walkIn": "Walk-in",
+    "clear": "Remove",
+    "lookupHint": "The exact number, as they gave it",
+    "noneWithThatPhone": "Nobody has that number. Register them?",
+    "namePlaceholder": "Their name",
+    "register": "Register"
   }
 }
