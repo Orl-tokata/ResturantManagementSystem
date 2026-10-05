@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { ADMIN_MENU, CASHIER_MENU, activeMenuItem } from "./menus";
+import messages from "../../messages/en.json";
+import {
+  ADMIN_ACCOUNT_MENU,
+  ADMIN_GROUPS,
+  ADMIN_MENU,
+  CASHIER_MENU,
+  activeGroup,
+  activeMenuItem,
+} from "./menus";
 
 /**
  * The header title and the sidebar highlight both come from this. It shipped
@@ -33,5 +41,44 @@ describe("activeMenuItem", () => {
   it("returns undefined for a path outside the menu", () => {
     expect(activeMenuItem("/login", ADMIN_MENU)).toBeUndefined();
     expect(activeMenuItem("/admin/products", CASHIER_MENU)).toBeUndefined();
+  });
+});
+
+/*
+ * The grouping of SCREENS §2.2.
+ *
+ * The failure worth guarding against is not a wrong heading, it is a screen
+ * that belongs to none: a new page added to the flat list and forgotten in the
+ * groups would simply stop appearing in the sidebar, and nothing else would
+ * say so.
+ */
+describe("ADMIN_GROUPS", () => {
+  it("accounts for every admin link exactly once", () => {
+    const grouped = ADMIN_GROUPS.flatMap((g) => g.items);
+    const all = [...grouped, ...ADMIN_ACCOUNT_MENU];
+
+    expect(new Set(all.map((i) => i.href)).size).toBe(all.length);
+    expect(all.map((i) => i.href).sort()).toEqual(ADMIN_MENU.map((i) => i.href).sort());
+  });
+
+  it("gives every heading a name in both catalogues", () => {
+    // Looked up as tGroup(group.key), which check-messages cannot see: a
+    // dynamic key is invisible to it and shows up as a crash on the screen.
+    for (const group of ADMIN_GROUPS) {
+      expect(messages.nav.group).toHaveProperty(group.key);
+    }
+  });
+
+  it("opens the heading the current page is inside", () => {
+    expect(activeGroup("/admin/products")?.key).toBe("catalog");
+    expect(activeGroup("/admin/stock")?.key).toBe("stock");
+    expect(activeGroup("/admin/stock/anything")?.key).toBe("stock");
+    expect(activeGroup("/admin")?.key).toBe("sell");
+  });
+
+  it("has no heading for a page outside the groups", () => {
+    // Your own account sits outside them, so nothing should open for it.
+    expect(activeGroup("/admin/change-password")).toBeUndefined();
+    expect(activeGroup("/login")).toBeUndefined();
   });
 });

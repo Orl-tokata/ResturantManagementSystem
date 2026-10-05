@@ -31,25 +31,91 @@ export interface MenuItem {
   key: string;
 }
 
-/** Ported from MENUS in the prototype's assets/js/proto.js. */
-export const ADMIN_MENU: MenuItem[] = [
-  { href: "/admin", icon: LayoutDashboard, key: "dashboard" },
-  { href: "/admin/products", icon: Utensils, key: "products" },
-  { href: "/admin/categories", icon: Tags, key: "categories" },
-  { href: "/admin/modifiers", icon: SlidersHorizontal, key: "modifiers" },
-  { href: "/admin/promotions", icon: Percent, key: "promotions" },
-  { href: "/admin/tables", icon: BookUser, key: "tables" },
-  { href: "/admin/staff", icon: Users, key: "staff" },
-  { href: "/admin/customers", icon: Contact, key: "customers" },
-  { href: "/admin/suppliers", icon: Truck, key: "suppliers" },
-  { href: "/admin/purchase", icon: ClipboardList, key: "purchase" },
-  { href: "/admin/stock", icon: Boxes, key: "stock" },
-  { href: "/admin/reports", icon: TrendingUp, key: "reports" },
-  { href: "/admin/users", icon: ShieldCheck, key: "users" },
-  { href: "/admin/audit", icon: FileClock, key: "audit" },
-  { href: "/admin/settings", icon: Settings, key: "settings" },
+/** A heading and the links under it. */
+export interface MenuGroup {
+  /** Key under the `nav.group` namespace in messages/*.json. */
+  key: string;
+  items: MenuItem[];
+}
+
+/**
+ * The admin navigation, in five headings.
+ *
+ * <p>SCREENS §2.2: the flat list reached seventeen items, and a scroll is a
+ * menu nobody reads. The headings are not a tidy-up of the old order — they
+ * are how an owner thinks about the business, so "where do I put prices up"
+ * has one obvious place to look rather than four plausible ones.
+ *
+ * <p>Some of what §2.2 lists does not exist as a screen: returns and shifts
+ * are the cashier's, loyalty lives inside a customer, stock movements became a
+ * tab on the stock screen, and there are no roles, tax or printer pages.
+ * Nothing is invented here to fill a heading out.
+ */
+export const ADMIN_GROUPS: MenuGroup[] = [
+  {
+    key: "sell",
+    items: [
+      { href: "/admin", icon: LayoutDashboard, key: "dashboard" },
+      { href: "/admin/reports", icon: TrendingUp, key: "reports" },
+    ],
+  },
+  {
+    key: "catalog",
+    items: [
+      { href: "/admin/products", icon: Utensils, key: "products" },
+      { href: "/admin/categories", icon: Tags, key: "categories" },
+      { href: "/admin/modifiers", icon: SlidersHorizontal, key: "modifiers" },
+      { href: "/admin/promotions", icon: Percent, key: "promotions" },
+    ],
+  },
+  {
+    key: "stock",
+    items: [
+      { href: "/admin/stock", icon: Boxes, key: "stock" },
+      { href: "/admin/purchase", icon: ClipboardList, key: "purchase" },
+      { href: "/admin/suppliers", icon: Truck, key: "suppliers" },
+    ],
+  },
+  {
+    key: "people",
+    items: [
+      { href: "/admin/customers", icon: Contact, key: "customers" },
+      { href: "/admin/staff", icon: Users, key: "staff" },
+      { href: "/admin/users", icon: ShieldCheck, key: "users" },
+    ],
+  },
+  {
+    key: "setup",
+    items: [
+      { href: "/admin/tables", icon: BookUser, key: "tables" },
+      { href: "/admin/settings", icon: Settings, key: "settings" },
+      { href: "/admin/audit", icon: FileClock, key: "audit" },
+    ],
+  },
+];
+
+/**
+ * Your own account, outside the headings.
+ *
+ * <p>Neither of these is a part of running the restaurant, and putting them
+ * under "Setup" would mean opening a section about the business to change your
+ * own password. They sit at the foot of the sidebar instead.
+ */
+export const ADMIN_ACCOUNT_MENU: MenuItem[] = [
   { href: "/admin/profile", icon: UserRound, key: "profile" },
   { href: "/admin/change-password", icon: KeyRound, key: "password" },
+];
+
+/**
+ * Every admin link, flat.
+ *
+ * <p>Derived rather than written out again: {@code activeMenuItem} and the
+ * page header need one list, and two copies would drift the first time a
+ * screen moved between headings.
+ */
+export const ADMIN_MENU: MenuItem[] = [
+  ...ADMIN_GROUPS.flatMap((group) => group.items),
+  ...ADMIN_ACCOUNT_MENU,
 ];
 
 /*
@@ -62,6 +128,12 @@ export const ADMIN_MENU: MenuItem[] = [
  * "Tables" for managing the table list, which is a different job.
  *
  * So the label names the task and the route is the screen that starts it.
+ */
+/**
+ * Flat, on purpose. SCREENS §2.2 groups the admin sidebar and leaves this one
+ * alone: it is seven items, a cashier learns them in a day, and a heading to
+ * open before reaching the till would be friction on the most-used screen in
+ * the building.
  */
 export const CASHIER_MENU: MenuItem[] = [
   { href: "/cashier", icon: Home, key: "home" },
@@ -87,6 +159,13 @@ export type ShellVariant = keyof typeof MENUS;
  * stock movements page in docs/PLAN.md P4, which the sidebar's own rule
  * (exclude "/admin" and "/cashier" from prefix matching) would not.
  */
+/** The heading that contains a path, or undefined. */
+export function activeGroup(pathname: string): MenuGroup | undefined {
+  const item = activeMenuItem(pathname, ADMIN_MENU);
+  if (!item) return undefined;
+  return ADMIN_GROUPS.find((group) => group.items.includes(item));
+}
+
 export function activeMenuItem(
   pathname: string,
   items: MenuItem[],

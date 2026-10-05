@@ -515,9 +515,33 @@ Two things it turned up:
   is the whole instruction; `orphanRemoval` does the rest. Older than P9 and
   hidden by every test setting its items exactly once.
 
-### P10 — Navigation regroup · ~2 days
+### P10 — Navigation regroup · **done**
 
-SCREENS §2.2. Five collapsible groups, persistent branch badge.
+SCREENS §2.2. Five collapsible headings — Sell, Catalog, Stock, People,
+Setup — with only the one you are inside open. The branch badge arrived with
+P1 and is already in the header.
+
+§2.2 was written when the admin sidebar was eleven items and predicted
+twenty-one. It reached **seventeen** before this was built, which is a scroll,
+and a scroll is a menu nobody reads.
+
+**The cashier side stays flat**, which §2.2 also says: seven items, learnt in
+a day, and a heading to open before reaching the till would be friction on the
+most-used screen in the building.
+
+**Your own account sits outside the headings.** Changing your password is not
+part of running the restaurant, and putting it under Setup would mean opening a
+section about the business to do it.
+
+Some of what §2.2 lists has no screen — returns and shifts are the cashier's,
+loyalty lives inside a customer, stock movements became a tab on the stock
+screen, and there are no roles, tax or printer pages. Nothing was invented to
+fill a heading out.
+
+**The test is about absence, not arrangement.** A new page added to the flat
+list and forgotten in the groups would simply stop appearing in the sidebar,
+and nothing else would say so; the heading names are looked up dynamically, so
+`check-messages` cannot see them either. Both are asserted.
 
 ---
 
@@ -535,14 +559,26 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P8 Variants | 5 · **done** |
 | P9 Promotions | 4 · **done** |
 | P7 Returns | 5 · **done** |
-| P10 Navigation | 2 |
-| **Total** | **43 days** |
+| P10 Navigation | 2 · **done** |
+| **Total** | **43 days · all done** |
 
 **Read that as ~9 working weeks, and expect 12.** These are focused-day
 estimates for one developer who knows the codebase. They contain no allowance
 for the thing that actually happens — a migration that will not apply, a
 Khmer string that clips, a test that fails only on CI. This project has already
 spent real time on all three.
+
+> **Phase 1 is complete.** Every package above shipped, in a different order
+> than this list: P5 first, P1 last, which was precisely backwards. The
+> argument for doing the branch retrofit first was that it touches every query
+> and gets dearer with every row, and by the time it was built there were 192
+> settled bills and five ledgers to carry across rather than a handful of rows.
+> Nothing else suffered much from the order.
+>
+> Two things from the plan deliberately did not ship: buy-X-get-Y, which
+> SCREENS §3.5 held back, and the contract half of P2 — dropping the three
+> columns `sale_payment` replaced — which is irreversible and is waiting on a
+> decision rather than on work.
 
 Phase 2 is not estimated here. Estimating work three months out is fiction.
 §4a lists what is in it.

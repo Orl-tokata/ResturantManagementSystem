@@ -28,7 +28,14 @@
     "customers": "Customers",
     "returns": "Returns",
     "modifiers": "Modifiers",
-    "promotions": "Promotions"
+    "promotions": "Promotions",
+    "group": {
+      "sell": "Sell",
+      "catalog": "Catalog",
+      "stock": "Stock",
+      "people": "People",
+      "setup": "Setup"
+    }
   },
   "common": {
     "save": "Save",

@@ -67,7 +67,7 @@ the single most repeated action in the building.
 This is the highest-value UI change in the plan and it removes code rather than
 adding it.
 
-### 2.2 The admin sidebar is a flat list of 11, and the brief adds 10
+### 2.2 The admin sidebar is a flat list of 11, and the brief adds 10 · **built (P10)**
 
 Customers, promotions, loyalty, returns, shifts, branches, users, roles, audit,
 tax. A flat 21-item sidebar is a scroll, and a scroll is a menu nobody reads.

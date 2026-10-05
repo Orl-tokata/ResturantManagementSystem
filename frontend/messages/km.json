@@ -28,7 +28,14 @@
     "customers": "អតិថិជន",
     "returns": "ការសងវិញ",
     "modifiers": "ជម្រើសបន្ថែម",
-    "promotions": "ការបញ្ចុះតម្លៃ"
+    "promotions": "ការបញ្ចុះតម្លៃ",
+    "group": {
+      "sell": "ការលក់",
+      "catalog": "ម៉ឺនូ",
+      "stock": "ស្តុក",
+      "people": "មនុស្ស",
+      "setup": "ការកំណត់"
+    }
   },
   "common": {
     "save": "រក្សាទុក",
