@@ -316,6 +316,24 @@ async function main() {
     `/products/${DISH}/modifier-groups/${question?.id}`, { tok: adminTok });
   await call("what it asks", "GET", `/products/${DISH}/modifier-groups`, { tok: adminTok });
 
+  /* ---- promotions: money off by a rule ----------------------------------
+     Percent and fixed only; buy-X-get-Y is refused rather than half-built,
+     which is the half of SCREENS §3.5 that would be invisible otherwise. */
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 19);
+  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 19);
+  const promo = await call("a rule on the whole bill", "POST", "/promotions", {
+    tok: adminTok, expect: [201],
+    body: { name: `Smoke ${Date.now() % 100000}`, type: "PERCENT", value: 10,
+            scope: "ORDER", startsAt: yesterday, endsAt: nextWeek },
+  });
+  await call("buy-X-get-Y is not ready", "POST", "/promotions", {
+    tok: adminTok, expect: [400],
+    body: { name: "Two for one", type: "BUY_X_GET_Y", value: 1, scope: "ORDER",
+            startsAt: yesterday, endsAt: nextWeek },
+  });
+  await call("list promotions", "GET", "/promotions", { tok: adminTok });
+  await call("what is running now", "GET", "/promotions/live", { tok: adminTok });
+
   /* ---- branches: which shop every one of those rows belongs to -----------
      The badge is all P1 shows; what matters is that the branch rides in the
      token. A cashier is refused the move, which is the half of the rule that
@@ -396,6 +414,12 @@ async function main() {
     tok: posTok, body: { paymentMethod: "CASH", amountTendered: 50 },
   });
   await call("fetch receipt", "GET", `/orders/${order?.id}/receipt`, { tok: posTok });
+  const discounted = await call("what came off this bill", "GET",
+    `/promotions/applicable?orderId=${order?.id}`, { tok: posTok });
+  if (!Array.isArray(discounted) || discounted.length === 0) {
+    console.log("  ! the live promotion took nothing off the bill");
+    process.exitCode = 1;
+  }
   // The meal should have earned them points on top of the 25 adjusted above.
   await call("their bills", "GET", `/orders?customerId=${buyer?.id}`, { tok: adminTok });
   const earned = await call("points after the meal", "GET", `/customers/${buyer?.id}`,
@@ -464,6 +488,15 @@ async function main() {
   });
 
   await call("cancel the idempotency bill", "POST", `/orders/${firstTry?.id}/cancel`, { tok: posTok });
+  await call("a used promotion cannot be deleted", "DELETE", `/promotions/${promo?.id}`, {
+    tok: adminTok, expect: [400],
+  });
+  await call("switch it off instead", "PUT", `/promotions/${promo?.id}`, {
+    tok: adminTok,
+    body: { name: promo?.name, type: "PERCENT", value: 10, scope: "ORDER",
+            active: false, startsAt: yesterday, endsAt: nextWeek },
+  });
+
   await call("stop asking it", "DELETE", "/modifier-groups/" + question?.id, { tok: adminTok });
   await call("take the size away", "DELETE", `/products/1/variants/${size?.id}`, { tok: adminTok });
 

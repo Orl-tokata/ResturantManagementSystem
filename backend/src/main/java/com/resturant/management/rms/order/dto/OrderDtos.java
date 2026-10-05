@@ -98,6 +98,8 @@ public final class OrderDtos {
             /** Includes the variant's price and every modifier's delta. */
             BigDecimal unitPrice,
             BigDecimal lineTotal,
+            /** What a rule took off this line, already counted in the bill. */
+            BigDecimal discountAmount,
             List<OrderItemModifierResponse> modifiers,
             String note
     ) {}
@@ -204,6 +206,8 @@ public final class OrderDtos {
             List<OrderItemResponse> items,
             BigDecimal subtotal,
             BigDecimal discount,
+            /** What the standing rules took off, apart from the figure above. */
+            BigDecimal promoDiscount,
             BigDecimal vatRate,
             BigDecimal vatAmount,
             BigDecimal total,

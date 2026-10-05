@@ -77,9 +77,25 @@ public class Order extends BaseAuditEntity {
     @Column(name = "subtotal", nullable = false, precision = 12, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;
 
+    /** What a person decided to take off this one bill. */
     @Builder.Default
     @Column(name = "discount", nullable = false, precision = 12, scale = 2)
     private BigDecimal discount = BigDecimal.ZERO;
+
+    /**
+     * What the standing rules took off, kept apart from the figure above.
+     *
+     * <p>"The manager gave five dollars off" and "Tuesday's rule gave five
+     * dollars off" are different facts, and a report that cannot separate them
+     * cannot say whether the rule is worth running.
+     */
+    @Builder.Default
+    @Column(name = "promo_discount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal promoDiscount = BigDecimal.ZERO;
+
+    /** The whole-bill rule that was applied, if one was. */
+    @Column(name = "promotion_id")
+    private Long promotionId;
 
     @Builder.Default
     @Column(name = "vat_rate", nullable = false, precision = 5, scale = 2)
@@ -166,8 +182,17 @@ public class Order extends BaseAuditEntity {
         item.setOrder(null);
     }
 
+    /**
+     * Empties the basket so it can be replaced.
+     *
+     * <p>Clearing the collection is the whole instruction: {@code orphanRemoval}
+     * turns that into deletes. Detaching each line first — which this used to
+     * do as well — asks Hibernate to write {@code order_id = NULL} to a column
+     * that forbids it, and it does so whenever the lines are still managed from
+     * an earlier save in the same persistence context. Replacing the items on a
+     * bill twice inside one transaction failed on exactly that.
+     */
     public void clearItems() {
-        items.forEach(i -> i.setOrder(null));
         items.clear();
     }
 

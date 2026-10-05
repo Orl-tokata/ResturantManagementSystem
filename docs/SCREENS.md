@@ -172,7 +172,7 @@ transaction described in ARCHITECTURE §4.2.
 > but because the audit log needs a name against a refund, and this is the
 > cheapest place to capture it.
 
-### 3.5 Promotions
+### 3.5 Promotions · **built (P9)**
 
 | | |
 |---|---|

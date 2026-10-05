@@ -63,6 +63,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     java.math.BigDecimal sumCostBetween(@Param("from") LocalDateTime from,
                                         @Param("to") LocalDateTime to);
 
+    long countByPromotionId(Long promotionId);
+
     /** How many lines in the range carry a cost that was filled in afterwards. */
     @Query("""
            SELECT COUNT(i)

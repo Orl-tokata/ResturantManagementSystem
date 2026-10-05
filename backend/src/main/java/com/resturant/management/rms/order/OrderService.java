@@ -56,6 +56,7 @@ public class OrderService {
     private final SalePaymentRepository paymentRepository;
     private final ShiftService shifts;
     private final CustomerService customers;
+    private final com.resturant.management.rms.promotion.PromotionEngine promotions;
     private final StockLedger stockLedger;
     private final ProductRepository productRepository;
     private final com.resturant.management.rms.catalog.ProductVariantRepository variantRepository;
@@ -834,7 +835,22 @@ public class OrderService {
             throw new BadRequestException("error.order.discountTooLarge");
         }
 
-        BigDecimal taxable = subtotal.subtract(discount);
+        /*
+         * The rules are applied here, which means every time the basket
+         * changes and again at settlement — so what the till shows and what
+         * the customer pays come from one piece of code run twice, not from
+         * two that have to agree.
+         */
+        BigDecimal lineDiscounts = promotions.apply(order, subtotal);
+        BigDecimal promoDiscount = lineDiscounts.add(order.getPromoDiscount());
+
+        BigDecimal taxable = subtotal.subtract(discount).subtract(promoDiscount);
+        if (taxable.signum() < 0) {
+            // A hand-typed discount on top of a rule can go past the bill.
+            // The rules are not the thing to give up, so this is the manual
+            // figure being too large.
+            throw new BadRequestException("error.order.discountTooLarge");
+        }
         BigDecimal rate = order.getVatRate() == null ? BigDecimal.ZERO : order.getVatRate();
         BigDecimal vat = taxable.multiply(rate)
                 .divide(BigDecimal.valueOf(100), MONEY_SCALE, RoundingMode.HALF_UP);
@@ -845,6 +861,9 @@ public class OrderService {
 
         order.setSubtotal(subtotal);
         order.setDiscount(discount);
+        // The order-level figure was set by the engine; the line-level part is
+        // added here so the bill's own column is the whole of what rules took.
+        order.setPromoDiscount(promoDiscount);
         order.setVatAmount(vat);
         order.setTotal(total);
         // Riel has no minor unit, so the converted figure is a whole number.
@@ -874,6 +893,7 @@ public class OrderService {
                         i.getVariant() != null ? i.getVariant().getId() : null,
                         i.getVariantName(),
                         i.getQty(), i.getUnitPrice(), i.getLineTotal(),
+                        i.getDiscountAmount(),
                         i.getModifiers().stream()
                                 .map(m -> new OrderItemModifierResponse(
                                         m.getId(),
@@ -893,7 +913,8 @@ public class OrderService {
                 o.getCustomer() != null ? o.getCustomer().getId() : null,
                 o.getCustomer() != null ? o.getCustomer().getName() : null,
                 o.getGuestCount(), items,
-                o.getSubtotal(), o.getDiscount(), o.getVatRate(), o.getVatAmount(),
+                o.getSubtotal(), o.getDiscount(), o.getPromoDiscount(),
+                o.getVatRate(), o.getVatAmount(),
                 o.getTotal(), o.getTotalKhr(), o.getFxRateKhr(),
                 payments,
                 // Derived, not stored: a screen that shows one payment line

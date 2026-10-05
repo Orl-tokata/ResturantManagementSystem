@@ -473,7 +473,48 @@ change to that box rather than to the catalog — and ARCHITECTURE §1.3 is clea
 that dishes have no barcode, so it buys little until there is packaged stock to
 scan.
 
-### P9 — Promotions · ~4 days — percent and fixed only
+### P9 — Promotions · **done** — percent and fixed only
+
+V19. `promotion`, `orders.promo_discount`, `order_item.discount_amount`, the
+five endpoints of API §6.6 and `/admin/promotions`.
+
+**Percent and fixed, as SCREENS §3.5 asked.** `BUY_X_GET_Y` is in the CHECK so
+adding it later is code rather than a migration, and the service refuses it —
+half-built is the one state it must not be in.
+
+**The rules are applied inside `recalculate`**, which runs on every basket
+change and again at settlement. What the till shows and what the customer pays
+come from one piece of code run twice, rather than two that have to agree. A
+rule switched off stops applying to a bill that is still open, because nothing
+is remembered between runs.
+
+**Two decisions a customer could ask about, made once:**
+
+- A whole-bill rule is measured against what the line rules left, not against
+  the list price. Taking 10% of an already-reduced figure is the arithmetic
+  people expect; taking it of the original quietly gives away more than the
+  rule says.
+- One rule per line and one for the bill, best-of. Stacking is where promotion
+  systems stop being explainable — two rules at 60% leave a line costing less
+  than nothing, and the order they apply in changes the answer. "The better
+  one" is something a cashier can say out loud.
+
+**`promo_discount` is kept apart from `discount`.** "The manager took five
+dollars off" and "Tuesday's rule took five dollars off" are different facts,
+and a report that cannot separate them cannot say whether the rule earns its
+keep.
+
+Two things it turned up:
+
+- **`value` is a reserved word in H2**, so the column ERD §3.5 names could not
+  be created. It is `discount_value`; quoting would have worked and would have
+  put quotes in every query that ever touched it.
+- **Replacing a bill's items twice in one transaction failed.** `clearItems()`
+  detached each line *and* cleared the collection, which asks Hibernate to
+  write `order_id = NULL` to a column that forbids it. Clearing the collection
+  is the whole instruction; `orphanRemoval` does the rest. Older than P9 and
+  hidden by every test setting its items exactly once.
+
 ### P10 — Navigation regroup · ~2 days
 
 SCREENS §2.2. Five collapsible groups, persistent branch badge.
@@ -492,7 +533,7 @@ SCREENS §2.2. Five collapsible groups, persistent branch badge.
 | P4 Stock ledger | 4 · **done** |
 | P6 Customers | 4 · **done** |
 | P8 Variants | 5 · **done** |
-| P9 Promotions | 4 |
+| P9 Promotions | 4 · **done** |
 | P7 Returns | 5 · **done** |
 | P10 Navigation | 2 |
 | **Total** | **43 days** |

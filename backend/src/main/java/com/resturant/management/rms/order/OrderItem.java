@@ -95,6 +95,19 @@ public class OrderItem {
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemModifier> modifiers = new ArrayList<>();
 
+    /**
+     * What a rule took off this line, already counted in the bill's discount.
+     *
+     * <p>Recorded here as well so a receipt can show the saving beside the
+     * dish it applied to, and so a report can ask which rule earned its keep.
+     */
+    @Builder.Default
+    @Column(name = "discount_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "promotion_id")
+    private Long promotionId;
+
     @Column(name = "note", length = 255)
     private String note;
 

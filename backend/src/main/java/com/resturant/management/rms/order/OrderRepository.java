@@ -19,6 +19,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByCustomerId(Long customerId);
 
+    long countByPromotionId(Long promotionId);
+
     /**
      * Spend per customer — {@code [customerId, total, visits, lastVisit]}.
      *

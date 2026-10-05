@@ -26,6 +26,8 @@ export interface OrderItem {
   /** Already includes the size's price and every modifier's delta. */
   unitPrice: number;
   lineTotal: number;
+  /** What a rule took off this line, already counted in the bill. */
+  discountAmount: number;
   modifiers: OrderItemModifier[];
   note: string | null;
 }
@@ -68,6 +70,8 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   discount: number;
+  /** What the standing rules took off, apart from the figure above. */
+  promoDiscount: number;
   vatRate: number;
   vatAmount: number;
   total: number;

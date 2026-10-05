@@ -265,7 +265,7 @@ CREATE TABLE loyalty_transaction (
 Inconsistent, and worth admitting: stock's convention is already established in
 a populated table, and changing it is churn. New tables get signed amounts.
 
-### 3.5 Promotions
+### 3.5 Promotions · **built (V19)**
 
 ```sql
 CREATE TABLE promotion (

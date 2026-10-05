@@ -234,7 +234,7 @@ a lookup, not a search — ARCHITECTURE §1.3 says the scanner types into the
 existing search box, and this is the endpoint that box calls when the input
 looks like a barcode.
 
-### 6.6 Promotions — 5
+### 6.6 Promotions — 5 · **built (P9)**
 
 ```
 GET|POST   /api/promotions

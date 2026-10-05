@@ -214,6 +214,9 @@ export default function ReceiptPage() {
         <Dashes />
 
         <Row label={bi("common.subtotal")} value={formatUsd(order.subtotal)} />
+        {order.promoDiscount > 0 && (
+          <Row label={bi("promotions.saved")} value={`-${formatUsd(order.promoDiscount)}`} />
+        )}
         {order.discount > 0 && (
           <Row label={bi("common.discount")} value={`-${formatUsd(order.discount)}`} />
         )}

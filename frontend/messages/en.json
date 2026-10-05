@@ -27,7 +27,8 @@
     "shift": "Shift",
     "customers": "Customers",
     "returns": "Returns",
-    "modifiers": "Modifiers"
+    "modifiers": "Modifiers",
+    "promotions": "Promotions"
   },
   "common": {
     "save": "Save",
@@ -87,7 +88,8 @@
     "role": "Role",
     "amount": "Amount",
     "type": "Type",
-    "done": "Done"
+    "done": "Done",
+    "choose": "Choose…"
   },
   "auth": {
     "loginTitle": "Restaurant Management System",
@@ -558,6 +560,16 @@
       "ADJUST": "Adjusted",
       "EXPIRE": "Expired",
       "REVERSE": "Reversed"
+    },
+    "promotionType": {
+      "PERCENT": "A percentage",
+      "AMOUNT": "An amount",
+      "BUY_X_GET_Y": "Buy X get Y"
+    },
+    "promotionScope": {
+      "ITEM": "One dish",
+      "CATEGORY": "A category",
+      "ORDER": "The whole bill"
     }
   },
   "weekday": {
@@ -623,7 +635,9 @@
     "saveVariant": "Could not save the size",
     "deleteVariant": "Could not remove the size",
     "saveModifierGroup": "Could not save the question",
-    "deleteModifierGroup": "Could not delete the question"
+    "deleteModifierGroup": "Could not delete the question",
+    "savePromotion": "Could not save the promotion",
+    "deletePromotion": "Could not delete the promotion"
   },
   "a11y": {
     "edit": "Edit {name}",
@@ -817,5 +831,32 @@
     "free": "free",
     "deltaHint": "A price can be negative: leaving something out may cost less.",
     "deleteNote": "Bills that used it keep the names they were ordered under."
+  },
+  "promotions": {
+    "title": "Promotions",
+    "add": "Add a promotion",
+    "details": "Promotion",
+    "help": "Rules that take money off by themselves. A manager's own discount on one bill is separate, and the two are reported apart.",
+    "none": "No promotions yet",
+    "errName": "A name is required",
+    "nameHint": "What a customer would be told it is called",
+    "namePlaceholder": "Tuesday happy hour",
+    "takesOff": "Takes off",
+    "percent": "Percent",
+    "appliesTo": "Applies to",
+    "which": "Which",
+    "window": "Dates",
+    "minimum": "Minimum bill",
+    "minimumHint": "Leave empty for no floor",
+    "from": "From",
+    "to": "To",
+    "timeFrom": "From time",
+    "timeTo": "To time",
+    "timeHint": "Leave both empty to run all day",
+    "liveNow": "Running",
+    "on": "On",
+    "off": "Off",
+    "deleteNote": "A promotion a bill has used cannot be deleted — switch it off instead.",
+    "saved": "Saved by promotions"
   }
 }
