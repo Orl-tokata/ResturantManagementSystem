@@ -21,6 +21,10 @@
 --     dining_table.name       LIKE 'Smoke %'
 --     orders.cashier_id       -> one of those users
 --     idempotency_key.user_id LIKE 'smoke%'
+--     customer.name           LIKE 'Smoke %'
+--     promotion.name          LIKE 'Smoke %'
+--     modifier_group.name     LIKE 'Smoke %'
+--     product_variant.name    LIKE 'Smoke %'
 --
 -- Not "DELETE FROM orders". An earlier ad-hoc version of this did exactly that,
 -- which was correct at the time because every order in the database happened to
@@ -59,6 +63,18 @@ UNION ALL SELECT 'stock movements',   count(*) FROM stock_movement WHERE stock_i
 UNION ALL SELECT 'tables',            count(*) FROM dining_table WHERE name LIKE 'Smoke %'
 UNION ALL SELECT 'staff',             count(*) FROM staff WHERE staff_code LIKE 'SMOKE-%'
 UNION ALL SELECT 'idempotency keys',  count(*) FROM idempotency_key WHERE user_id LIKE 'smoke%'
+UNION ALL SELECT 'customers',         count(*) FROM customer WHERE name LIKE 'Smoke %'
+UNION ALL SELECT 'promotions',        count(*) FROM promotion WHERE name LIKE 'Smoke %'
+UNION ALL SELECT 'modifier groups',   count(*) FROM modifier_group WHERE name LIKE 'Smoke %'
+UNION ALL SELECT 'variants',         count(*) FROM product_variant WHERE name LIKE 'Smoke %'
+-- Rows that would stop the deletes rather than be removed by them. All of
+-- these reference a smoke user or order with NO ACTION, so a count above zero
+-- means this script will fail loudly and change nothing -- which is the right
+-- outcome, and better found here than in the middle of it.
+UNION ALL SELECT 'BLOCKER shifts',    count(*) FROM cash_shift WHERE user_ref IN (SELECT id FROM _smoke_users)
+UNION ALL SELECT 'BLOCKER returns',   count(*) FROM sale_return WHERE order_id IN (SELECT id FROM _smoke_orders)
+UNION ALL SELECT 'BLOCKER loyalty',   count(*) FROM loyalty_transaction WHERE order_id IN (SELECT id FROM _smoke_orders)
+UNION ALL SELECT 'BLOCKER approvals', count(*) FROM sale_return WHERE approved_by IN (SELECT id FROM _smoke_users)
 ORDER BY what;
 
 -- Written in their own transaction by design, so they outlive the requests
@@ -66,16 +82,24 @@ ORDER BY what;
 -- accumulate one row per smoke run per protected write.
 DELETE FROM idempotency_key WHERE user_id LIKE 'smoke%';
 
--- Give back the stock those smoke sales consumed. Has to run before the order
--- lines go, because it reads them; without it the inventory stays permanently
--- short by whatever the smoke test sold.
-UPDATE product p
-SET    stock_qty = p.stock_qty + s.sold
-FROM  (SELECT i.product_id, sum(i.qty) AS sold
-       FROM   order_item i
-       WHERE  i.order_id IN (SELECT id FROM _smoke_orders)
-       GROUP  BY i.product_id) s
-WHERE p.id = s.product_id;
+-- ---------------------------------------------------------------------------
+-- The stock is deliberately NOT given back
+--
+-- This used to add the smoke sales back to product.stock_qty, which was right
+-- when that column was the only record of how much there was. V11 made it a
+-- cached balance of the stock ledger, and the ledger is now the truth: every
+-- product's stored figure equals the balance_after of its newest movement, and
+-- StockLedgerTest asserts it.
+--
+-- Adding quantity here would write to the cache and not to the ledger, so the
+-- two would disagree by exactly what the smoke test sold -- the drift P4 exists
+-- to prevent, introduced by the script that is supposed to tidy up.
+--
+-- It is also not needed. V11's opening balances were taken from the quantities
+-- as they stood, smoke sales already deducted, so the ledger and the shelf have
+-- agreed since. A real correction belongs in the stock screen's Adjust modal,
+-- where it leaves a movement with a reason on it.
+-- ---------------------------------------------------------------------------
 
 DELETE FROM order_item WHERE order_id IN (SELECT id FROM _smoke_orders);
 DELETE FROM orders     WHERE id       IN (SELECT id FROM _smoke_orders);
@@ -93,8 +117,43 @@ DELETE FROM staff        WHERE staff_code LIKE 'SMOKE-%';
 DELETE FROM password_reset_token WHERE user_ref IN (SELECT id FROM _smoke_users);
 DELETE FROM users_infm           WHERE id       IN (SELECT id FROM _smoke_users);
 
+-- ---------------------------------------------------------------------------
+-- What P6, P8 and P9 added
+--
+-- Each is deleted only when nothing surviving points at it. A real bill that
+-- happened to use a smoke promotion, or a real customer registered with a
+-- smoke-looking name, keeps its row: a cleanup script that can destroy real
+-- history the moment a marker collides is worse than one that leaves a row
+-- behind.
+-- ---------------------------------------------------------------------------
+
+DELETE FROM customer c
+WHERE  c.name LIKE 'Smoke %'
+  AND  NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id)
+  AND  NOT EXISTS (SELECT 1 FROM loyalty_transaction l WHERE l.customer_id = c.id);
+
+DELETE FROM promotion p
+WHERE  p.name LIKE 'Smoke %'
+  AND  NOT EXISTS (SELECT 1 FROM orders o WHERE o.promotion_id = p.id)
+  AND  NOT EXISTS (SELECT 1 FROM order_item i WHERE i.promotion_id = p.id);
+
+DELETE FROM modifier_group g
+WHERE  g.name LIKE 'Smoke %'
+  AND  NOT EXISTS (SELECT 1 FROM order_item_modifier m
+                   JOIN modifier x ON x.id = m.modifier_id
+                   WHERE x.group_id = g.id);
+
+-- A size the smoke test put on a seeded dish. Kept if a line was ever sold at
+-- it, because order_item names the variant it was rung up as.
+DELETE FROM product_variant v
+WHERE  v.name LIKE 'Smoke %'
+  AND  NOT EXISTS (SELECT 1 FROM order_item i WHERE i.variant_id = v.id);
+
 \echo ''
-\echo '=== what is left (a freshly seeded database reads 9 / 18 / 12 / 7 / 5 / 10 / 2) ==='
+-- A freshly seeded database reads: 9 categories, 18 products, 12 tables,
+-- 7 staff, 5 suppliers, 10 stock items, 2 users, and no orders or
+-- purchases. Anything above those is real work somebody did, not residue.
+\echo '=== what is left ==='
 SELECT 'categories'  AS what, count(*) FROM category
 UNION ALL SELECT 'products',    count(*) FROM product
 UNION ALL SELECT 'tables',      count(*) FROM dining_table

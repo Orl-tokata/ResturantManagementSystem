@@ -296,8 +296,11 @@ async function main() {
      server works both out from ids, so the only thing a client can choose is
      which. */
   const DISH = 1;   // the seeded fried rice, which outlives this script
+  /* Named with the marker every other artefact carries. A run that dies
+     between here and the delete below leaves this size on a seeded dish, and
+     clean-smoke-data.sql can only remove what it can recognise. */
   const size = await call("add a size", "POST", `/products/${DISH}/variants`, {
-    tok: adminTok, body: { name: "Large", price: 9.5 }, expect: [201],
+    tok: adminTok, body: { name: "Smoke large", price: 9.5 }, expect: [201],
   });
   await call("the product's sizes", "GET", `/products/${DISH}/variants`, { tok: adminTok });
   const question = await call("a question with two answers", "POST", "/modifier-groups", {
