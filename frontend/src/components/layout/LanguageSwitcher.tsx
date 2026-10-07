@@ -20,7 +20,7 @@ export function LanguageSwitcher() {
 
   return (
     <div
-      className="flex items-center gap-1 rounded bg-white/15 p-0.5"
+      className="flex items-center gap-1 rounded bg-black/20 p-1"
       role="group"
       aria-label={tA11y("language")}
     >
@@ -32,8 +32,8 @@ export function LanguageSwitcher() {
           disabled={pending || code === active}
           aria-pressed={code === active}
           onClick={() => startTransition(() => setLocale(code))}
-          className={`rounded px-2 py-0.5 text-xs font-semibold transition disabled:cursor-default ${
-            code === active ? "bg-white text-ink-900" : "text-white/85 hover:bg-white/20"
+          className={`rounded px-2.5 py-1.5 text-xs font-semibold transition disabled:cursor-default ${
+            code === active ? "bg-white text-ink-900" : "text-white hover:bg-black/25"
           }`}
         >
           {LOCALE_LABEL[code]}

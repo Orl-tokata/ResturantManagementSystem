@@ -60,7 +60,13 @@ export function SearchBar({
   }
 
   return (
-    <div
+    /*
+     * A label, not a div: the box is 209x34 and the input inside it was
+     * 161x20, so clicking the magnifier, the padding, or anywhere near the
+     * top edge of what plainly looks like a search field did nothing at all.
+     * A label hands the click to the control it wraps, whichever part is hit.
+     */
+    <label
       className={`flex max-w-80 items-center gap-2 rounded border border-ink-300 bg-white px-3 py-1.5 focus-within:border-teal-600 ${className}`}
     >
       <Search size={15} className="shrink-0 text-ink-500" />
@@ -82,6 +88,6 @@ export function SearchBar({
           <X size={14} />
         </button>
       )}
-    </div>
+    </label>
   );
 }

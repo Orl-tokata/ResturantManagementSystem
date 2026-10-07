@@ -95,7 +95,7 @@ export default function CustomerDetailPage() {
       // Signed as stored: these are the numbers that add up to the balance,
       // so showing them any other way would stop them adding up.
       render: (r) => (
-        <span className={r.points < 0 ? "text-danger" : "text-success"}>
+        <span className={r.points < 0 ? "text-danger" : "text-success-ink"}>
           {r.points > 0 ? "+" : ""}
           {r.points}
         </span>

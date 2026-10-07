@@ -169,7 +169,7 @@ function ToastRow({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number) 
         type="button"
         onClick={() => onDismiss(toast.id)}
         aria-label="Dismiss"
-        className="-mr-1 -mt-0.5 shrink-0 rounded px-1 text-ink-400 hover:text-ink-700"
+        className="-mr-1 -mt-0.5 shrink-0 rounded px-1 text-ink-500 hover:text-ink-700"
       >
         ✕
       </button>

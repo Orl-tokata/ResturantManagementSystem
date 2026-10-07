@@ -55,12 +55,19 @@ function PosScreen() {
     staleTime: 5 * 60_000,
   });
 
+  /*
+   * sellable=true, to match the /categories/active above it. Without it the
+   * grid listed dishes from categories that had been switched off: they could
+   * be sold, but no category button reached them, so they only turned up
+   * under "All". The pair of calls now agrees about what is on sale.
+   */
   const products = useQuery({
-    queryKey: ["products", { categoryId, search, size: 200 }],
+    queryKey: ["products", { categoryId, search, size: 200, sellable: true }],
     queryFn: () =>
       get<PageResponse<Product>>("/products", {
         ...(categoryId ? { categoryId } : {}),
         ...(search ? { search } : {}),
+        sellable: true,
         size: 200,
       }),
     placeholderData: (prev) => prev,
@@ -564,7 +571,7 @@ function PosScreen() {
                           type="button"
                           aria-label={tA11y("remove", { name: l.productName })}
                           onClick={() => removeLine(l.key)}
-                          className="text-danger-soft"
+                          className="text-danger"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -609,7 +616,7 @@ function PosScreen() {
               <span className="font-[family-name:var(--font-num)]">{formatKhr(totals.total)}</span>
             </div>
             {dirty && (
-              <p className="mt-1.5 text-center text-xs font-semibold text-warning">
+              <p className="mt-1.5 text-center text-xs font-semibold text-warning-ink">
                 {t("unsaved")}
               </p>
             )}

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,6 +33,39 @@ class MasterDataControllerTest {
 	void signIn() throws Exception {
 		adminToken = token("admin");
 		cashierToken = token("cashier");
+	}
+
+	@Test
+	@DisplayName("the till is not offered dishes from a category that is switched off")
+	void sellableExcludesInactiveCategories() throws Exception {
+		// V3 seeds Dessert (id 8) INACTIVE with three dishes under it. They stayed
+		// on the POS grid because /products filtered nothing, while the category
+		// rail came from /categories/active — so they could be sold but not
+		// browsed to, appearing only under "All".
+		String all = mvc.perform(get("/api/products").param("size", "200")
+						.header("Authorization", "Bearer " + cashierToken))
+				.andExpect(status().isOk()).andReturn()
+				.getResponse().getContentAsString();
+
+		String sellable = mvc.perform(get("/api/products").param("size", "200")
+						.param("sellable", "true")
+						.header("Authorization", "Bearer " + cashierToken))
+				.andExpect(status().isOk()).andReturn()
+				.getResponse().getContentAsString();
+
+		assertThat(categoryIds(all)).contains(8L);
+		assertThat(categoryIds(sellable)).doesNotContain(8L);
+		// and it is a filter, not an emptying
+		assertThat(categoryIds(sellable)).isNotEmpty();
+	}
+
+	/** The categoryId of every row in a product page payload. */
+	private java.util.List<Long> categoryIds(String body) throws Exception {
+		java.util.List<Long> ids = new java.util.ArrayList<>();
+		for (JsonNode p : json.readTree(body).path("data").path("content")) {
+			ids.add(p.path("categoryId").asLong());
+		}
+		return ids;
 	}
 
 	private String token(String username) throws Exception {

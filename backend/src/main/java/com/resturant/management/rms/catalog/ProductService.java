@@ -23,8 +23,16 @@ public class ProductService {
     private final com.resturant.management.rms.storage.ImageStorageService imageStorage;
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> search(String query, Long categoryId, Pageable pageable) {
-        return productRepository.search(blankToNull(query), categoryId, pageable).map(this::toResponse);
+    /**
+     * @param sellableOnly the POS grid: only dishes on sale, in a category
+     *                     that is itself on sale
+     */
+    public Page<ProductResponse> search(String query, Long categoryId,
+                                        boolean sellableOnly, Pageable pageable) {
+        return productRepository
+                .search(blankToNull(query), sellableOnly ? RecordStatus.ACTIVE : null,
+                        categoryId, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

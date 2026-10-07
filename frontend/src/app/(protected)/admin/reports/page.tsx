@@ -149,7 +149,7 @@ export default function ReportsPage() {
       render: (s) => (
         <span title={s.costEstimated ? t("estimatedRow") : undefined}>
           {formatUsd(s.cost)}
-          {s.costEstimated && <span className="ml-1 text-ink-400">~</span>}
+          {s.costEstimated && <span className="ml-1 text-ink-500">~</span>}
         </span>
       ),
     },
@@ -157,7 +157,7 @@ export default function ReportsPage() {
       key: "profit",
       header: t("profit"),
       numeric: true,
-      render: (s) => <span className="font-semibold text-success">{formatUsd(s.profit)}</span>,
+      render: (s) => <span className="font-semibold text-success-ink">{formatUsd(s.profit)}</span>,
     },
     { key: "pay", header: tH("paymentMethod"), hideOnMobile: true, render: (s) => s.paymentMethod || "—" },
   ];

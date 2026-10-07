@@ -453,7 +453,7 @@ export default function PurchasePage() {
                     <button
                       type="button"
                       onClick={() => setLines((ls) => ls.filter((x) => x.stockItemId !== l.stockItemId))}
-                      className="text-danger-soft"
+                      className="text-danger"
                       aria-label={tA11y("remove", { name: l.itemName })}
                     >
                       <Trash2 size={14} />

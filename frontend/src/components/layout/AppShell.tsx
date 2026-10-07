@@ -79,7 +79,7 @@ export function AppShell({
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
-              className="grid h-8 w-8 place-items-center rounded hover:bg-white/15 md:hidden"
+              className="grid h-8 w-8 place-items-center rounded hover:bg-black/20 md:hidden"
               aria-label={drawerOpen ? tA11y("closeMenu") : tA11y("openMenu")}
               onClick={() => setDrawerOpen((v) => !v)}
             >
@@ -98,7 +98,7 @@ export function AppShell({
             <Link
               href={settingsHref}
               aria-label={tNav("settings")}
-              className="grid h-8 w-8 place-items-center rounded hover:bg-white/15"
+              className="grid h-8 w-8 place-items-center rounded hover:bg-black/20"
             >
               <Settings size={16} />
             </Link>
@@ -109,7 +109,7 @@ export function AppShell({
           {children}
         </main>
 
-        <footer className="flex h-8 shrink-0 items-center justify-between bg-[var(--chrome)] px-4 text-xs text-white/90 print:hidden">
+        <footer className="flex h-8 shrink-0 items-center justify-between bg-[var(--chrome)] px-4 text-xs text-white/95 print:hidden">
           <span>{tApp("name")}</span>
           <Clock mode="date" />
         </footer>

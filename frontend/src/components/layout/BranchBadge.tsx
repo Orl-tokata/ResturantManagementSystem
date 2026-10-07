@@ -57,7 +57,7 @@ export function BranchBadge() {
   if (!canSwitch) {
     return (
       <span
-        className="hidden items-center gap-1.5 rounded bg-white/15 px-2 py-1 sm:inline-flex"
+        className="hidden items-center gap-1.5 rounded bg-black/20 px-2 py-1 sm:inline-flex"
         title={t("current", { name: label })}
       >
         <Store size={13} aria-hidden />
@@ -71,7 +71,7 @@ export function BranchBadge() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 rounded bg-white/15 px-2 py-1 hover:bg-white/25"
+        className="inline-flex items-center gap-1.5 rounded bg-black/20 px-2 py-1 hover:bg-black/30"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t("current", { name: label })}

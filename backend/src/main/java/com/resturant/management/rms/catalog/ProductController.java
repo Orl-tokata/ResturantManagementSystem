@@ -34,14 +34,18 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "List products (paged)",
-            description = "Optional free-text search and category filter — also backs the POS grid.")
+            description = "Optional free-text search and category filter. "
+                    + "sellable=true restricts the list to dishes the till may sell: "
+                    + "ACTIVE, and in an ACTIVE category.")
     public ApiResponse<PageResponse<ProductResponse>> list(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "false") boolean sellable,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         var pageable = Paging.of(page, size, Sort.by("name").ascending());
-        return ApiResponse.ok(PageResponse.from(productService.search(search, categoryId, pageable)));
+        return ApiResponse.ok(PageResponse.from(
+                productService.search(search, categoryId, sellable, pageable)));
     }
 
     @GetMapping("/{id}")

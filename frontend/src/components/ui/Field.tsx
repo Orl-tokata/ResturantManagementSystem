@@ -39,12 +39,17 @@ export function Field({
         className="field-label mb-1.5 block text-sm font-semibold text-ink-700"
       >
         {label}
-        {required && <span className="ml-0.5 text-danger-soft">*</span>}
+        {required && <span className="ml-0.5 text-danger">*</span>}
       </label>
       {children}
       {hint && !error && <p className="field-hint mt-1 text-xs text-ink-500">{hint}</p>}
+      {/*
+        danger, not danger-soft: #e5484d on white is 3.9:1, and this is the text
+        that tells someone why their form will not save. The auth card
+        re-colours .field-error in globals.css, so the dark side is unaffected.
+      */}
       {error && (
-        <p role="alert" className="field-error mt-1 text-xs font-semibold text-danger-soft">
+        <p role="alert" className="field-error mt-1 text-xs font-semibold text-danger">
           {error}
         </p>
       )}

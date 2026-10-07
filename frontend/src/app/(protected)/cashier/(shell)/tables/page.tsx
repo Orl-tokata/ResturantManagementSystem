@@ -22,7 +22,7 @@ import {
 
 const CARD_TONE: Record<DiningTable["status"], string> = {
   FREE: "bg-success",
-  OCCUPIED: "bg-danger-soft",
+  OCCUPIED: "bg-danger",
   RESERVED: "bg-warning",
 };
 

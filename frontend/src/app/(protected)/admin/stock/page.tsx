@@ -241,7 +241,7 @@ export default function StockPage() {
       // positive — a column of bare numbers makes an addition and a removal
       // look alike.
       render: (m) => (
-        <span className={m.increase ? "text-success" : "text-danger"}>
+        <span className={m.increase ? "text-success-ink" : "text-danger"}>
           {m.increase ? "+" : "−"}
           {m.qty}
         </span>
@@ -259,7 +259,7 @@ export default function StockPage() {
       // balance arrives as undefined.
       render: (m) =>
         m.balanceAfter == null ? (
-          <span className="text-ink-400">—</span>
+          <span className="text-ink-500">—</span>
         ) : (
           <b className="font-[family-name:var(--font-num)]">{m.balanceAfter}</b>
         ),

@@ -135,7 +135,7 @@ export function BarChart({
             {/* The weekday is a second line under an already-thin tick; it only
                 earns its place when every bar is labelled. */}
             {labelled(i) && tickEvery === 1 && p.sublabel && (
-              <div className="truncate text-[10px] text-ink-400">{p.sublabel}</div>
+              <div className="truncate text-[10px] text-ink-500">{p.sublabel}</div>
             )}
           </div>
         ))}

@@ -75,8 +75,8 @@ export function Sidebar({
           "flex items-center gap-2.5 border-l-[3px] py-2.5 text-sm transition",
           inset ? "pl-7 pr-4" : "px-4",
           active
-            ? "border-orange-500 bg-white/15 font-semibold text-white"
-            : "border-transparent text-white/85 hover:bg-white/10 hover:text-white",
+            ? "border-orange-500 bg-black/20 font-semibold text-white"
+            : "border-transparent text-white hover:bg-black/15",
         ].join(" ")}
       >
         <Icon size={17} className="shrink-0" />
@@ -94,7 +94,7 @@ export function Sidebar({
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">{user?.fullName ?? "—"}</div>
-          <div className="truncate text-xs text-white/75">{user ? tEnum(user.role) : ""}</div>
+          <div className="truncate text-xs text-white/95">{user ? tEnum(user.role) : ""}</div>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ export function Sidebar({
                     className={[
                       "flex w-full items-center justify-between gap-2 px-4 py-2 text-left",
                       "text-[11px] font-semibold uppercase tracking-wide transition",
-                      holdsCurrent ? "text-white" : "text-white/60 hover:text-white",
+                      holdsCurrent ? "text-white" : "text-white/95 hover:text-white",
                     ].join(" ")}
                   >
                     <span className="truncate">{tGroup(group.key)}</span>
@@ -139,11 +139,16 @@ export function Sidebar({
         )}
       </nav>
 
-      <div className="border-t border-white/15 px-3.5 py-3">
+      {/*
+        The button carries the padding, not the row. With it on the row the
+        clickable box was 66x16 inside a strip twice that tall, so a click on
+        the obvious place to click did nothing.
+      */}
+      <div className="border-t border-white/15 px-2.5 py-1.5">
         <button
           type="button"
           onClick={() => logout()}
-          className="flex items-center gap-2 text-xs text-white/85 hover:text-white"
+          className="flex w-full items-center gap-2 rounded px-2 py-2.5 text-xs text-white/95 transition hover:bg-black/15 hover:text-white"
         >
           <LogOut size={15} />
           {t("logout")}

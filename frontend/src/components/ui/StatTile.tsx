@@ -7,7 +7,7 @@ const TONES: Record<Tone, string> = {
   1: "bg-brand-600 text-white",
   2: "bg-sand-300 text-ink-900",
   3: "bg-teal-600 text-white",
-  4: "bg-danger-soft text-white",
+  4: "bg-danger text-white",
 };
 
 export function StatTile({

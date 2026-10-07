@@ -79,7 +79,7 @@ export default function UsersPage() {
         r.failedAttempts > 0 ? (
           <b className="text-danger">{r.failedAttempts}</b>
         ) : (
-          <span className="text-ink-400">—</span>
+          <span className="text-ink-500">—</span>
         ),
     },
     {

@@ -19,8 +19,13 @@
   --color-teal-100: #cbe4de;
 
   /* --- Admin theme (green family) --- */
-  --color-brand-700: #158069;
-  --color-brand-600: #1b9c85;
+  /* The admin chrome, the primary button and the first summary tile all put
+     white text on brand-600. At #1b9c85 that was 3.4:1, and text-brand-600 on
+     white was the same — so a filter that reads "All" and the sidebar you
+     navigate by were both under the mark. One step down the same hue fixes
+     every one of them at once, and brand-700 moves to stay ahead of it. */
+  --color-brand-700: #0f6553;
+  --color-brand-600: #158069;
   --color-brand-500: #47a992;
   --color-brand-200: #b7e5dd;
   --color-sand-300: #eed180;
@@ -39,13 +44,26 @@
   --color-warning: #e6a817;
   --color-info: #2f7bc4;
 
+  /* Status colours again, dark enough to be read as text on a light ground.
+     The ones above are chosen for fills — a badge, a tile, a chart bar — and
+     at 3.4:1 (success), 1.9:1 (warning) and 3.9:1 (info) they were being used
+     for figures that matter: a profit column, change due, a till warning. The
+     fills keep their hue; only text moves to these. */
+  --color-success-ink: #1d6b3e;
+  --color-warning-ink: #8a6100;
+  --color-info-ink: #1b568f;
+
   /* --- Neutrals --- */
   --color-ink-50: #fbfbfb;
   --color-ink-100: #f4f5f7;
   --color-ink-200: #e7e9ec;
   --color-ink-300: #d9d9d9;
   --color-ink-400: #b8b8b8;
-  --color-ink-500: #8b9096;
+  /* Secondary text: hints, table meta, "0 of 12" counts — 118 uses of
+     text-ink-500, and every one of them was 3.2:1 on white, below the 4.5:1
+     that body text needs. #6b7177 is the same grey a step darker and clears
+     it on both white and ink-100. */
+  --color-ink-500: #6b7177;
   --color-ink-700: #4a4f55;
   --color-ink-900: #22262b;
 

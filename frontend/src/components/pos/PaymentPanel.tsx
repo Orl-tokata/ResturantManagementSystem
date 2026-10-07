@@ -177,7 +177,7 @@ export function PaymentPanel({
               <span>{t("change")}</span>
               <b
                 className={`font-[family-name:var(--font-num)] text-lg ${
-                  state.change >= 0 ? "text-success" : "text-danger"
+                  state.change >= 0 ? "text-success-ink" : "text-danger"
                 }`}
               >
                 {formatUsd(Math.max(0, state.change))}

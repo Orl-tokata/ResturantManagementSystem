@@ -73,8 +73,8 @@ class RmsApplicationTests {
 	@Test
 	@DisplayName("custom @Query methods execute against the database")
 	void customQueriesRun() {
-		assertThat(products.search("បាយ", null, PageRequest.of(0, 10))).isNotEmpty();
-		assertThat(products.search(null, 7L, PageRequest.of(0, 10))).isNotEmpty();   // drinks
+		assertThat(products.search("បាយ", null, null, PageRequest.of(0, 10))).isNotEmpty();
+		assertThat(products.search(null, null, 7L, PageRequest.of(0, 10))).isNotEmpty();   // drinks
 		assertThat(categories.search(null, PageRequest.of(0, 10)).getTotalElements()).isEqualTo(9);
 		assertThat(suppliers.search("Angkor", PageRequest.of(0, 10))).hasSize(1);
 		assertThat(staff.search(null, Role.CASHIER, PageRequest.of(0, 10))).hasSize(2);

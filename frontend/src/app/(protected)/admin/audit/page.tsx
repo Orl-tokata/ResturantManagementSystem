@@ -200,7 +200,7 @@ function Change({ entry, emptyLabel }: { entry: AuditEntry; emptyLabel: string }
   const fields = [...new Set([...Object.keys(before), ...Object.keys(after)])];
 
   if (fields.length === 0) {
-    return <span className="text-xs text-ink-400">{emptyLabel}</span>;
+    return <span className="text-xs text-ink-500">{emptyLabel}</span>;
   }
 
   return (
@@ -209,9 +209,9 @@ function Change({ entry, emptyLabel }: { entry: AuditEntry; emptyLabel: string }
         <div key={field} className="flex flex-wrap items-baseline gap-1.5 text-xs">
           <span className="text-ink-500">{field}</span>
           {field in before && (
-            <span className="text-ink-400 line-through">{before[field]}</span>
+            <span className="text-ink-500 line-through">{before[field]}</span>
           )}
-          {field in before && field in after && <span className="text-ink-400">→</span>}
+          {field in before && field in after && <span className="text-ink-500">→</span>}
           {field in after && <span className="font-medium tabular-nums">{after[field]}</span>}
         </div>
       ))}

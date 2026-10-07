@@ -9,7 +9,7 @@ type Chrome = "admin" | "cashier" | "danger" | "success";
 const CHROME: Record<Chrome, string> = {
   admin: "bg-brand-600",
   cashier: "bg-teal-800",
-  danger: "bg-danger-soft",
+  danger: "bg-danger",
   success: "bg-success",
 };
 

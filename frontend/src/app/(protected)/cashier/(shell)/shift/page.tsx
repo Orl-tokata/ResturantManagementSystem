@@ -153,7 +153,7 @@ export default function ShiftPage() {
       header: tc("amount"),
       numeric: true,
       render: (m) => (
-        <span className={m.increase ? "text-success" : "text-danger"}>
+        <span className={m.increase ? "text-success-ink" : "text-danger"}>
           {m.increase ? "+" : "−"}
           {formatUsd(m.amount)}
         </span>
@@ -396,7 +396,7 @@ function Line({
   tone?: "plain" | "good" | "warn" | "bad";
 }) {
   const colour =
-    tone === "bad" ? "text-danger" : tone === "warn" ? "text-warning" : tone === "good" ? "text-success" : "text-ink-900";
+    tone === "bad" ? "text-danger" : tone === "warn" ? "text-warning-ink" : tone === "good" ? "text-success-ink" : "text-ink-900";
   return (
     <div className="flex justify-between gap-3">
       <dt className="text-ink-500">{label}</dt>

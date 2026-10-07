@@ -152,7 +152,7 @@ export function LineChooser({
         <fieldset key={group.id} className="mb-4">
           <legend className="mb-1.5 text-sm font-semibold">
             {group.name}
-            {group.required && <span className="ml-0.5 text-danger-soft">*</span>}
+            {group.required && <span className="ml-0.5 text-danger">*</span>}
             <span className="ml-2 text-xs font-normal text-ink-500">
               {t("chooseRange", { min: group.minSelect, max: group.maxSelect })}
             </span>

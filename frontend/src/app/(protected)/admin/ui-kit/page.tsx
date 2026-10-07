@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  Alert,
   Badge,
   Button,
   Card,
@@ -158,6 +159,21 @@ export default function UiKitPage() {
           <Badge tone="info">ព័ត៌មាន · Info</Badge>
           <Badge tone="neutral">Neutral</Badge>
         </div>
+      </Card>
+
+      {/* ---- alerts ---- */}
+      <Card title="Alert">
+        {/*
+          Here because every tone was white on a light tint until now, and this
+          is the page where that would have been obvious. The auth screens show
+          the same component on dark teal; AuthCard's .auth-surface class picks
+          that treatment, so these four are what an admin or cashier screen
+          gets and nothing has to be passed in.
+        */}
+        <Alert tone="error">រក្សាទុកមិនបាន · Could not save. Check the fields marked below.</Alert>
+        <Alert tone="success">បានរក្សាទុក · Saved.</Alert>
+        <Alert tone="warn">ស្តុកជិតអស់ · Two ingredients are below their minimum.</Alert>
+        <Alert tone="info">ព័ត៌មាន · A VAT change applies only to bills opened afterwards.</Alert>
       </Card>
 
       {/* ---- form ---- */}

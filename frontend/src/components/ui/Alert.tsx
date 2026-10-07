@@ -3,20 +3,34 @@ import type { ReactNode } from "react";
 type Tone = "error" | "success" | "info" | "warn";
 
 /**
- * The first three are white on a tint, because this component grew up inside
- * AuthCard, whose background is a dark teal gradient. On the admin screens,
- * which are light, white text on a 15% tint is close to invisible — a known
- * fault, not a style choice, and not fixed here because fixing it properly
- * means giving the dark-background callers a way to keep what they have.
+ * Dark text on a light tint by default, and white on a translucent tint inside
+ * AuthCard.
  *
- * <p>`warn` is written for where it is actually used: dark amber on a light
- * amber field, matching the Badge of the same name, and legible on both.
+ * <p>It used to be white everywhere, because the component grew up inside
+ * AuthCard and its ground is dark teal. Thirty-one of the thirty-five screens
+ * that show an Alert are light, and fifty-six of the calls are
+ * {@code tone="error"} — so the usual case was white text on a 15% tint, which
+ * is the message a cashier needs most and could barely read.
+ *
+ * <p>The dark treatment is kept for the auth screens and selected by the
+ * {@code .auth-surface} class AuthCard already carries, so no caller passes
+ * anything and an Alert added to either kind of screen is right by default.
+ *
+ * <p>The darker hexes are deliberate: `success` and `info` at their token
+ * values clear 3:1 against a tint but not the 4.5:1 that body text wants.
+ * `warn` was already written this way and is unchanged.
  */
 const TONES: Record<Tone, string> = {
-  error: "border-danger-soft bg-danger-soft/15 text-white",
-  success: "border-success bg-success/15 text-white",
-  info: "border-teal-100/50 bg-white/10 text-white",
-  warn: "border-[#e6a817] bg-[#fdf0d2] text-[#8a6100]",
+  error:
+    "border-danger bg-danger/10 text-danger" +
+    " [.auth-surface_&]:border-danger-soft [.auth-surface_&]:bg-danger-soft/15 [.auth-surface_&]:text-white",
+  success:
+    "border-success bg-success/10 text-success-ink" +
+    " [.auth-surface_&]:bg-success/15 [.auth-surface_&]:text-white",
+  info:
+    "border-info bg-info/10 text-info-ink" +
+    " [.auth-surface_&]:border-teal-100/50 [.auth-surface_&]:bg-white/10 [.auth-surface_&]:text-white",
+  warn: "border-warning bg-[#fdf0d2] text-warning-ink",
 };
 
 const ICONS: Record<Tone, string> = {

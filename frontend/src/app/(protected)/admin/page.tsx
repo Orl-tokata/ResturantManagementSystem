@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
       header: "#",
       width: "44px",
       render: (_r, i) => (
-        <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-200 text-xs font-bold text-brand-700">
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-200 text-xs font-bold text-teal-900">
           {i + 1}
         </span>
       ),
@@ -124,9 +124,9 @@ export default function AdminDashboardPage() {
         <div className="space-y-4">
           <Card title={t("tableStatus")}>
             <div className="space-y-2.5 text-sm">
-              <Row label={tTable("FREE")} value={d?.tablesFree} tone="text-success" />
-              <Row label={tTable("OCCUPIED")} value={d?.tablesOccupied} tone="text-danger-soft" />
-              <Row label={tTable("RESERVED")} value={d?.tablesReserved} tone="text-warning" />
+              <Row label={tTable("FREE")} value={d?.tablesFree} tone="text-success-ink" />
+              <Row label={tTable("OCCUPIED")} value={d?.tablesOccupied} tone="text-danger" />
+              <Row label={tTable("RESERVED")} value={d?.tablesReserved} tone="text-warning-ink" />
             </div>
             <Link href="/admin/tables">
               <Button variant="ghost" block className="mt-3">
