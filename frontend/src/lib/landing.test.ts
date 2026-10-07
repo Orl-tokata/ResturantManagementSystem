@@ -12,16 +12,17 @@ import { landingPath } from "@/lib/landing";
 
 describe("landingPath", () => {
   it("sends each role to its own home when there is no next", () => {
+    // Two roles, because only two can hold a login. WAITER and CHEF are job
+    // titles on a staff record and used to be offered by the account form,
+    // which is how they got here; LoginRole now makes that a type error.
     expect(landingPath(null, "ADMIN")).toBe("/admin");
     expect(landingPath(null, "CASHIER")).toBe("/cashier/order");
-    expect(landingPath(null, "WAITER")).toBe("/cashier/order");
-    expect(landingPath(null, "CHEF")).toBe("/cashier/order");
   });
 
   it("honours a local path the user may open", () => {
     expect(landingPath("/cashier/order", "CASHIER")).toBe("/cashier/order");
     expect(landingPath("/admin/staff", "ADMIN")).toBe("/admin/staff");
-    expect(landingPath("/cashier/history?date=2026-09-24", "WAITER")).toBe(
+    expect(landingPath("/cashier/history?date=2026-09-24", "CASHIER")).toBe(
       "/cashier/history?date=2026-09-24",
     );
   });
@@ -31,8 +32,8 @@ describe("landingPath", () => {
     // sends them to /login?next=%2Fadmin%2Fstaff, they sign in, and without
     // this they land back on a screen that only shows them a refusal.
     expect(landingPath("/admin/staff", "CASHIER")).toBe("/cashier/order");
-    expect(landingPath("/admin", "WAITER")).toBe("/cashier/order");
-    expect(landingPath("/admin/report/sales", "CHEF")).toBe("/cashier/order");
+    expect(landingPath("/admin", "CASHIER")).toBe("/cashier/order");
+    expect(landingPath("/admin/report/sales", "CASHIER")).toBe("/cashier/order");
   });
 
   it("does not mistake a lookalike path for the admin area", () => {

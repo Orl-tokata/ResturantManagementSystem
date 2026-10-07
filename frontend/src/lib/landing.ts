@@ -1,4 +1,4 @@
-import { HOME_BY_ROLE, type Role } from "@/types/auth";
+import { HOME_BY_ROLE, type LoginRole } from "@/types/auth";
 
 /**
  * The one part of the site not open to every signed-in user.
@@ -28,7 +28,7 @@ export const ADMIN_PREFIX = "/admin";
  * Anything that fails either check falls back to the role's own home, which is
  * the same place a plain visit to /login ends up.
  */
-export function landingPath(next: string | null, role: Role): string {
+export function landingPath(next: string | null, role: LoginRole): string {
   const home = HOME_BY_ROLE[role];
   if (next === null) return home;
 

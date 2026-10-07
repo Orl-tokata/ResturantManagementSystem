@@ -67,6 +67,7 @@ public class DiningTableController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CASHIER')")
     @Operation(summary = "Change table status",
             description = "Any authenticated user — cashiers seat and clear tables.")
     public ApiResponse<TableResponse> changeStatus(@PathVariable Long id,

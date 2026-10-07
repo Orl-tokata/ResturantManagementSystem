@@ -1,4 +1,4 @@
-import type { Role } from "@/types/auth";
+import type { LoginRole } from "@/types/auth";
 
 /** A sign-in account, as `GET /api/users` returns it. */
 export interface UserAccount {
@@ -7,7 +7,7 @@ export interface UserAccount {
   fullName: string;
   email?: string;
   phone?: string;
-  role: Role;
+  role: LoginRole;
   active: boolean;
   locked: boolean;
   /**

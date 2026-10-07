@@ -73,6 +73,14 @@ public class AuthService {
             throw new ConflictException("error.auth.emailRegistered", request.email());
         }
 
+        // A login is only ever ADMIN or CASHIER. Without this the role came
+        // straight from the request body and a WAITER or CHEF account was one
+        // dropdown away from the till.
+        Role role = request.role() != null ? request.role() : Role.CASHIER;
+        if (!role.canSignIn()) {
+            throw new BadRequestException("error.auth.roleCannotSignIn", role.name());
+        }
+
         UserInfm user = UserInfm.builder()
                 .bizKey(generateBizKey())
                 .userId(request.username())
@@ -80,7 +88,7 @@ public class AuthService {
                 .userPwd(passwordEncoder.encode(request.password()))
                 .eml(request.email())
                 .tel(request.phone())
-                .role(request.role() != null ? request.role() : Role.CASHIER)
+                .role(role)
                 // The shop the admin creating them is working in. Not a field
                 // on the request: who may work where is not a thing the person
                 // being created gets to say, and an admin who wants somebody

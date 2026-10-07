@@ -198,23 +198,52 @@ class AuthControllerTest {
 	@DisplayName("an admin creates an account with the role they chose, and a duplicate is 409")
 	void adminCreatesAccountThenConflict() throws Exception {
 		String body = """
-				{"username":"waiter1","password":"Passw0rdX","fullName":"Kim Srey Neat",
-				 "email":"waiter1@rms.local","phone":"016 555 777","role":"WAITER"}""";
+				{"username":"till2","password":"Passw0rdX","fullName":"Kim Srey Neat",
+				 "email":"till2@rms.local","phone":"016 555 777","role":"CASHIER"}""";
 		String token = login();
 
 		// The role comes from the request here, and that is correct: choosing it
 		// is the point of the call when the caller already holds the authority.
+		// It must still be a role that can sign in — this used to read WAITER,
+		// which is a job title, and the account it made could work the till.
 		mvc.perform(post("/api/auth/register")
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON).content(body))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.data.username").value("waiter1"))
-				.andExpect(jsonPath("$.data.role").value("WAITER"));
+				.andExpect(jsonPath("$.data.username").value("till2"))
+				.andExpect(jsonPath("$.data.role").value("CASHIER"));
 
 		mvc.perform(post("/api/auth/register")
 						.header("Authorization", "Bearer " + token)
 						.contentType(MediaType.APPLICATION_JSON).content(body))
 				.andExpect(status().isConflict());
+	}
+
+	@Test
+	@DisplayName("a job title cannot be given a login, and nothing is created when one is tried")
+	void registerRefusesRolesThatCannotSignIn() throws Exception {
+		String token = login();
+
+		// WAITER, CHEF and MANAGER are roles in the enum and in the database's
+		// role CHECK, so they used to sail through. A login for one of them
+		// reached the till: orders, payments, cash shifts and refunds ask for
+		// a signed-in user and, before this, nothing more.
+		for (String role : new String[] { "WAITER", "CHEF", "MANAGER" }) {
+			mvc.perform(post("/api/auth/register")
+							.header("Authorization", "Bearer " + token)
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{"username":"job_%s","password":"Passw0rdX",
+									 "fullName":"Job Title","role":"%s"}""".formatted(role, role)))
+					.andExpect(status().isBadRequest());
+
+			// A refusal that still wrote the row would be no refusal at all.
+			mvc.perform(post("/api/auth/login")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{"username":"job_%s","password":"Passw0rdX"}""".formatted(role)))
+					.andExpect(status().isUnauthorized());
+		}
 	}
 
 	@Test

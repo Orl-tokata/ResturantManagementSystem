@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Shifts", description = "Opening, counting and closing a till")
+// Whoever stands at the drawer. The one listing below is narrower still.
+@PreAuthorize("hasAnyRole('ADMIN', 'CASHIER')")
 public class ShiftController {
 
     private final ShiftService shiftService;

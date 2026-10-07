@@ -2,13 +2,32 @@
 // existed in @PreAuthorize and nowhere else.
 export type Role = "ADMIN" | "MANAGER" | "CASHIER" | "WAITER" | "CHEF";
 
+/**
+ * The roles that may hold a login, which is not all of them.
+ *
+ * <p>{@link Role} is a job title on an HR record — a chef has a row in staff,
+ * not a password. Both used to be the same type, so the account form offered
+ * every title and a CHEF login was one dropdown away from the till: nothing
+ * below ADMIN was told apart, and orders, payments, cash shifts and refunds
+ * ask only for a signed-in user. Role.canSignIn() is the server's half of
+ * this; keeping the two types apart is the client's.
+ *
+ * <p>MANAGER is absent on purpose. The backend has granted it admin work
+ * since P3 and V17 widened the role CHECK, but no screen creates one and the
+ * admin shell turns it away — so it is unfinished, not available.
+ */
+export type LoginRole = Extract<Role, "ADMIN" | "CASHIER">;
+
+/** For a dropdown that issues a login. */
+export const LOGIN_ROLES: LoginRole[] = ["ADMIN", "CASHIER"];
+
 export interface User {
   id: number;
   username: string;
   fullName: string;
   email: string | null;
   phone: string | null;
-  role: Role;
+  role: LoginRole;
   locked: boolean;
   lastLoginAt: string | null;
   /** The shop this session is working in. Comes from the signed token. */
@@ -39,7 +58,7 @@ export interface AccountRequest {
   fullName: string;
   email?: string;
   phone?: string;
-  role: Role;
+  role: LoginRole;
 }
 
 export interface AuthResponse {
@@ -55,12 +74,7 @@ export interface VerifyOtpResponse {
 }
 
 /** Where each role lands after signing in. */
-export const HOME_BY_ROLE: Record<Role, string> = {
+export const HOME_BY_ROLE: Record<LoginRole, string> = {
   ADMIN: "/admin",
-  // A manager runs a shop rather than a till, so they land where the figures
-  // are, like an admin.
-  MANAGER: "/admin",
   CASHIER: "/cashier/order",
-  WAITER: "/cashier/order",
-  CHEF: "/cashier/order",
 };

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import messages from "../../../messages/en.json";
 import { RequireAuth } from "@/components/auth/RequireAuth";
-import type { Role, User } from "@/types/auth";
+import type { LoginRole, User } from "@/types/auth";
 
 /*
  * The client-side half of authorisation.
@@ -30,7 +30,7 @@ vi.mock("@/lib/auth-context", () => ({
   useAuth: () => auth,
 }));
 
-function signedIn(role: Role): User {
+function signedIn(role: LoginRole): User {
   return {
     id: 1,
     username: role.toLowerCase(),
@@ -101,9 +101,12 @@ describe("RequireAuth", () => {
   });
 
   it("asks only for a session when no role is named", () => {
-    // The shared screens — the POS, order history — are open to every role.
+    // Used where a session is the whole requirement, such as the profile and
+    // change-password screens. The till is not one of these: it names
+    // ["ADMIN", "CASHIER"] in app/(protected)/cashier/layout.tsx, because a
+    // login is no longer the same thing as permission to take money.
     auth.status = "authenticated";
-    auth.user = signedIn("CHEF");
+    auth.user = signedIn("CASHIER");
     show(<RequireAuth>{SECRET}</RequireAuth>);
 
     expect(screen.getByTestId("secret")).toBeTruthy();

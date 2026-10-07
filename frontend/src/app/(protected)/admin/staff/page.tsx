@@ -27,7 +27,7 @@ import { useList, useRemove, useSave } from "@/hooks/useCrud";
 import { post } from "@/lib/api";
 import { useApiError } from "@/lib/use-api-error";
 import { formatUsd } from "@/lib/format";
-import type { AccountRequest, Role } from "@/types/auth";
+import { LOGIN_ROLES, type AccountRequest, type LoginRole, type Role } from "@/types/auth";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import {
   type Gender,
@@ -164,9 +164,13 @@ export default function StaffPage() {
 
   function openAccount(row: Staff) {
     // Everything the staff row already knows is carried across, so the admin
-    // types a username and a password and nothing else. The role defaults to
-    // the one they were hired into rather than to the least privileged, which
-    // would only be overridden by hand every time.
+    // types a username and a password and nothing else.
+    //
+    // The role is the exception. It used to be copied from the staff record,
+    // which is a job title: hiring someone as a chef and giving them a login
+    // made a CHEF account, and that reached the till. Only an admin's title
+    // carries over; everyone else starts as a cashier and is changed by hand
+    // if that is wrong.
     setAccountFor(row);
     setAccount({
       username: "",
@@ -174,7 +178,7 @@ export default function StaffPage() {
       fullName: row.staffName,
       email: row.email ?? undefined,
       phone: row.phone ?? undefined,
-      role: row.role,
+      role: row.role === "ADMIN" ? "ADMIN" : "CASHIER",
     });
     setAccountError(null);
   }
@@ -541,9 +545,9 @@ export default function StaffPage() {
             <Select
               id="a-role"
               value={account.role}
-              onChange={(e) => setAcc("role", e.target.value as Role)}
+              onChange={(e) => setAcc("role", e.target.value as LoginRole)}
             >
-              {(["ADMIN","CASHIER","WAITER","CHEF"] as Role[]).map((r) => (
+              {LOGIN_ROLES.map((r) => (
                 <option key={r} value={r}>
                   {tRole(r)}
                 </option>

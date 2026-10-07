@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,10 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Returns", description = "Giving money back against a settled bill")
+// A refund is the one transaction that pays out with nothing coming in.
+// ReturnService already demands an ADMIN above the approval threshold; this
+// settles who may raise one at all.
+@PreAuthorize("hasAnyRole('ADMIN', 'CASHIER')")
 public class ReturnController {
 
     private final ReturnService returnService;

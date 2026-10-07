@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
-import type { Role } from "@/types/auth";
+import type { LoginRole } from "@/types/auth";
 
 /**
  * Client-side route guard.
@@ -20,7 +20,7 @@ export function RequireAuth({
   roles,
 }: {
   children: ReactNode;
-  roles?: Role[];
+  roles?: LoginRole[];
 }) {
   const t = useTranslations("common");
   const tErr = useTranslations("error");
